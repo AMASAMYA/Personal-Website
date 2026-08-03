@@ -1461,6 +1461,17 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
           <span class="nav-label">Live Audit</span>
         </button>
       </li>
+      <!-- v5.2 Scheduled Crawls tab. -->
+      <li role="presentation">
+        <button class="nav-tab" role="tab" id="tab-schedules"
+          aria-controls="panel-schedules" aria-selected="false" tabindex="-1" type="button">
+          <!-- Clock/schedule icon -->
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+          </svg>
+          <span class="nav-label">Schedules</span>
+        </button>
+      </li>
 
       <li role="presentation" aria-hidden="true">
         <div class="nav-section-divider"></div>
@@ -2327,6 +2338,223 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
       </div>
     </div>
 
+    <!-- ═══ SCHEDULED CRAWLS (v5.2) ═══
+         MVP scope: create/edit/delete schedules that the Chrome
+         extension picks up via Firestore mirror and runs on
+         chrome.alarms. Webhook (Slack / Teams / generic JSON) posts
+         happen from the extension, not from this panel.
+         JS wiring lands in a later commit; this is the HTML shell. -->
+    <div id="panel-schedules" class="tab-panel" role="tabpanel"
+         aria-labelledby="tab-schedules" tabindex="-1" hidden>
+      <h1 class="panel-title">Scheduled Crawls</h1>
+      <p class="panel-desc">
+        Run Site Crawl automatically on a daily or weekly cadence.
+        The AMASAMYA Chrome extension must be installed and open in
+        Chrome at some point during the scheduled window for the
+        crawl to fire; missed runs replay on the next browser start.
+        Post regression alerts to a Slack, Teams, or generic-JSON
+        webhook.
+      </p>
+
+      <!-- Prerequisite banner: shown by JS when extension is not detected. -->
+      <div id="sched-ext-missing" class="callout callout-warn" role="status" hidden>
+        <p><strong>Extension not detected.</strong> Install
+        <a href="https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif" rel="noopener">the AMASAMYA Chrome extension</a>
+        and reload this page. Schedules will not fire until the
+        extension is installed.</p>
+      </div>
+
+      <!-- Toolbar. New-schedule button opens the create form below. -->
+      <div class="toolbar" role="toolbar" aria-label="Schedules toolbar" style="display:flex;gap:10px;margin:12px 0 20px;">
+        <button type="button" id="sched-new-btn" class="btn-primary">
+          <span aria-hidden="true">+ </span>New schedule
+        </button>
+        <button type="button" id="sched-refresh-btn" class="btn-secondary">
+          Refresh list
+        </button>
+      </div>
+
+      <!-- Assertive region for save/delete confirmations. -->
+      <div id="sched-live-assertive" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+      <!-- Polite region for list updates and background sync. -->
+      <div id="sched-live-polite" class="sr-only" aria-live="polite" aria-atomic="false"></div>
+
+      <!-- ── Create/edit form. Toggled via sched-new-btn or Edit action.
+           Hidden until user opens it. Fieldsets group related inputs
+           for NVDA/JAWS legend announcement. ── -->
+      <section id="sched-form-section" aria-labelledby="sched-form-heading" hidden>
+        <h2 id="sched-form-heading" class="section-heading">New schedule</h2>
+        <form id="sched-form" novalidate>
+          <input type="hidden" id="sched-id" value="">
+
+          <div class="field-group">
+            <label for="sched-label" class="field-label">Name this schedule</label>
+            <input type="text" id="sched-label" class="field-input"
+                   maxlength="120" required
+                   aria-describedby="sched-label-desc"
+                   autocomplete="off">
+            <p id="sched-label-desc" class="field-hint">A short name so you can tell schedules apart in the list. Example: "hdfcbank.com nightly check".</p>
+          </div>
+
+          <fieldset class="field-group">
+            <legend class="field-label">What to crawl</legend>
+            <div>
+              <label>
+                <input type="radio" name="sched-source" value="urls" checked>
+                Paste a list of URLs
+              </label>
+            </div>
+            <div>
+              <label>
+                <input type="radio" name="sched-source" value="sitemap">
+                Point to a sitemap.xml URL
+              </label>
+            </div>
+
+            <div id="sched-urls-wrap" style="margin-top:12px;">
+              <label for="sched-urls" class="field-label">URLs (one per line, up to 200)</label>
+              <textarea id="sched-urls" class="field-input" rows="6"
+                        aria-describedby="sched-urls-desc"></textarea>
+              <p id="sched-urls-desc" class="field-hint">Full URLs including https://. Blank lines are ignored.</p>
+            </div>
+
+            <div id="sched-sitemap-wrap" style="margin-top:12px;" hidden>
+              <label for="sched-sitemap" class="field-label">Sitemap URL</label>
+              <input type="url" id="sched-sitemap" class="field-input"
+                     maxlength="500"
+                     placeholder="https://example.com/sitemap.xml"
+                     aria-describedby="sched-sitemap-desc">
+              <p id="sched-sitemap-desc" class="field-hint">The extension will fetch this sitemap at run time and crawl each URL, up to 200.</p>
+            </div>
+          </fieldset>
+
+          <fieldset class="field-group">
+            <legend class="field-label">How often</legend>
+            <div>
+              <label>
+                <input type="radio" name="sched-frequency" value="daily" checked>
+                Every day
+              </label>
+            </div>
+            <div>
+              <label>
+                <input type="radio" name="sched-frequency" value="weekly-monday">
+                Every Monday
+              </label>
+            </div>
+            <div>
+              <label>
+                <input type="radio" name="sched-frequency" value="weekly-friday">
+                Every Friday
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="field-group">
+            <legend class="field-label">What time (your local timezone)</legend>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <label for="sched-hh" class="sr-only">Hour, 0 to 23</label>
+              <input type="number" id="sched-hh" class="field-input"
+                     min="0" max="23" step="1" value="9"
+                     style="width:70px" required
+                     inputmode="numeric" aria-describedby="sched-time-desc">
+              <span aria-hidden="true">:</span>
+              <label for="sched-mm" class="sr-only">Minute, 0 to 59</label>
+              <input type="number" id="sched-mm" class="field-input"
+                     min="0" max="59" step="1" value="0"
+                     style="width:70px" required
+                     inputmode="numeric">
+            </div>
+            <p id="sched-time-desc" class="field-hint">24-hour clock. The schedule fires at this local time using the timezone of the machine where the extension is running.</p>
+          </fieldset>
+
+          <fieldset class="field-group">
+            <legend class="field-label">Where to send alerts (optional)</legend>
+            <div>
+              <label for="sched-webhook-type" class="field-label">Webhook type</label>
+              <select id="sched-webhook-type" class="field-input">
+                <option value="none">Do not send anywhere (just save the run)</option>
+                <option value="slack">Slack incoming webhook</option>
+                <option value="teams">Microsoft Teams incoming webhook</option>
+                <option value="generic-json">Generic JSON POST</option>
+              </select>
+            </div>
+            <div id="sched-webhook-url-wrap" style="margin-top:12px;" hidden>
+              <label for="sched-webhook-url" class="field-label">Webhook URL</label>
+              <input type="url" id="sched-webhook-url" class="field-input"
+                     maxlength="500"
+                     placeholder="https://hooks.slack.com/services/..."
+                     aria-describedby="sched-webhook-url-desc">
+              <p id="sched-webhook-url-desc" class="field-hint">The URL to POST the run summary to. Keep this secret; anyone with the URL can post messages to your channel.</p>
+              <button type="button" id="sched-webhook-test-btn" class="btn-secondary" style="margin-top:8px;">
+                Send a test message now
+              </button>
+              <p id="sched-webhook-test-result" class="field-hint" style="margin-top:6px;" role="status"></p>
+            </div>
+          </fieldset>
+
+          <div class="field-group" style="display:flex;gap:12px;margin-top:20px;">
+            <button type="submit" id="sched-save-btn" class="btn-primary">Save schedule</button>
+            <button type="button" id="sched-cancel-btn" class="btn-secondary">Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ── List of existing schedules. Empty state visible until
+           the first schedule is created. Rendered as a table because
+           it is tabular data and JAWS/NVDA table navigation is the
+           right pattern for scanning rows. ── -->
+      <section aria-labelledby="sched-list-heading" style="margin-top:24px;">
+        <h2 id="sched-list-heading" class="section-heading">Your schedules</h2>
+
+        <div id="sched-list-empty" class="callout" role="status">
+          <p>No schedules yet. Click <strong>New schedule</strong> above to create your first one.</p>
+        </div>
+
+        <table id="sched-list-table" class="findings-table" hidden aria-describedby="sched-list-heading">
+          <caption class="sr-only">Your scheduled crawls, most recently updated first.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Frequency</th>
+              <th scope="col">Time</th>
+              <th scope="col">Last run</th>
+              <th scope="col">Enabled</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sched-list-body">
+            <!-- Rows injected by JS in a later commit. -->
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ── Runs history for the currently selected schedule.
+           Hidden until user clicks View runs on a row. ── -->
+      <section id="sched-runs-section" aria-labelledby="sched-runs-heading" style="margin-top:24px;" hidden>
+        <h2 id="sched-runs-heading" class="section-heading">Recent runs</h2>
+        <p class="panel-desc" id="sched-runs-context"></p>
+        <table id="sched-runs-table" class="findings-table" aria-describedby="sched-runs-heading">
+          <caption class="sr-only">Most recent 20 runs for the selected schedule.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Started</th>
+              <th scope="col">Pages</th>
+              <th scope="col">New</th>
+              <th scope="col">Regressed</th>
+              <th scope="col">Unchanged</th>
+              <th scope="col">Resolved</th>
+              <th scope="col">Webhook</th>
+            </tr>
+          </thead>
+          <tbody id="sched-runs-body">
+            <!-- Rows injected by JS in a later commit. -->
+          </tbody>
+        </table>
+      </section>
+
+    </div>
+
   </main>
 </div>
 
@@ -2710,7 +2938,7 @@ function showView(id) {
 }
 
 /* ── Tab switching ── */
-const TABS = ['dashboard','import','webaudit','document','champions','vpat','mobile','settings','ai-settings','copilot'];
+const TABS = ['dashboard','import','webaudit','document','champions','vpat','mobile','schedules','settings','ai-settings','copilot'];
 
 /* Tab labels for announce() - matches the visible .nav-label text */
 const TAB_LABELS = {
@@ -2722,6 +2950,7 @@ const TAB_LABELS = {
   'mobile':      'Mobile',
   'champions':   'Champions',
   'copilot':     'Live Audit',
+  'schedules':   'Schedules',
   'settings':    'Settings',
   'ai-settings': 'AI Settings'
 };

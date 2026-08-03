@@ -43,6 +43,79 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // v5.2 Scheduled Crawls
+    // ----------------------
+    // schedules/{scheduleId} — user-owned scheduled crawl config.
+    // Only the owner can read/write/delete their own schedules.
+    // Shape is validated on create to prevent malformed docs from
+    // ever landing in Firestore (the extension is the source of
+    // truth for the alarm; the doc is the cross-device sync
+    // + audit trail).
+    match /schedules/{scheduleId} {
+      allow read, delete: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid;
+
+      allow update: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+             'ownerUid', 'label', 'urls', 'sitemap',
+             'frequency', 'timeOfDayHHMM',
+             'webhookUrl', 'webhookType',
+             'enabled', 'lastRunAt', 'lastRunSummary',
+             'createdAt', 'updatedAt'
+           ])
+        && request.resource.data.label is string
+        && request.resource.data.label.size() >= 1
+        && request.resource.data.label.size() <= 120
+        && request.resource.data.frequency in ['daily', 'weekly-monday', 'weekly-friday']
+        && request.resource.data.timeOfDayHHMM is string
+        && request.resource.data.timeOfDayHHMM.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && request.resource.data.webhookType in ['slack', 'teams', 'generic-json', 'none']
+        && (request.resource.data.webhookUrl == null
+            || (request.resource.data.webhookUrl is string
+                && request.resource.data.webhookUrl.size() <= 500))
+        && request.resource.data.enabled is bool
+        && (request.resource.data.urls == null
+            || (request.resource.data.urls is list
+                && request.resource.data.urls.size() <= 200))
+        && (request.resource.data.sitemap == null
+            || (request.resource.data.sitemap is string
+                && request.resource.data.sitemap.size() <= 500));
+    }
+
+    // scheduledRuns/{runId} — summary record of a scheduled run.
+    // Owner-only read + create. No update, no delete (immutable log).
+    // Full findings stay in the existing per-URL report collection.
+    match /scheduledRuns/{runId} {
+      allow read: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+             'ownerUid', 'scheduleId',
+             'startedAt', 'finishedAt', 'pageCount',
+             'newFindings', 'regressedFindings',
+             'unchangedFindings', 'resolvedFindings',
+             'webhookDelivered', 'webhookError',
+             'createdAt'
+           ])
+        && request.resource.data.scheduleId is string
+        && request.resource.data.pageCount is int
+        && request.resource.data.pageCount >= 0
+        && request.resource.data.newFindings is int
+        && request.resource.data.regressedFindings is int
+        && request.resource.data.unchangedFindings is int
+        && request.resource.data.resolvedFindings is int
+        && request.resource.data.webhookDelivered is bool;
+
+      allow update, delete: if false;
+    }
+
     // Deny everything else
     match /{document=**} {
       allow read, write: if false;
