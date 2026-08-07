@@ -74,6 +74,9 @@ Screenshots/
 *.zip
 amasamya-public-repo/
 
+# Personal job-search drafts. Never push these.
+job-applications/
+
 # Per-session test data that should never be committed
 Test Reports/
 coverage.xlsx
