@@ -124,9 +124,9 @@ this project, ever, going forward.
   baseline promotion from history, and selector normalisation are
   deferred to v4.4.0; offline-only Vision AI is v5.0. See
   amasamya-extension/ROADMAP.md.
-- **Public source** - github.com/accessitestai/AMASAMYA (mirror of the
+- **Public source** - github.com/AMASAMYA/AMASAMYA (mirror of the
   extension code; MIT licence). The full Personal-Website source remains
-  private at github.com/accessitestai/Personal-Website.
+  private at github.com/AMASAMYA/Personal-Website.
 - **Hosting** - Netlify. Auto-deploys on push to `main`.
 - **Domains** - akhileshmalani.com (root portfolio), amasamya.akhileshmalani.com
   (audit platform).

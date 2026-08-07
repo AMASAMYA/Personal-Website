@@ -14,7 +14,7 @@
 #     outcome at a glance.
 #
 # Usage:
-#   curl -O https://raw.githubusercontent.com/accessitestai/Personal-Website/main/beta/migrate-to-mac.sh
+#   curl -O https://raw.githubusercontent.com/AMASAMYA/Personal-Website/main/beta/migrate-to-mac.sh
 #   bash migrate-to-mac.sh
 
 set -euo pipefail
@@ -22,7 +22,7 @@ set -euo pipefail
 # Trap any error and print a clear final-line failure marker.
 trap 'echo ""; echo "MIGRATION FAILED"; echo "The last command exited with an error. Scroll up with VO+arrow keys to read what went wrong."; exit 1' ERR
 
-GITHUB_USER="accessitestai"
+GITHUB_USER="AMASAMYA"
 REPO_NAME="Personal-Website"
 TARGET_DIR="${HOME}/code/personal-website"
 GIT_EMAIL="akhilesh.malani@gmail.com"

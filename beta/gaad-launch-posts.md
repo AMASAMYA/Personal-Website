@@ -64,7 +64,7 @@ Full launch post with links, source code, and the three release surfaces is in t
 >
 > Chrome extension: https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif
 > Web platform: https://amasamya.akhileshmalani.com
-> Source code on GitHub: https://github.com/accessitestai/AMASAMYA
+> Source code on GitHub: https://github.com/AMASAMYA/AMASAMYA
 > Full launch story: https://akhileshmalani.com/blog/gaad-2026-launching-amasamya.html
 
 ---
@@ -96,7 +96,7 @@ Plain text only, no HTML, no attachments.
 >
 > The AMASAMYA web platform at https://amasamya.akhileshmalani.com - extends the same engines to documents in eight formats (PDF, Microsoft Office, EPUB, OpenDocument), plus a structured mobile-app accessibility checklist for iOS, Android, and WearOS. Exports CSV, JSON, or HTML.
 >
-> The source code, MIT licensed, at https://github.com/accessitestai/AMASAMYA - extension code, README, CONTRIBUTING, privacy policy, all readable and forkable.
+> The source code, MIT licensed, at https://github.com/AMASAMYA/AMASAMYA - extension code, README, CONTRIBUTING, privacy policy, all readable and forkable.
 >
 > The whole point of the project is that the interface is operable with a screen reader from the first commit, and findings are written to be actionable by non-sighted developers. I am a screen reader user myself. The honest gap between what most automated tools see (around 30 to 40 per cent of WCAG criteria) and what manual testing catches is well understood here - AMASAMYA is designed to handle the mechanical part so manual testing time can go to the journey work tools cannot do.
 >
@@ -161,7 +161,7 @@ opening sentence every single time - never bulk-send.
 >
 > Chrome extension: https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif
 > Web platform: https://amasamya.akhileshmalani.com
-> Source code: https://github.com/accessitestai/AMASAMYA
+> Source code: https://github.com/AMASAMYA/AMASAMYA
 >
 > Launch story with reasoning and limitations: https://akhileshmalani.com/blog/gaad-2026-launching-amasamya.html
 >

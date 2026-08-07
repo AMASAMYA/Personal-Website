@@ -369,7 +369,7 @@ gets its own release line for that reason.
 
 Not part of the extension. Tracked here for visibility only.
 
-- New repo: `accessitestai/amasamya-cli`.
+- New repo: `AMASAMYA/amasamya-cli`.
 - `npm install -g @amasamya/cli`.
 - Wraps the same engine modules (post-refactor in v4.0 to make them
   environment-agnostic) and runs them under Puppeteer or Playwright
