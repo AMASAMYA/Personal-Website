@@ -141,10 +141,54 @@
     };
   }
 
+  /* ── Missed-run detection ──
+     lastExpectedFire(schedule, now): timestamp of the most recent
+     scheduled fire time at or before `now`, computed in the local
+     timezone of the machine running the extension. Only inspects
+     schedule.frequency and schedule.timeOfDayHHMM. */
+  function lastExpectedFire(schedule, now) {
+    if (!schedule || !schedule.timeOfDayHHMM || !schedule.frequency) return 0;
+    var parts = String(schedule.timeOfDayHHMM).split(':');
+    var hh = parseInt(parts[0], 10);
+    var mm = parseInt(parts[1], 10);
+    if (isNaN(hh) || isNaN(mm)) return 0;
+    var nowDate = now instanceof Date ? now : new Date(now);
+    var target = new Date(nowDate);
+    target.setHours(hh, mm, 0, 0);
+    if (schedule.frequency === 'daily') {
+      if (target.getTime() > nowDate.getTime()) {
+        target.setDate(target.getDate() - 1);
+      }
+      return target.getTime();
+    }
+    var wantDow = schedule.frequency === 'weekly-monday' ? 1
+                : schedule.frequency === 'weekly-friday' ? 5
+                : -1;
+    if (wantDow < 0) return 0;
+    var backDays = (nowDate.getDay() - wantDow + 7) % 7;
+    if (backDays === 0 && target.getTime() > nowDate.getTime()) backDays = 7;
+    target.setDate(target.getDate() - backDays);
+    return target.getTime();
+  }
+
+  /* isMissed(schedule, now): true iff the schedule is enabled AND
+     the last expected fire time is strictly after schedule.lastRunAt
+     (or lastRunAt is null / undefined, meaning it has never fired). */
+  function isMissed(schedule, now) {
+    if (!schedule || !schedule.enabled) return false;
+    var expected = lastExpectedFire(schedule, now);
+    if (!expected) return false;
+    var last = schedule.lastRunAt;
+    if (last == null) return true;
+    return Number(last) < expected;
+  }
+
   var api = {
-    accumulateTotals:   accumulateTotals,
+    accumulateTotals:    accumulateTotals,
     buildWebhookPayload: buildWebhookPayload,
-    diffLine:           diffLine
+    diffLine:            diffLine,
+    lastExpectedFire:    lastExpectedFire,
+    isMissed:            isMissed
   };
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;

@@ -166,3 +166,85 @@ test.describe('Scheduled Crawls: webhook payload builder', () => {
   });
 
 });
+
+test.describe('Scheduled Crawls: missed-run detection', () => {
+
+  /* All times are local. Tests construct concrete Date objects so
+     the machine's timezone does not change the outcome. */
+
+  test('lastExpectedFire (daily) is today at HH:MM when now is later', () => {
+    const now = new Date(2026, 6, 20, 14, 0, 0);            // Mon 20 Jul 2026 14:00 local
+    const s = { frequency: 'daily', timeOfDayHHMM: '09:00' };
+    const expected = new Date(2026, 6, 20, 9, 0, 0).getTime();
+    expect(S.lastExpectedFire(s, now)).toBe(expected);
+  });
+
+  test('lastExpectedFire (daily) is yesterday at HH:MM when now is earlier', () => {
+    const now = new Date(2026, 6, 20, 8, 0, 0);             // Mon 20 Jul 2026 08:00 local
+    const s = { frequency: 'daily', timeOfDayHHMM: '09:00' };
+    const expected = new Date(2026, 6, 19, 9, 0, 0).getTime();
+    expect(S.lastExpectedFire(s, now)).toBe(expected);
+  });
+
+  test('lastExpectedFire (weekly-monday) picks the most recent Monday', () => {
+    const now = new Date(2026, 6, 23, 12, 0, 0);            // Thu 23 Jul 2026 12:00 local
+    const s = { frequency: 'weekly-monday', timeOfDayHHMM: '09:00' };
+    const expected = new Date(2026, 6, 20, 9, 0, 0).getTime(); // Mon 20 Jul
+    expect(S.lastExpectedFire(s, now)).toBe(expected);
+  });
+
+  test('lastExpectedFire (weekly-friday) rolls back a week when today is Friday but HH:MM has not landed', () => {
+    const now = new Date(2026, 6, 24, 7, 0, 0);             // Fri 24 Jul 2026 07:00 local
+    const s = { frequency: 'weekly-friday', timeOfDayHHMM: '09:00' };
+    const expected = new Date(2026, 6, 17, 9, 0, 0).getTime(); // Fri 17 Jul (previous week)
+    expect(S.lastExpectedFire(s, now)).toBe(expected);
+  });
+
+  test('lastExpectedFire returns 0 for malformed schedule', () => {
+    expect(S.lastExpectedFire(null, Date.now())).toBe(0);
+    expect(S.lastExpectedFire({}, Date.now())).toBe(0);
+    expect(S.lastExpectedFire({ frequency: 'daily' }, Date.now())).toBe(0);
+    expect(S.lastExpectedFire({ frequency: 'daily', timeOfDayHHMM: 'xx' }, Date.now())).toBe(0);
+    expect(S.lastExpectedFire({ frequency: 'monthly', timeOfDayHHMM: '09:00' }, Date.now())).toBe(0);
+  });
+
+  test('isMissed: enabled schedule that has never run is missed', () => {
+    const now = new Date(2026, 6, 20, 14, 0, 0);
+    const s = { enabled: true, frequency: 'daily', timeOfDayHHMM: '09:00', lastRunAt: null };
+    expect(S.isMissed(s, now)).toBe(true);
+  });
+
+  test('isMissed: disabled schedule is never missed', () => {
+    const now = new Date(2026, 6, 20, 14, 0, 0);
+    const s = { enabled: false, frequency: 'daily', timeOfDayHHMM: '09:00', lastRunAt: null };
+    expect(S.isMissed(s, now)).toBe(false);
+  });
+
+  test('isMissed: lastRunAt equals last expected fire => not missed', () => {
+    const now = new Date(2026, 6, 20, 14, 0, 0);
+    const s = {
+      enabled: true, frequency: 'daily', timeOfDayHHMM: '09:00',
+      lastRunAt: new Date(2026, 6, 20, 9, 0, 0).getTime()
+    };
+    expect(S.isMissed(s, now)).toBe(false);
+  });
+
+  test('isMissed: lastRunAt is earlier than last expected fire => missed', () => {
+    const now = new Date(2026, 6, 20, 14, 0, 0);
+    const s = {
+      enabled: true, frequency: 'daily', timeOfDayHHMM: '09:00',
+      lastRunAt: new Date(2026, 6, 19, 9, 0, 0).getTime()  // yesterday
+    };
+    expect(S.isMissed(s, now)).toBe(true);
+  });
+
+  test('isMissed: weekly-monday last run 8 days ago is missed', () => {
+    const now = new Date(2026, 6, 20, 14, 0, 0);            // Mon 20 Jul
+    const s = {
+      enabled: true, frequency: 'weekly-monday', timeOfDayHHMM: '09:00',
+      lastRunAt: new Date(2026, 6, 12, 9, 0, 0).getTime()   // Sun 12 Jul (before last Mon)
+    };
+    expect(S.isMissed(s, now)).toBe(true);
+  });
+
+});

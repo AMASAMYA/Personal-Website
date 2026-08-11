@@ -1662,10 +1662,37 @@ function notifyPanelError(msg) {
     };
   }
 
+  /* ── Missed-run replay ──
+     A schedule whose local expected fire time is in the past but
+     later than schedule.lastRunAt is treated as missed. On browser
+     startup we run one catch-up per missed schedule, serially, so
+     Monday morning does not fire a flood of parallel crawls. */
+  async function catchUpMissedRuns() {
+    if (!self.AMASAMYAScheduledSummary || typeof self.AMASAMYAScheduledSummary.isMissed !== 'function') return;
+    const now = Date.now();
+    const schedules = await loadSchedules();
+    for (const s of schedules) {
+      if (!self.AMASAMYAScheduledSummary.isMissed(s, now)) continue;
+      try {
+        await runScheduledCrawl(s);
+      } catch (err) {
+        console.warn('[Schedules] catch-up run failed for', s.id, err);
+      }
+    }
+  }
+
   /* Rehydrate alarms on service-worker startup and on install/update.
      MV3 workers get evicted; without this, alarms registered in a
      previous session would still fire but the diff would drift if
-     the schedule mirror had changed. */
-  chrome.runtime.onStartup.addListener(() => { reregisterAllAlarms().catch(() => {}); });
-  chrome.runtime.onInstalled.addListener(() => { reregisterAllAlarms().catch(() => {}); });
+     the schedule mirror had changed. Catch-up runs after alarms
+     re-register so the "next fire" landscape is stable while we
+     replay missed ones. */
+  chrome.runtime.onStartup.addListener(async () => {
+    await reregisterAllAlarms().catch(() => {});
+    await catchUpMissedRuns().catch(() => {});
+  });
+  chrome.runtime.onInstalled.addListener(async () => {
+    await reregisterAllAlarms().catch(() => {});
+    /* No catch-up on install: a fresh install has no history. */
+  });
 })();
