@@ -1249,3 +1249,290 @@ function delay(ms) {
 function notifyPanelError(msg) {
   chrome.runtime.sendMessage({ type: 'focus-narrator-ui', phase: 'error', message: msg }).catch(() => {});
 }
+
+/* ═══════════════════════════════════════════════════════════
+   v5.2 Scheduled Crawls - background module
+   Pairs with:
+   - amasamya/index.html Schedules panel (source of truth in Firestore)
+   - content-script-platform.js AMASAMYA_platform_schedule_sync msg
+   Extension mirrors the schedule set into chrome.storage.local and
+   registers chrome.alarms per schedule. On alarm fire, we invoke
+   startSiteCrawl(), monitor its broadcastCrawlUi phase stream,
+   compute the per-run summary, POST to the configured webhook,
+   and persist the run record in chrome.storage.local.
+
+   Runs history stays local for MVP. Next iteration flushes it to
+   Firestore via the platform bridge when a platform tab is open.
+═══════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  const SCHED_STORAGE_KEY = 'amasamya_schedules_v52';
+  const RUNS_STORAGE_KEY  = 'amasamya_scheduled_runs_v52';
+  const ALARM_PREFIX      = 'amasamya-sched:';
+  const MAX_RUNS_STORED   = 100;
+
+  /* ── Storage helpers ── */
+  async function loadSchedules() {
+    const store = await chrome.storage.local.get([SCHED_STORAGE_KEY]);
+    return Array.isArray(store[SCHED_STORAGE_KEY]) ? store[SCHED_STORAGE_KEY] : [];
+  }
+  async function saveSchedules(list) {
+    await chrome.storage.local.set({ [SCHED_STORAGE_KEY]: list });
+  }
+  async function appendRun(summary) {
+    const store = await chrome.storage.local.get([RUNS_STORAGE_KEY]);
+    const runs = Array.isArray(store[RUNS_STORAGE_KEY]) ? store[RUNS_STORAGE_KEY] : [];
+    runs.unshift(summary);
+    /* Ring-buffer at MAX_RUNS_STORED to bound storage usage. */
+    if (runs.length > MAX_RUNS_STORED) runs.length = MAX_RUNS_STORED;
+    await chrome.storage.local.set({ [RUNS_STORAGE_KEY]: runs });
+  }
+
+  /* ── Alarm registration ──
+     Each schedule gets one alarm with periodInMinutes based on
+     frequency. Initial delay is set so the first firing lands on
+     the user's chosen HH:MM local time. */
+  function nextFireDelayMinutes(schedule) {
+    const [hh, mm] = String(schedule.timeOfDayHHMM || '09:00').split(':').map(n => parseInt(n, 10));
+    const now = new Date();
+    const target = new Date(now);
+    target.setHours(hh, mm, 0, 0);
+    if (schedule.frequency === 'daily') {
+      if (target <= now) target.setDate(target.getDate() + 1);
+    } else if (schedule.frequency === 'weekly-monday') {
+      const dowMonday = 1;
+      let daysAhead = (dowMonday - now.getDay() + 7) % 7;
+      if (daysAhead === 0 && target <= now) daysAhead = 7;
+      target.setDate(target.getDate() + daysAhead);
+    } else if (schedule.frequency === 'weekly-friday') {
+      const dowFriday = 5;
+      let daysAhead = (dowFriday - now.getDay() + 7) % 7;
+      if (daysAhead === 0 && target <= now) daysAhead = 7;
+      target.setDate(target.getDate() + daysAhead);
+    }
+    return Math.max(1, Math.round((target.getTime() - now.getTime()) / 60000));
+  }
+  function periodMinutes(schedule) {
+    return schedule.frequency === 'daily' ? 60 * 24 : 60 * 24 * 7;
+  }
+  function alarmName(scheduleId) {
+    return ALARM_PREFIX + scheduleId;
+  }
+  async function registerAlarm(schedule) {
+    if (!schedule || !schedule.enabled) return;
+    chrome.alarms.create(alarmName(schedule.id), {
+      delayInMinutes:  nextFireDelayMinutes(schedule),
+      periodInMinutes: periodMinutes(schedule)
+    });
+  }
+  async function clearAlarm(scheduleId) {
+    try { await chrome.alarms.clear(alarmName(scheduleId)); }
+    catch (_) { /* ignore */ }
+  }
+  async function reregisterAllAlarms() {
+    const existing = await chrome.alarms.getAll();
+    for (const a of existing) {
+      if (a.name && a.name.indexOf(ALARM_PREFIX) === 0) {
+        await chrome.alarms.clear(a.name);
+      }
+    }
+    const schedules = await loadSchedules();
+    for (const s of schedules) await registerAlarm(s);
+  }
+
+  /* ── Message routing from the platform bridge ── */
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (!message || typeof message.type !== 'string') return;
+
+    if (message.type === 'AMASAMYA_schedules_sync') {
+      /* Full-set replace. Diff so we only touch alarms that changed. */
+      (async () => {
+        const incoming = Array.isArray(message.schedules) ? message.schedules : [];
+        await saveSchedules(incoming);
+        await reregisterAllAlarms();
+        sendResponse({ ok: true, count: incoming.length });
+      })();
+      return true; /* keep sendResponse alive */
+    }
+
+    if (message.type === 'AMASAMYA_schedule_delete') {
+      (async () => {
+        const list = await loadSchedules();
+        const kept = list.filter(s => s.id !== message.scheduleId);
+        await saveSchedules(kept);
+        await clearAlarm(message.scheduleId);
+        sendResponse({ ok: true });
+      })();
+      return true;
+    }
+    return; /* not for us */
+  });
+
+  /* ── Alarm fire handler ──
+     On fire: look up the schedule, kick off Site Crawl, monitor
+     the crawl UI phase stream for 'complete' or 'error', compute
+     the summary, POST to webhook, persist run summary locally. */
+  chrome.alarms.onAlarm.addListener(async (alarm) => {
+    if (!alarm.name || alarm.name.indexOf(ALARM_PREFIX) !== 0) return;
+    const scheduleId = alarm.name.slice(ALARM_PREFIX.length);
+    const schedules = await loadSchedules();
+    const schedule = schedules.find(s => s.id === scheduleId);
+    if (!schedule || !schedule.enabled) {
+      await clearAlarm(scheduleId);
+      return;
+    }
+    await runScheduledCrawl(schedule).catch(err => {
+      console.error('[Schedules] run failed', err);
+      appendRun({
+        scheduleId: schedule.id,
+        startedAt:  Date.now(),
+        finishedAt: Date.now(),
+        pageCount:  0,
+        newFindings: 0, regressedFindings: 0,
+        unchangedFindings: 0, resolvedFindings: 0,
+        webhookDelivered: false,
+        webhookError: String(err && err.message ? err.message : err)
+      });
+    });
+  });
+
+  async function runScheduledCrawl(schedule) {
+    const startedAt = Date.now();
+    const perPageFindings = new Map(); /* url -> findings[] */
+    let sawComplete = false;
+
+    /* Listen for site-crawl-ui phase events. broadcastCrawlUi emits
+       these; we treat 'complete' as our signal to summarise. */
+    const phaseListener = (msg) => {
+      if (!msg || msg.type !== 'site-crawl-ui') return;
+      if (msg.phase === 'page' && msg.url) {
+        perPageFindings.set(msg.url, Array.isArray(msg.findings) ? msg.findings : []);
+      } else if (msg.phase === 'complete') {
+        sawComplete = true;
+      }
+    };
+    chrome.runtime.onMessage.addListener(phaseListener);
+
+    try {
+      const input = schedule.urls && schedule.urls.length
+        ? { source: 'list', urls: schedule.urls }
+        : { source: 'sitemap', root: schedule.sitemap };
+      await startSiteCrawl(input);
+
+      /* Poll for completion. startSiteCrawl doesn't return until the
+         crawl finishes because it awaits the crawler internally, so
+         by the time we reach here, sawComplete should be true. Guard
+         against races with a short timeout. */
+      const t0 = Date.now();
+      while (!sawComplete && Date.now() - t0 < 60000) {
+        await delay(200);
+      }
+    } finally {
+      chrome.runtime.onMessage.removeListener(phaseListener);
+    }
+
+    /* MVP summary: page count only. Diff verdicts (New / Regressed
+       / Unchanged / Resolved) require reading each URL's prior
+       baseline from chrome.storage.local per the v4.3.0 diff
+       engine; wire that in the next commit. */
+    const pageCount = perPageFindings.size;
+    const summary = {
+      scheduleId: schedule.id,
+      scheduleLabel: schedule.label,
+      startedAt:  startedAt,
+      finishedAt: Date.now(),
+      pageCount:  pageCount,
+      newFindings: 0, regressedFindings: 0,
+      unchangedFindings: 0, resolvedFindings: 0,
+      webhookDelivered: false,
+      webhookError: null
+    };
+
+    /* Update schedule.lastRunAt in local mirror so the panel's next
+       load shows the correct value. */
+    const list = await loadSchedules();
+    const idx = list.findIndex(s => s.id === schedule.id);
+    if (idx >= 0) {
+      list[idx].lastRunAt = summary.finishedAt;
+      list[idx].lastRunSummary = 'Crawled ' + pageCount + ' pages';
+      await saveSchedules(list);
+    }
+
+    if (schedule.webhookType && schedule.webhookType !== 'none' && schedule.webhookUrl) {
+      try {
+        const res = await fetch(schedule.webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildWebhookPayload(schedule, summary))
+        });
+        summary.webhookDelivered = res.ok || res.type === 'opaque';
+        if (!summary.webhookDelivered) summary.webhookError = 'HTTP ' + res.status;
+      } catch (err) {
+        summary.webhookDelivered = false;
+        summary.webhookError = String(err && err.message ? err.message : err);
+      }
+    }
+
+    await appendRun(summary);
+  }
+
+  function buildWebhookPayload(schedule, summary) {
+    const line = 'AMASAMYA scheduled crawl "' + schedule.label + '" completed: '
+      + summary.pageCount + ' pages audited.';
+    if (schedule.webhookType === 'slack') {
+      return {
+        text: line,
+        attachments: [{
+          color: summary.pageCount > 0 ? '#2b7bd0' : '#c93636',
+          fields: [
+            { title: 'Schedule',    value: schedule.label,                  short: true },
+            { title: 'Pages',       value: String(summary.pageCount),       short: true },
+            { title: 'Started',     value: new Date(summary.startedAt).toISOString(),  short: true },
+            { title: 'Finished',    value: new Date(summary.finishedAt).toISOString(), short: true }
+          ]
+        }]
+      };
+    }
+    if (schedule.webhookType === 'teams') {
+      return {
+        '@type': 'MessageCard',
+        '@context': 'http://schema.org/extensions',
+        summary: line,
+        themeColor: '2b7bd0',
+        title: 'AMASAMYA scheduled crawl completed',
+        text: line,
+        sections: [{
+          facts: [
+            { name: 'Schedule', value: schedule.label },
+            { name: 'Pages',    value: String(summary.pageCount) },
+            { name: 'Started',  value: new Date(summary.startedAt).toISOString() },
+            { name: 'Finished', value: new Date(summary.finishedAt).toISOString() }
+          ]
+        }]
+      };
+    }
+    return {
+      kind: 'amasamya.scheduled.run',
+      version: '5.2',
+      schedule: {
+        id:    schedule.id,
+        label: schedule.label,
+        frequency: schedule.frequency,
+        timeOfDayHHMM: schedule.timeOfDayHHMM
+      },
+      run: {
+        startedAt:  summary.startedAt,
+        finishedAt: summary.finishedAt,
+        pageCount:  summary.pageCount
+      }
+    };
+  }
+
+  /* Rehydrate alarms on service-worker startup and on install/update.
+     MV3 workers get evicted; without this, alarms registered in a
+     previous session would still fire but the diff would drift if
+     the schedule mirror had changed. */
+  chrome.runtime.onStartup.addListener(() => { reregisterAllAlarms().catch(() => {}); });
+  chrome.runtime.onInstalled.addListener(() => { reregisterAllAlarms().catch(() => {}); });
+})();

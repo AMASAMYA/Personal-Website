@@ -13,7 +13,8 @@
     "sidePanel",
     "tabs",
     "storage",
-    "debugger"
+    "debugger",
+    "alarms"
   ],
 
   "host_permissions": [

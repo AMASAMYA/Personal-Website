@@ -8003,6 +8003,7 @@ if ($('mob-export-txt')) {
           schedulesCache.push(Object.assign({ id: doc.id }, doc.data()));
         });
         renderList();
+        pushSchedulesToExtension();
         schedAnnounce('Loaded ' + schedulesCache.length + ' schedule' +
           (schedulesCache.length === 1 ? '' : 's') + '.');
       })
@@ -8010,6 +8011,44 @@ if ($('mob-export-txt')) {
         console.error('[Schedules] load failed', err);
         schedAnnounce('Failed to load schedules. ' + err.message, 'assertive');
       });
+  }
+
+  /* ── Extension bridge ──
+     The extension's content-script-platform.js listens for these
+     window messages and forwards them to background.js, which
+     mirrors the schedule set into chrome.storage.local and
+     registers chrome.alarms per schedule. If the extension is not
+     installed, the message is silently ignored (postMessage never
+     throws for undelivered messages). */
+  function pushSchedulesToExtension() {
+    /* Firestore Timestamp objects don't serialise across the
+       postMessage cloning boundary. Convert to primitive ms. */
+    var wire = schedulesCache.map(function (s) {
+      return {
+        id:              s.id,
+        label:           s.label,
+        urls:            s.urls || null,
+        sitemap:         s.sitemap || null,
+        frequency:       s.frequency,
+        timeOfDayHHMM:   s.timeOfDayHHMM,
+        webhookUrl:      s.webhookUrl || null,
+        webhookType:     s.webhookType,
+        enabled:         !!s.enabled,
+        lastRunAt:       s.lastRunAt && s.lastRunAt.toMillis ? s.lastRunAt.toMillis() : null,
+        lastRunSummary:  s.lastRunSummary || null
+      };
+    });
+    window.postMessage({
+      type: 'AMASAMYA_platform_schedule_sync',
+      schedules: wire
+    }, location.origin);
+  }
+
+  function pushScheduleDeleteToExtension(id) {
+    window.postMessage({
+      type: 'AMASAMYA_platform_schedule_delete',
+      scheduleId: id
+    }, location.origin);
   }
 
   function renderList() {
@@ -8267,6 +8306,7 @@ if ($('mob-export-txt')) {
     var ok = window.confirm('Delete schedule "' + s.label + '"? This cannot be undone. Past run history will be kept.');
     if (!ok) return;
     db.collection(FIRESTORE_SCHEDULES).doc(id).delete().then(function () {
+      pushScheduleDeleteToExtension(id);
       schedAnnounce('Schedule deleted.', 'assertive');
       loadSchedules();
     }).catch(function (err) {

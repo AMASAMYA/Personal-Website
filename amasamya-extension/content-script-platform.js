@@ -54,3 +54,50 @@ chrome.runtime.onMessage.addListener((message) => {
     return;
   }
 });
+
+/*
+ * v5.2 Scheduled Crawls: reverse direction (platform -> background).
+ * The Schedules panel writes to Firestore for cross-device sync
+ * AND posts a window message here so the background service worker
+ * can register chrome.alarms and hold a local schedule mirror in
+ * chrome.storage.local. We treat platform postMessage as untrusted
+ * input from a page context and validate shape before forwarding.
+ */
+window.addEventListener('message', function (event) {
+  if (event.source !== window) return;
+  if (event.origin !== location.origin) return;
+  var m = event.data;
+  if (!m || typeof m.type !== 'string') return;
+
+  if (m.type === 'AMASAMYA_platform_schedule_sync') {
+    /* Full replace: platform sends the entire current schedule set
+       for the signed-in user. Background diffs against its local
+       mirror and re-registers alarms. */
+    if (!Array.isArray(m.schedules)) return;
+    chrome.runtime.sendMessage({
+      type: 'AMASAMYA_schedules_sync',
+      schedules: m.schedules
+    }, function () { void chrome.runtime.lastError; });
+    return;
+  }
+
+  if (m.type === 'AMASAMYA_platform_schedule_delete') {
+    if (typeof m.scheduleId !== 'string') return;
+    chrome.runtime.sendMessage({
+      type: 'AMASAMYA_schedule_delete',
+      scheduleId: m.scheduleId
+    }, function () { void chrome.runtime.lastError; });
+    return;
+  }
+
+  if (m.type === 'AMASAMYA_platform_extension_ping') {
+    /* Platform asks: "are you installed?" We answer via a DOM
+       attribute the platform's own JS can poll for. */
+    document.documentElement.setAttribute('data-amasamya-extension', 'installed');
+    return;
+  }
+});
+
+/* Announce presence immediately on inject so the Schedules panel's
+   checkExtensionPresence() sees us within its 800ms window. */
+document.documentElement.setAttribute('data-amasamya-extension', 'installed');
