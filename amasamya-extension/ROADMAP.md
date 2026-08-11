@@ -1,12 +1,80 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-07-09 (v4.3.1 Published; Option B alignment policy locked with platform).
+Last reviewed: 2026-08-11 (v5.2.0 built; awaiting CWS upload).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
 
 ## Published: v4.0.0, v4.0.1, v4.2.0, v4.3.0, v4.3.1
+
+## Built, awaiting upload: v5.2.0 "Scheduled Crawls"
+
+Joint MAJOR.MINOR release with the AMASAMYA web platform (also v5.2.0).
+Users of v4.3.1 who never create a schedule see no behaviour change; the
+scheduler code is dormant until they configure a schedule from the
+platform's new Schedules tab.
+
+What ships in v5.2.0:
+
+- **Schedules panel on the platform.** Full CRUD over per-user schedules
+  stored in Firestore. Radio-group fieldsets for What-to-Crawl (URLs vs
+  sitemap) and Frequency (daily / weekly-Monday / weekly-Friday), HH+MM
+  number inputs for time, select for webhook type. Live regions
+  (`sched-live-polite`, `sched-live-assertive`) route every state change
+  through NVDA/JAWS concisely.
+- **Chrome extension gains `alarms` permission.** Registers one
+  `chrome.alarms` per enabled schedule, aligned to the user's local
+  HH:MM. Alarms persist across service-worker eviction; the
+  `onStartup` handler re-registers everything on browser boot.
+- **Alarm-fire runs Site Crawl.** Invokes the existing v4.2.0 crawler
+  via a new hooks interface (`onPageComplete`, `onComplete`). Backward-
+  compatible: side-panel callers do not pass hooks and see identical
+  behaviour.
+- **Diff verdicts on every run.** Per-page, the scheduler fetches the
+  URL's previous audit via `AMASAMYAAuditHistory.getPreviousAudit`,
+  diffs against current findings via `AMASAMYAAuditDiff.diffAudits`,
+  and accumulates `newFindings / regressedFindings / unchangedFindings
+  / resolvedFindings` into the run summary. On per-URL diff failure,
+  falls back to counting all current findings as `new` so the summary
+  is never silently zero.
+- **Webhook posting from `background.js`.** Slack incoming webhook
+  (attachments with colour-coded fields), Teams MessageCard, or
+  generic JSON payload shape. Colour picker: red when regressed > 0,
+  amber when only new > 0, blue for clean runs.
+- **Firestore run flush.** Run summaries live in `chrome.storage.local`
+  under `amasamya_scheduled_runs_v52` (100-entry ring buffer). Each
+  run has a `crypto.randomUUID`-generated `runId`. When a platform
+  tab is open, the extension pushes unsynced runs; the platform
+  writes each to `scheduledRuns/{runId}` using the runId as the doc
+  ID (idempotent: duplicate `.set` on the same ID trips the deny-
+  update rule and is treated as "already synced").
+- **Missed-run replay on browser start.** `onStartup` awaits
+  `reregisterAllAlarms` then serially replays any schedule whose
+  `lastRunAt` is strictly earlier than `lastExpectedFire(schedule,
+  now)`. One catch-up per missed schedule per startup.
+
+Non-goals in v5.2.0 (deferred):
+
+- End-to-end Playwright test with real Chrome + unpacked extension.
+  Existing 23 scheduled-crawls unit tests (`accumulateTotals`,
+  `buildWebhookPayload`, `lastExpectedFire`, `isMissed`) cover the
+  algorithm; the wire between `chrome.alarms.onAlarm` and the
+  scheduler is covered by first real schedule the user creates
+  against their own site.
+- Multi-webhook fan-out (one schedule -> multiple channels). Not
+  requested. Add if users ask.
+- Cron pattern beyond the three enum choices (daily / weekly-Monday /
+  weekly-Friday). Hourly is out of scope for a browser-based scheduler
+  (browser must be open); arbitrary weekdays add UI complexity for
+  little marginal value.
+- Cross-schedule dedup of shared URLs. Two schedules watching the same
+  URL will double-audit. Fine at MVP scale.
+- Timezone portability. Schedule fires in the local time of the
+  machine where the extension is running at the moment. If the user
+  travels, the schedule shifts. Matches calendar-app default.
+
+## Published: v4.0.0, v4.0.1, v4.2.0, v4.3.0, v4.3.1 (historical)
 
 ## Version alignment policy with the AMASAMYA web platform (Option B)
 

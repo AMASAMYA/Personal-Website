@@ -90,10 +90,18 @@ this project, ever, going forward.
   v4.3.0, and v4.3.1 are all Published. v4.3.1 was a same-week
   ten-bug quality patch after v4.3.0. Version alignment policy with
   the AMASAMYA web platform is locked as Option B: MAJOR.MINOR must
-  match, PATCH may differ for hotfix agility. Next joint
-  MAJOR.MINOR release is v5.2 (extension jumps from 4.3.1 -> 5.2;
-  platform bumps from 5.1.0 -> 5.2.0). See amasamya-extension/ROADMAP.md
-  "Version alignment policy" section for the full rule. v4.3.0 adds
+  match, PATCH may differ for hotfix agility. **v5.2.0 is built and
+  awaiting Chrome Web Store upload** (extension bumped from 4.3.1
+  to 5.2.0; platform PLATFORM_VERSION bumped from 5.1.0 to 5.2.0).
+  v5.2.0 adds Scheduled Crawls: per-user schedule config in Firestore
+  via new platform Schedules tab, chrome.alarms in the extension,
+  alarm-fire runs Site Crawl and diffs against history, run summary
+  posted to Slack / Teams / generic-JSON webhook, run records
+  flushed to Firestore scheduledRuns collection when platform tab
+  is open, missed-run replay on service worker startup. 23 unit
+  tests cover the summary accumulation, webhook payload shapes,
+  and missed-run detection. See amasamya-extension/ROADMAP.md
+  "Built, awaiting upload: v5.2.0" section for the full rundown. v4.3.0 adds
   on-device history storage (10 audits per URL in
   chrome.storage.local, 8 MB total soft cap with automatic eviction),
   a diff engine with identity tuple {engine, criterion, selector} and
