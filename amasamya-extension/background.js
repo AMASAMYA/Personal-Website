@@ -34,7 +34,11 @@ try {
          audit; the diff engine is called from the side panel when a
          previous audit exists for the current URL. */
       'engines/audit-history.js',
-      'engines/audit-diff.js'
+      'engines/audit-diff.js',
+      /* v5.2: Scheduled Crawls summary + webhook payload helpers.
+         Pure functions, unit-tested via
+         tests/scheduled-crawls-summary.spec.js. */
+      'engines/scheduled-summary.js'
     );
   }
 } catch (e) {
@@ -178,7 +182,12 @@ async function sendCrawlPageToPlatform(record) {
   }
 }
 
-async function startSiteCrawl(input) {
+async function startSiteCrawl(input, hooks) {
+  /* v5.2: hooks is an optional { onPageComplete(rec), onComplete(summary) }.
+     Used by the Scheduled Crawls background flow to observe the crawl
+     in-process (chrome.runtime.sendMessage does not deliver to the
+     sender's own context, so the side-panel event stream cannot be
+     replayed here without hooks). */
   if (__crawlCurrent) {
     broadcastCrawlUi({ phase: 'error', message: 'A crawl is already running.' });
     return;
@@ -270,6 +279,10 @@ async function startSiteCrawl(input) {
       if (rec.status === 'audited' && Array.isArray(rec.findings) && rec.findings.length > 0) {
         await sendCrawlPageToPlatform(rec);
       }
+      if (hooks && typeof hooks.onPageComplete === 'function') {
+        try { await hooks.onPageComplete(rec); }
+        catch (e) { console.warn('[startSiteCrawl] onPageComplete hook threw', e); }
+      }
     })
     .on('complete',     (summary) => {
       broadcastCrawlUi({ phase: 'complete', summary: summary });
@@ -279,6 +292,10 @@ async function startSiteCrawl(input) {
       waiters.clear();
       ownedTabs.clear();
       __crawlCurrent = null;
+      if (hooks && typeof hooks.onComplete === 'function') {
+        try { hooks.onComplete(summary); }
+        catch (e) { console.warn('[startSiteCrawl] onComplete hook threw', e); }
+      }
     });
 
   broadcastCrawlUi({ phase: 'queued', total: urls.length });
@@ -1399,52 +1416,73 @@ function notifyPanelError(msg) {
 
   async function runScheduledCrawl(schedule) {
     const startedAt = Date.now();
-    const perPageFindings = new Map(); /* url -> findings[] */
-    let sawComplete = false;
+    /* Accumulated diff counts across all pages the crawl completed. */
+    const totals = { new: 0, regressed: 0, unchanged: 0, resolved: 0 };
+    let pageCount = 0;
+    let completed = false;
 
-    /* Listen for site-crawl-ui phase events. broadcastCrawlUi emits
-       these; we treat 'complete' as our signal to summarise. */
-    const phaseListener = (msg) => {
-      if (!msg || msg.type !== 'site-crawl-ui') return;
-      if (msg.phase === 'page' && msg.url) {
-        perPageFindings.set(msg.url, Array.isArray(msg.findings) ? msg.findings : []);
-      } else if (msg.phase === 'complete') {
-        sawComplete = true;
-      }
+    /* Per-page hook: compute diff against the URL's previous audit
+       (if any), sum verdict counts into the totals, and rely on the
+       existing history saver (invoked upstream on audit-results
+       messages) to record this run as the new baseline. */
+    const histDeps = (self.AMASAMYAAuditHistory && typeof self.AMASAMYAAuditHistory.makeChromeStorageDeps === 'function')
+      ? self.AMASAMYAAuditHistory.makeChromeStorageDeps()
+      : null;
+
+    const hooks = {
+      onPageComplete: async (rec) => {
+        if (!rec || rec.status !== 'audited' || !Array.isArray(rec.findings)) return;
+        pageCount++;
+
+        if (!histDeps || !self.AMASAMYAAuditDiff) {
+          /* Engines missing: every current finding is 'new', nothing
+             else counts. Keeps the totals meaningful even if the diff
+             engine failed to load. */
+          totals.new += rec.findings.length;
+          return;
+        }
+        try {
+          const prior = await self.AMASAMYAAuditHistory.getPreviousAudit(rec.url, Date.now(), histDeps);
+          const previousFindings = (prior && Array.isArray(prior.findings)) ? prior.findings : [];
+          const diff = self.AMASAMYAAuditDiff.diffAudits(rec.findings, previousFindings);
+          totals.new       += diff.summary.new;
+          totals.regressed += diff.summary.regressed;
+          totals.unchanged += diff.summary.unchanged;
+          totals.resolved  += diff.summary.resolved;
+        } catch (err) {
+          console.warn('[Schedules] diff failed for', rec.url, err);
+          /* On per-page diff failure, still count something so the
+             webhook payload is informative. Fall back to counting all
+             current findings as new. */
+          totals.new += rec.findings.length;
+        }
+      },
+      onComplete: () => { completed = true; }
     };
-    chrome.runtime.onMessage.addListener(phaseListener);
 
-    try {
-      const input = schedule.urls && schedule.urls.length
-        ? { source: 'list', urls: schedule.urls }
-        : { source: 'sitemap', root: schedule.sitemap };
-      await startSiteCrawl(input);
+    const input = schedule.urls && schedule.urls.length
+      ? { source: 'list', urls: schedule.urls }
+      : { source: 'sitemap', root: schedule.sitemap };
+    await startSiteCrawl(input, hooks);
 
-      /* Poll for completion. startSiteCrawl doesn't return until the
-         crawl finishes because it awaits the crawler internally, so
-         by the time we reach here, sawComplete should be true. Guard
-         against races with a short timeout. */
-      const t0 = Date.now();
-      while (!sawComplete && Date.now() - t0 < 60000) {
-        await delay(200);
-      }
-    } finally {
-      chrome.runtime.onMessage.removeListener(phaseListener);
+    /* Belt-and-braces: onComplete should have fired before startSiteCrawl
+       returns because the crawler awaits internally, but a race would
+       leave completed=false. Bounded wait keeps us safe. */
+    const t0 = Date.now();
+    while (!completed && Date.now() - t0 < 60000) {
+      await delay(200);
     }
 
-    /* MVP summary: page count only. Diff verdicts (New / Regressed
-       / Unchanged / Resolved) require reading each URL's prior
-       baseline from chrome.storage.local per the v4.3.0 diff
-       engine; wire that in the next commit. */
-    const pageCount = perPageFindings.size;
     const summary = {
       scheduleId: schedule.id,
       scheduleLabel: schedule.label,
       startedAt:  startedAt,
       finishedAt: Date.now(),
       pageCount:  pageCount,
-      newFindings: 0, regressedFindings: 0,
-      unchangedFindings: 0, resolvedFindings: 0,
+      newFindings:       totals.new,
+      regressedFindings: totals.regressed,
+      unchangedFindings: totals.unchanged,
+      resolvedFindings:  totals.resolved,
       webhookDelivered: false,
       webhookError: null
     };
@@ -1455,16 +1493,22 @@ function notifyPanelError(msg) {
     const idx = list.findIndex(s => s.id === schedule.id);
     if (idx >= 0) {
       list[idx].lastRunAt = summary.finishedAt;
-      list[idx].lastRunSummary = 'Crawled ' + pageCount + ' pages';
+      list[idx].lastRunSummary = pageCount + ' pages: ' +
+        summary.newFindings + ' new, ' +
+        summary.regressedFindings + ' regressed, ' +
+        summary.unchangedFindings + ' unchanged, ' +
+        summary.resolvedFindings + ' resolved';
       await saveSchedules(list);
     }
 
     if (schedule.webhookType && schedule.webhookType !== 'none' && schedule.webhookUrl) {
+      const builder = (self.AMASAMYAScheduledSummary && self.AMASAMYAScheduledSummary.buildWebhookPayload)
+        || buildWebhookPayload;
       try {
         const res = await fetch(schedule.webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(buildWebhookPayload(schedule, summary))
+          body: JSON.stringify(builder(schedule, summary))
         });
         summary.webhookDelivered = res.ok || res.type === 'opaque';
         if (!summary.webhookDelivered) summary.webhookError = 'HTTP ' + res.status;
@@ -1478,18 +1522,35 @@ function notifyPanelError(msg) {
   }
 
   function buildWebhookPayload(schedule, summary) {
+    /* One-line diff summary, e.g. "3 new, 1 regressed, 12 unchanged,
+       0 resolved". Same wording pattern as the v4.3.0 polite-region
+       announcement so channel readers and NVDA users hear the same
+       thing. */
+    const diffLine = summary.newFindings + ' new, ' +
+                     summary.regressedFindings + ' regressed, ' +
+                     summary.unchangedFindings + ' unchanged, ' +
+                     summary.resolvedFindings + ' resolved';
     const line = 'AMASAMYA scheduled crawl "' + schedule.label + '" completed: '
-      + summary.pageCount + ' pages audited.';
+      + summary.pageCount + ' pages audited. ' + diffLine + '.';
+    /* Colour: red if any regression, amber if only new, blue otherwise. */
+    const color = summary.regressedFindings > 0 ? '#c93636'
+                : summary.newFindings > 0        ? '#e0a800'
+                : '#2b7bd0';
+
     if (schedule.webhookType === 'slack') {
       return {
         text: line,
         attachments: [{
-          color: summary.pageCount > 0 ? '#2b7bd0' : '#c93636',
+          color: color,
           fields: [
-            { title: 'Schedule',    value: schedule.label,                  short: true },
-            { title: 'Pages',       value: String(summary.pageCount),       short: true },
-            { title: 'Started',     value: new Date(summary.startedAt).toISOString(),  short: true },
-            { title: 'Finished',    value: new Date(summary.finishedAt).toISOString(), short: true }
+            { title: 'Schedule',   value: schedule.label,                  short: true },
+            { title: 'Pages',      value: String(summary.pageCount),       short: true },
+            { title: 'New',        value: String(summary.newFindings),        short: true },
+            { title: 'Regressed',  value: String(summary.regressedFindings),  short: true },
+            { title: 'Unchanged',  value: String(summary.unchangedFindings),  short: true },
+            { title: 'Resolved',   value: String(summary.resolvedFindings),   short: true },
+            { title: 'Started',    value: new Date(summary.startedAt).toISOString(),  short: true },
+            { title: 'Finished',   value: new Date(summary.finishedAt).toISOString(), short: true }
           ]
         }]
       };
@@ -1499,15 +1560,19 @@ function notifyPanelError(msg) {
         '@type': 'MessageCard',
         '@context': 'http://schema.org/extensions',
         summary: line,
-        themeColor: '2b7bd0',
+        themeColor: color.replace('#', ''),
         title: 'AMASAMYA scheduled crawl completed',
         text: line,
         sections: [{
           facts: [
-            { name: 'Schedule', value: schedule.label },
-            { name: 'Pages',    value: String(summary.pageCount) },
-            { name: 'Started',  value: new Date(summary.startedAt).toISOString() },
-            { name: 'Finished', value: new Date(summary.finishedAt).toISOString() }
+            { name: 'Schedule',  value: schedule.label },
+            { name: 'Pages',     value: String(summary.pageCount) },
+            { name: 'New',       value: String(summary.newFindings) },
+            { name: 'Regressed', value: String(summary.regressedFindings) },
+            { name: 'Unchanged', value: String(summary.unchangedFindings) },
+            { name: 'Resolved',  value: String(summary.resolvedFindings) },
+            { name: 'Started',   value: new Date(summary.startedAt).toISOString() },
+            { name: 'Finished',  value: new Date(summary.finishedAt).toISOString() }
           ]
         }]
       };
@@ -1524,7 +1589,11 @@ function notifyPanelError(msg) {
       run: {
         startedAt:  summary.startedAt,
         finishedAt: summary.finishedAt,
-        pageCount:  summary.pageCount
+        pageCount:  summary.pageCount,
+        newFindings:       summary.newFindings,
+        regressedFindings: summary.regressedFindings,
+        unchangedFindings: summary.unchangedFindings,
+        resolvedFindings:  summary.resolvedFindings
       }
     };
   }
