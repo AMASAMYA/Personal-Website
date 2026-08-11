@@ -1242,7 +1242,11 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
     future feature actually needs Firestore, re-add this line and the
     initialisation in firebase-config.js at the same time.
   -->
-  <!-- <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script> -->
+  <!-- v5.2 (2026-08-11): Firestore SDK re-added for Scheduled Crawls.
+       The schedules and scheduledRuns collections are per-user documents
+       gated by Firestore rules (see firestore.rules). Also uncomment
+       the db = firebase.firestore() line in firebase-config.js. -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="./firebase-config.js"></script>
   <!-- PDF.js - used by the Document Audit tab to walk the real PDF
        structure tree (tagged-PDF roles, alt text, outlines, permissions)
@@ -7897,6 +7901,486 @@ if ($('mob-export-txt')) {
     });
   });
 
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   v5.2 Scheduled Crawls — panel wiring
+   Firestore CRUD for schedules + scheduledRuns collections.
+   The Chrome extension picks up schedules on chrome.alarms in
+   a separate commit (extension side). This module is only
+   responsible for the platform-side dashboard: create, edit,
+   list, toggle, delete, view runs, test webhook. Extension
+   presence detection is best-effort.
+═══════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  if (!document.getElementById('panel-schedules')) return;
+
+  var FIRESTORE_SCHEDULES = 'schedules';
+  var FIRESTORE_RUNS = 'scheduledRuns';
+  var MAX_URLS_PER_SCHEDULE = 200;
+  var MAX_RUNS_PER_VIEW = 20;
+
+  var currentUid = null;
+  var editingScheduleId = null;
+  var schedulesCache = [];
+
+  function schedAnnounce(msg, urgency) {
+    var id = urgency === 'assertive' ? 'sched-live-assertive' : 'sched-live-polite';
+    var el = document.getElementById(id);
+    if (!el) { try { announce(msg, urgency); } catch (_) {} return; }
+    el.textContent = '';
+    setTimeout(function () { el.textContent = msg; }, 50);
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    var t = d && d.toDate ? d.toDate() : new Date(d);
+    if (!t || isNaN(t.getTime())) return '—';
+    var pad = function (n) { return String(n).padStart(2, '0'); };
+    return t.getFullYear() + '-' + pad(t.getMonth()+1) + '-' + pad(t.getDate()) +
+           ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes());
+  }
+
+  function fmtFreq(f) {
+    return { 'daily':'Every day', 'weekly-monday':'Every Monday', 'weekly-friday':'Every Friday' }[f] || f || '—';
+  }
+
+  /* ── Extension presence ──
+     Extension's content-script-platform.js stamps
+     data-amasamya-extension on the html element on inject. Give
+     it 800ms after DOM ready to appear, then check. Shows a
+     banner in the panel when not detected. */
+  function checkExtensionPresence() {
+    var missing = document.getElementById('sched-ext-missing');
+    if (!missing) return;
+    setTimeout(function () {
+      var installed = document.documentElement.hasAttribute('data-amasamya-extension');
+      missing.hidden = installed;
+    }, 800);
+  }
+
+  function init() {
+    if (typeof auth === 'undefined' || !auth || typeof db === 'undefined' || !db) {
+      var m = document.getElementById('sched-ext-missing');
+      if (m) {
+        m.innerHTML = '<p><strong>Sign-in required.</strong> Scheduled Crawls are available to signed-in users only. Please sign in from the auth screen and reload.</p>';
+        m.hidden = false;
+      }
+      return;
+    }
+    auth.onAuthStateChanged(function (user) {
+      if (user) {
+        currentUid = user.uid;
+        loadSchedules();
+        checkExtensionPresence();
+      } else {
+        currentUid = null;
+        schedulesCache = [];
+        renderList();
+      }
+    });
+    bindToolbar();
+    bindForm();
+  }
+
+  function loadSchedules() {
+    if (!currentUid) return;
+    db.collection(FIRESTORE_SCHEDULES)
+      .where('ownerUid', '==', currentUid)
+      .orderBy('createdAt', 'desc')
+      .get()
+      .then(function (snap) {
+        schedulesCache = [];
+        snap.forEach(function (doc) {
+          schedulesCache.push(Object.assign({ id: doc.id }, doc.data()));
+        });
+        renderList();
+        schedAnnounce('Loaded ' + schedulesCache.length + ' schedule' +
+          (schedulesCache.length === 1 ? '' : 's') + '.');
+      })
+      .catch(function (err) {
+        console.error('[Schedules] load failed', err);
+        schedAnnounce('Failed to load schedules. ' + err.message, 'assertive');
+      });
+  }
+
+  function renderList() {
+    var table = document.getElementById('sched-list-table');
+    var empty = document.getElementById('sched-list-empty');
+    var tbody = document.getElementById('sched-list-body');
+    if (!table || !empty || !tbody) return;
+    if (schedulesCache.length === 0) {
+      table.hidden = true;
+      empty.hidden = false;
+      tbody.innerHTML = '';
+      return;
+    }
+    empty.hidden = true;
+    table.hidden = false;
+    tbody.innerHTML = schedulesCache.map(function (s) {
+      var source = (s.urls && s.urls.length)
+        ? s.urls.length + ' URL' + (s.urls.length === 1 ? '' : 's')
+        : (s.sitemap ? 'sitemap' : '—');
+      return '<tr>' +
+        '<td>' + esc(s.label) + '<br><small>' + esc(source) + '</small></td>' +
+        '<td>' + esc(fmtFreq(s.frequency)) + '</td>' +
+        '<td>' + esc(s.timeOfDayHHMM || '—') + '</td>' +
+        '<td>' + esc(fmtDate(s.lastRunAt)) + '</td>' +
+        '<td>' +
+          '<button type="button" role="switch" aria-checked="' + (s.enabled ? 'true' : 'false') +
+          '" data-sched-toggle="' + esc(s.id) + '"' +
+          ' aria-label="Toggle schedule ' + esc(s.label) + '">' +
+          (s.enabled ? 'On' : 'Off') +
+          '</button>' +
+        '</td>' +
+        '<td>' +
+          '<button type="button" data-sched-edit="' + esc(s.id) + '">Edit</button> ' +
+          '<button type="button" data-sched-runs="' + esc(s.id) + '">View runs</button> ' +
+          '<button type="button" data-sched-delete="' + esc(s.id) + '">Delete</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+    bindRowActions();
+  }
+
+  function bindRowActions() {
+    var tbody = document.getElementById('sched-list-body');
+    if (!tbody) return;
+    tbody.querySelectorAll('[data-sched-edit]').forEach(function (b) {
+      b.addEventListener('click', function () { openEditForm(b.getAttribute('data-sched-edit')); });
+    });
+    tbody.querySelectorAll('[data-sched-runs]').forEach(function (b) {
+      b.addEventListener('click', function () { openRunsView(b.getAttribute('data-sched-runs')); });
+    });
+    tbody.querySelectorAll('[data-sched-toggle]').forEach(function (b) {
+      b.addEventListener('click', function () { toggleSchedule(b.getAttribute('data-sched-toggle')); });
+    });
+    tbody.querySelectorAll('[data-sched-delete]').forEach(function (b) {
+      b.addEventListener('click', function () { deleteSchedule(b.getAttribute('data-sched-delete')); });
+    });
+  }
+
+  function bindToolbar() {
+    var n = document.getElementById('sched-new-btn');
+    if (n) n.addEventListener('click', openNewForm);
+    var r = document.getElementById('sched-refresh-btn');
+    if (r) r.addEventListener('click', loadSchedules);
+  }
+
+  function bindForm() {
+    var form = document.getElementById('sched-form');
+    if (!form) return;
+    form.addEventListener('submit', function (e) { e.preventDefault(); submitForm(); });
+
+    var cancel = document.getElementById('sched-cancel-btn');
+    if (cancel) cancel.addEventListener('click', closeForm);
+
+    form.querySelectorAll('[name="sched-source"]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        var isUrls = r.value === 'urls' && r.checked;
+        document.getElementById('sched-urls-wrap').hidden = !isUrls;
+        document.getElementById('sched-sitemap-wrap').hidden = isUrls;
+      });
+    });
+
+    var wtype = document.getElementById('sched-webhook-type');
+    if (wtype) {
+      wtype.addEventListener('change', function () {
+        document.getElementById('sched-webhook-url-wrap').hidden = (wtype.value === 'none');
+      });
+    }
+
+    var testBtn = document.getElementById('sched-webhook-test-btn');
+    if (testBtn) testBtn.addEventListener('click', testWebhook);
+  }
+
+  function openNewForm() {
+    editingScheduleId = null;
+    document.getElementById('sched-form-heading').textContent = 'New schedule';
+    document.getElementById('sched-id').value = '';
+    document.getElementById('sched-label').value = '';
+    document.getElementById('sched-urls').value = '';
+    document.getElementById('sched-sitemap').value = '';
+    document.querySelector('[name="sched-source"][value="urls"]').checked = true;
+    document.getElementById('sched-urls-wrap').hidden = false;
+    document.getElementById('sched-sitemap-wrap').hidden = true;
+    document.querySelector('[name="sched-frequency"][value="daily"]').checked = true;
+    document.getElementById('sched-hh').value = '9';
+    document.getElementById('sched-mm').value = '0';
+    document.getElementById('sched-webhook-type').value = 'none';
+    document.getElementById('sched-webhook-url').value = '';
+    document.getElementById('sched-webhook-url-wrap').hidden = true;
+    document.getElementById('sched-webhook-test-result').textContent = '';
+    document.getElementById('sched-form-section').hidden = false;
+    document.getElementById('sched-label').focus();
+    schedAnnounce('New schedule form opened.');
+  }
+
+  function openEditForm(id) {
+    var s = schedulesCache.find(function (x) { return x.id === id; });
+    if (!s) return;
+    editingScheduleId = id;
+    document.getElementById('sched-form-heading').textContent = 'Edit schedule';
+    document.getElementById('sched-id').value = id;
+    document.getElementById('sched-label').value = s.label || '';
+    if (s.urls && s.urls.length) {
+      document.querySelector('[name="sched-source"][value="urls"]').checked = true;
+      document.getElementById('sched-urls').value = s.urls.join('\n');
+      document.getElementById('sched-sitemap').value = '';
+      document.getElementById('sched-urls-wrap').hidden = false;
+      document.getElementById('sched-sitemap-wrap').hidden = true;
+    } else if (s.sitemap) {
+      document.querySelector('[name="sched-source"][value="sitemap"]').checked = true;
+      document.getElementById('sched-sitemap').value = s.sitemap;
+      document.getElementById('sched-urls').value = '';
+      document.getElementById('sched-urls-wrap').hidden = true;
+      document.getElementById('sched-sitemap-wrap').hidden = false;
+    }
+    var freq = s.frequency || 'daily';
+    var freqRadio = document.querySelector('[name="sched-frequency"][value="' + freq + '"]');
+    if (freqRadio) freqRadio.checked = true;
+    var t = (s.timeOfDayHHMM || '09:00').split(':');
+    document.getElementById('sched-hh').value = parseInt(t[0], 10) || 0;
+    document.getElementById('sched-mm').value = parseInt(t[1], 10) || 0;
+    document.getElementById('sched-webhook-type').value = s.webhookType || 'none';
+    document.getElementById('sched-webhook-url').value = s.webhookUrl || '';
+    document.getElementById('sched-webhook-url-wrap').hidden = (!s.webhookType || s.webhookType === 'none');
+    document.getElementById('sched-webhook-test-result').textContent = '';
+    document.getElementById('sched-form-section').hidden = false;
+    document.getElementById('sched-label').focus();
+    schedAnnounce('Editing schedule ' + s.label + '.');
+  }
+
+  function closeForm() {
+    document.getElementById('sched-form-section').hidden = true;
+    editingScheduleId = null;
+    schedAnnounce('Form closed.');
+    var back = document.getElementById('sched-new-btn');
+    if (back) back.focus();
+  }
+
+  function submitForm() {
+    if (!currentUid) { schedAnnounce('Cannot save. Not signed in.', 'assertive'); return; }
+
+    var label = document.getElementById('sched-label').value.trim();
+    if (!label) { schedAnnounce('Name is required.', 'assertive'); document.getElementById('sched-label').focus(); return; }
+
+    var source = document.querySelector('[name="sched-source"]:checked').value;
+    var urls = null, sitemap = null;
+    if (source === 'urls') {
+      urls = document.getElementById('sched-urls').value.split('\n')
+        .map(function (u) { return u.trim(); }).filter(Boolean);
+      if (urls.length === 0) {
+        schedAnnounce('Enter at least one URL.', 'assertive');
+        document.getElementById('sched-urls').focus();
+        return;
+      }
+      if (urls.length > MAX_URLS_PER_SCHEDULE) {
+        schedAnnounce('Too many URLs. Cap is ' + MAX_URLS_PER_SCHEDULE + '.', 'assertive');
+        document.getElementById('sched-urls').focus();
+        return;
+      }
+    } else {
+      sitemap = document.getElementById('sched-sitemap').value.trim();
+      if (!sitemap) {
+        schedAnnounce('Sitemap URL is required.', 'assertive');
+        document.getElementById('sched-sitemap').focus();
+        return;
+      }
+    }
+
+    var freq = document.querySelector('[name="sched-frequency"]:checked').value;
+    var hh = parseInt(document.getElementById('sched-hh').value, 10);
+    var mm = parseInt(document.getElementById('sched-mm').value, 10);
+    if (isNaN(hh) || hh < 0 || hh > 23) { schedAnnounce('Hour must be between 0 and 23.', 'assertive'); return; }
+    if (isNaN(mm) || mm < 0 || mm > 59) { schedAnnounce('Minute must be between 0 and 59.', 'assertive'); return; }
+    var timeStr = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+
+    var webhookType = document.getElementById('sched-webhook-type').value;
+    var webhookUrl = (webhookType === 'none') ? null : (document.getElementById('sched-webhook-url').value.trim() || null);
+    if (webhookType !== 'none' && !webhookUrl) {
+      schedAnnounce('Webhook URL is required when a type is selected.', 'assertive');
+      document.getElementById('sched-webhook-url').focus();
+      return;
+    }
+
+    var now = firebase.firestore.FieldValue.serverTimestamp();
+    var doc = {
+      ownerUid: currentUid,
+      label: label,
+      urls: urls,
+      sitemap: sitemap,
+      frequency: freq,
+      timeOfDayHHMM: timeStr,
+      webhookUrl: webhookUrl,
+      webhookType: webhookType,
+      enabled: true,
+      lastRunAt: null,
+      lastRunSummary: null,
+      updatedAt: now
+    };
+
+    var op;
+    if (editingScheduleId) {
+      op = db.collection(FIRESTORE_SCHEDULES).doc(editingScheduleId).update(doc);
+    } else {
+      doc.createdAt = now;
+      op = db.collection(FIRESTORE_SCHEDULES).add(doc);
+    }
+    op.then(function () {
+      schedAnnounce('Schedule saved.', 'assertive');
+      closeForm();
+      loadSchedules();
+    }).catch(function (err) {
+      console.error('[Schedules] save failed', err);
+      schedAnnounce('Save failed. ' + err.message, 'assertive');
+    });
+  }
+
+  function toggleSchedule(id) {
+    var s = schedulesCache.find(function (x) { return x.id === id; });
+    if (!s) return;
+    var newState = !s.enabled;
+    db.collection(FIRESTORE_SCHEDULES).doc(id).update({
+      enabled: newState,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function () {
+      s.enabled = newState;
+      schedAnnounce('Schedule ' + s.label + ' ' + (newState ? 'enabled' : 'disabled') + '.');
+      renderList();
+    }).catch(function (err) {
+      schedAnnounce('Toggle failed. ' + err.message, 'assertive');
+    });
+  }
+
+  function deleteSchedule(id) {
+    var s = schedulesCache.find(function (x) { return x.id === id; });
+    if (!s) return;
+    var ok = window.confirm('Delete schedule "' + s.label + '"? This cannot be undone. Past run history will be kept.');
+    if (!ok) return;
+    db.collection(FIRESTORE_SCHEDULES).doc(id).delete().then(function () {
+      schedAnnounce('Schedule deleted.', 'assertive');
+      loadSchedules();
+    }).catch(function (err) {
+      schedAnnounce('Delete failed. ' + err.message, 'assertive');
+    });
+  }
+
+  function openRunsView(id) {
+    var s = schedulesCache.find(function (x) { return x.id === id; });
+    if (!s) return;
+    document.getElementById('sched-runs-context').textContent = 'Recent runs for: ' + s.label;
+    document.getElementById('sched-runs-body').innerHTML =
+      '<tr><td colspan="7">Loading recent runs...</td></tr>';
+    document.getElementById('sched-runs-section').hidden = false;
+    var h = document.getElementById('sched-runs-heading');
+    if (h) h.focus();
+
+    db.collection(FIRESTORE_RUNS)
+      .where('ownerUid', '==', currentUid)
+      .where('scheduleId', '==', id)
+      .orderBy('createdAt', 'desc')
+      .limit(MAX_RUNS_PER_VIEW)
+      .get()
+      .then(function (snap) {
+        if (snap.empty) {
+          document.getElementById('sched-runs-body').innerHTML =
+            '<tr><td colspan="7">No runs recorded yet for this schedule.</td></tr>';
+          schedAnnounce('No runs yet.');
+          return;
+        }
+        var rows = [];
+        snap.forEach(function (doc) {
+          var r = doc.data();
+          rows.push('<tr>' +
+            '<td>' + esc(fmtDate(r.startedAt)) + '</td>' +
+            '<td>' + esc(r.pageCount || 0) + '</td>' +
+            '<td>' + esc(r.newFindings || 0) + '</td>' +
+            '<td>' + esc(r.regressedFindings || 0) + '</td>' +
+            '<td>' + esc(r.unchangedFindings || 0) + '</td>' +
+            '<td>' + esc(r.resolvedFindings || 0) + '</td>' +
+            '<td>' + (r.webhookDelivered ? 'Sent' : (r.webhookError ? esc('Failed: ' + r.webhookError) : '—')) + '</td>' +
+          '</tr>');
+        });
+        document.getElementById('sched-runs-body').innerHTML = rows.join('');
+        schedAnnounce('Loaded ' + snap.size + ' run' + (snap.size === 1 ? '' : 's') + '.');
+      })
+      .catch(function (err) {
+        document.getElementById('sched-runs-body').innerHTML =
+          '<tr><td colspan="7">Load failed: ' + esc(err.message) + '</td></tr>';
+        schedAnnounce('Runs load failed. ' + err.message, 'assertive');
+      });
+  }
+
+  function testWebhook() {
+    var url = document.getElementById('sched-webhook-url').value.trim();
+    var type = document.getElementById('sched-webhook-type').value;
+    var out = document.getElementById('sched-webhook-test-result');
+    if (!url) { schedAnnounce('Enter a webhook URL first.', 'assertive'); return; }
+    var payload = buildTestPayload(type);
+    out.textContent = 'Sending test message...';
+    schedAnnounce('Sending test message.');
+    fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function () {
+      // Opaque response with no-cors. Cannot confirm delivery from
+      // here; user must eyeball their channel.
+      out.textContent = 'Test sent. Check your channel to confirm delivery.';
+      schedAnnounce('Test webhook sent. Verify delivery in your channel.');
+    }).catch(function (err) {
+      out.textContent = 'Send failed: ' + err.message;
+      schedAnnounce('Webhook test failed. ' + err.message, 'assertive');
+    });
+  }
+
+  function buildTestPayload(type) {
+    var text = 'AMASAMYA test message. If you see this in your channel, the webhook URL is correct.';
+    if (type === 'slack') {
+      return {
+        text: text,
+        attachments: [{
+          color: '#2b7bd0',
+          fields: [
+            { title: 'Schedule', value: 'Test message', short: true },
+            { title: 'Sent from', value: 'AMASAMYA Platform', short: true }
+          ]
+        }]
+      };
+    }
+    if (type === 'teams') {
+      return {
+        '@type': 'MessageCard',
+        '@context': 'http://schema.org/extensions',
+        summary: text,
+        themeColor: '2b7bd0',
+        title: 'AMASAMYA webhook test',
+        text: text
+      };
+    }
+    return {
+      kind: 'amasamya.webhook.test',
+      version: '5.2',
+      message: text,
+      sentAt: new Date().toISOString()
+    };
+  }
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    init();
+  } else {
+    document.addEventListener('DOMContentLoaded', init);
+  }
 })();
 </script>
 </body>

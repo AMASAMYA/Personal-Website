@@ -15,18 +15,18 @@ var firebaseConfig = {
 };
 
 // Initialize Firebase (gracefully handle placeholder config).
-// v5.1 (2026-07-08): the Firestore SDK was dropped from index.html so
-// firebase.firestore() is no longer available here. `db` stays null;
-// nothing in the codebase reads it. If a future feature needs
-// Firestore, re-add the SDK script tag in index.html AND uncomment
-// the db initialisation below - do those two together.
+// v5.2 (2026-08-11): Firestore SDK re-added for Scheduled Crawls
+// (schedules + scheduledRuns collections, per-user, gated by
+// firestore.rules). If both lines are commented again in future
+// (to shed the ~90 KB Firestore SDK), remove the schedules panel
+// JS in index.html at the same time.
 var auth = null;
 var db = null;
 try {
   if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== 'YOUR_API_KEY') {
     firebase.initializeApp(firebaseConfig);
     auth = firebase.auth();
-    // db = firebase.firestore();
+    db = firebase.firestore();
   }
 } catch (e) {
   console.warn('Firebase initialization skipped:', e.message);
