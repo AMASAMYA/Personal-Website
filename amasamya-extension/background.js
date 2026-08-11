@@ -1297,13 +1297,58 @@ function notifyPanelError(msg) {
   async function saveSchedules(list) {
     await chrome.storage.local.set({ [SCHED_STORAGE_KEY]: list });
   }
+  function makeRunId() {
+    /* crypto.randomUUID is available in service workers on Chrome 92+.
+       Falls back to timestamp+random for hypothetical older envs. */
+    try {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return 'run_' + crypto.randomUUID();
+      }
+    } catch (_) { /* fall through */ }
+    return 'run_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+  }
   async function appendRun(summary) {
+    if (!summary.runId) summary.runId = makeRunId();
+    summary.syncedAt = null;   /* filled after Firestore accepts the doc */
     const store = await chrome.storage.local.get([RUNS_STORAGE_KEY]);
     const runs = Array.isArray(store[RUNS_STORAGE_KEY]) ? store[RUNS_STORAGE_KEY] : [];
     runs.unshift(summary);
     /* Ring-buffer at MAX_RUNS_STORED to bound storage usage. */
     if (runs.length > MAX_RUNS_STORED) runs.length = MAX_RUNS_STORED;
     await chrome.storage.local.set({ [RUNS_STORAGE_KEY]: runs });
+    /* Best-effort push to any open platform tab. If no tab is open,
+       the run stays local and the platform will drain on next visit. */
+    pushUnsyncedRunsToPlatform().catch(() => {});
+  }
+  async function markRunsSynced(runIds) {
+    if (!Array.isArray(runIds) || runIds.length === 0) return;
+    const store = await chrome.storage.local.get([RUNS_STORAGE_KEY]);
+    const runs = Array.isArray(store[RUNS_STORAGE_KEY]) ? store[RUNS_STORAGE_KEY] : [];
+    const set = new Set(runIds);
+    const now = Date.now();
+    for (const r of runs) if (r && set.has(r.runId)) r.syncedAt = now;
+    await chrome.storage.local.set({ [RUNS_STORAGE_KEY]: runs });
+  }
+  async function pushUnsyncedRunsToPlatform() {
+    const store = await chrome.storage.local.get([RUNS_STORAGE_KEY]);
+    const runs = Array.isArray(store[RUNS_STORAGE_KEY]) ? store[RUNS_STORAGE_KEY] : [];
+    const unsynced = runs.filter(r => r && !r.syncedAt);
+    if (unsynced.length === 0) return;
+    /* PLATFORM_URL is defined elsewhere in background.js; matches
+       https://amasamya.akhileshmalani.com. */
+    let tabs = [];
+    try {
+      tabs = await chrome.tabs.query({ url: PLATFORM_URL + '/*' });
+    } catch (_) { return; }
+    if (!tabs || tabs.length === 0) return;
+    for (const tab of tabs) {
+      try {
+        await chrome.tabs.sendMessage(tab.id, {
+          type: 'AMASAMYA_scheduled_runs_flush',
+          runs: unsynced
+        });
+      } catch (_) { /* content script may not be injected yet */ }
+    }
   }
 
   /* ── Alarm registration ──
@@ -1379,6 +1424,25 @@ function notifyPanelError(msg) {
         const kept = list.filter(s => s.id !== message.scheduleId);
         await saveSchedules(kept);
         await clearAlarm(message.scheduleId);
+        sendResponse({ ok: true });
+      })();
+      return true;
+    }
+
+    if (message.type === 'AMASAMYA_platform_request_runs_flush') {
+      /* Platform panel just loaded and is asking us to push any
+         unsynced runs so it can write them to Firestore. */
+      pushUnsyncedRunsToPlatform().catch(() => {});
+      sendResponse({ ok: true });
+      return true;
+    }
+
+    if (message.type === 'AMASAMYA_platform_runs_synced') {
+      /* Platform confirms Firestore acknowledged these runIds.
+         We flip syncedAt on each so pushUnsyncedRunsToPlatform
+         does not re-send them. */
+      (async () => {
+        await markRunsSynced(Array.isArray(message.runIds) ? message.runIds : []);
         sendResponse({ ok: true });
       })();
       return true;

@@ -23,6 +23,17 @@
  */
 chrome.runtime.onMessage.addListener((message) => {
   if (!message || typeof message.type !== 'string') return;
+
+  /* v5.2: background pushes unsynced scheduledRuns for the platform
+     to write to Firestore. Forward as a window message. */
+  if (message.type === 'AMASAMYA_scheduled_runs_flush') {
+    window.postMessage({
+      type: 'AMASAMYA_extension_runs_flush',
+      runs: Array.isArray(message.runs) ? message.runs : []
+    }, location.origin);
+    return;
+  }
+
   /* Standard single-page audit results from the WCAG engine. */
   if (message.type === 'AMASAMYA_platform_results') {
     window.postMessage({
@@ -94,6 +105,26 @@ window.addEventListener('message', function (event) {
     /* Platform asks: "are you installed?" We answer via a DOM
        attribute the platform's own JS can poll for. */
     document.documentElement.setAttribute('data-amasamya-extension', 'installed');
+    return;
+  }
+
+  if (m.type === 'AMASAMYA_platform_request_runs_flush') {
+    /* Platform panel just loaded and wants us to drain any unsynced
+       scheduledRuns from the background's chrome.storage.local mirror. */
+    chrome.runtime.sendMessage({
+      type: 'AMASAMYA_platform_request_runs_flush'
+    }, function () { void chrome.runtime.lastError; });
+    return;
+  }
+
+  if (m.type === 'AMASAMYA_platform_runs_synced') {
+    /* Platform confirms the listed runIds are now in Firestore.
+       Forward so background can mark them synced. */
+    if (!Array.isArray(m.runIds)) return;
+    chrome.runtime.sendMessage({
+      type: 'AMASAMYA_platform_runs_synced',
+      runIds: m.runIds
+    }, function () { void chrome.runtime.lastError; });
     return;
   }
 });

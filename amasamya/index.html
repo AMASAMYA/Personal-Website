@@ -7981,6 +7981,10 @@ if ($('mob-export-txt')) {
         currentUid = user.uid;
         loadSchedules();
         checkExtensionPresence();
+        /* Ask the extension to push any runs that fired while the
+           platform tab was closed. Delay slightly so the content
+           script has time to inject before we message it. */
+        setTimeout(requestRunsFlushFromExtension, 1200);
       } else {
         currentUid = null;
         schedulesCache = [];
@@ -8050,6 +8054,67 @@ if ($('mob-export-txt')) {
       scheduleId: id
     }, location.origin);
   }
+
+  function requestRunsFlushFromExtension() {
+    window.postMessage({
+      type: 'AMASAMYA_platform_request_runs_flush'
+    }, location.origin);
+  }
+
+  /* Listen for the extension's runs-flush push. Each run gets
+     written to Firestore scheduledRuns using runId as the doc ID
+     for idempotency (Firestore rules deny update/delete on this
+     collection, so a duplicate .set() with the same ID silently
+     fails on the second try — that is the desired behaviour). */
+  window.addEventListener('message', function (event) {
+    if (event.source !== window) return;
+    if (event.origin !== location.origin) return;
+    var m = event.data;
+    if (!m || m.type !== 'AMASAMYA_extension_runs_flush') return;
+    if (!currentUid || !db) return;
+    if (!Array.isArray(m.runs) || m.runs.length === 0) return;
+
+    var syncedIds = [];
+    var writes = m.runs.map(function (r) {
+      /* Guard shape: only fields Firestore rules allow. */
+      var doc = {
+        ownerUid:          currentUid,
+        scheduleId:        String(r.scheduleId || ''),
+        startedAt:         Number(r.startedAt || 0),
+        finishedAt:        Number(r.finishedAt || 0),
+        pageCount:         Number(r.pageCount || 0),
+        newFindings:       Number(r.newFindings || 0),
+        regressedFindings: Number(r.regressedFindings || 0),
+        unchangedFindings: Number(r.unchangedFindings || 0),
+        resolvedFindings:  Number(r.resolvedFindings || 0),
+        webhookDelivered:  !!r.webhookDelivered,
+        webhookError:      r.webhookError || null,
+        createdAt:         firebase.firestore.FieldValue.serverTimestamp()
+      };
+      return db.collection(FIRESTORE_RUNS).doc(String(r.runId)).set(doc)
+        .then(function () { syncedIds.push(r.runId); })
+        .catch(function (err) {
+          /* Duplicate write raises permission-denied because rules
+             forbid updates. Treat as "already synced" and ack anyway. */
+          if (err && err.code === 'permission-denied') {
+            syncedIds.push(r.runId);
+          } else {
+            console.warn('[Schedules] run flush write failed', r.runId, err);
+          }
+        });
+    });
+
+    Promise.all(writes).then(function () {
+      if (syncedIds.length > 0) {
+        window.postMessage({
+          type: 'AMASAMYA_platform_runs_synced',
+          runIds: syncedIds
+        }, location.origin);
+        schedAnnounce(syncedIds.length + ' scheduled run' +
+          (syncedIds.length === 1 ? '' : 's') + ' synced from extension.');
+      }
+    });
+  });
 
   function renderList() {
     var table = document.getElementById('sched-list-table');
