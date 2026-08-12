@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AMASAMYA - Accessibility Audit Tool",
   "version": "5.2.0",
-  "description": "Blind-first WCAG 2.2 audit tool for any page or a whole site. Diff shows what changed since your last audit. Scheduled crawls post regressions to Slack, Teams, or your own webhook.",
+  "description": "Blind-first WCAG 2.2 audit tool. Scheduled crawls post regressions to Slack, Teams, or your webhook. Diff on every run.",
   "author": "Akhilesh Malani",
   "homepage_url": "https://amasamya.akhileshmalani.com",
   "minimum_chrome_version": "114",
