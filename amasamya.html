@@ -210,15 +210,19 @@
       <p>
         AMASAMYA has two parts. The <strong>Chrome extension</strong> runs 24
         WCAG 2.2 audit engines against whatever page you are looking at, walks
-        up to 200 pages of a website in one Site Crawl run, and (from v4.3.0
-        onward) diffs each audit against the last one for the same URL so a
-        follow-up run tells you what is New, Regressed, Unchanged, or Resolved.
-        Findings appear in a side panel that is fully operable with NVDA,
-        JAWS, and VoiceOver. The
+        up to 200 pages of a website in one Site Crawl run, diffs each audit
+        against the last one for the same URL so a follow-up run tells you
+        what is New, Regressed, Unchanged, or Resolved, and (from v5.2.0
+        onward) can run a crawl on a schedule you set from the platform.
+        Scheduled runs post a summary to Slack, Microsoft Teams, or your own
+        webhook so a regression on your production site pings your team the
+        moment it lands. Findings appear in a side panel that is fully
+        operable with NVDA, JAWS, and VoiceOver. The
         <strong>web platform</strong> at
         <a href="https://amasamya.akhileshmalani.com">amasamya.akhileshmalani.com</a>
         accepts single-page audits, crawl reports, document files, and
         structured mobile checklists, and produces reports a manager can read.
+        The new Schedules tab is where you configure recurring crawls.
       </p>
       <p>
         Both are free. The extension is open source under MIT licence at
