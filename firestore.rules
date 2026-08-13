@@ -116,6 +116,51 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // v5.3 Users + usage tracking
+    // ---------------------------
+    // users/{uid} — one doc per signed-in platform user, keyed by
+    // Firebase Auth uid. Holds the onboarding profile (name, role,
+    // company, why-here) and per-feature usage counters. The
+    // welcome modal writes this doc on first sign-in; feature
+    // entry points increment usage.* counters via
+    // FieldValue.increment. Admin (Akhilesh) reads all for the
+    // Admin dashboard tab; every other user reads only their own.
+    match /users/{userId} {
+      // Admin sees every doc; owner sees only their own.
+      allow read: if request.auth != null
+        && (request.auth.token.email == 'akhilesh.malani@gmail.com'
+            || request.auth.uid == userId);
+
+      // First-run write: doc ID must equal caller uid; require
+      // at minimum a name string and a role from the enum. Other
+      // fields optional so the Skip button on the welcome modal
+      // can save a minimal doc without asking for company or
+      // why-here.
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.role in ['auditor', 'developer', 'designer', 'other']
+        && (!('company' in request.resource.data.keys())
+            || (request.resource.data.company is string
+                && request.resource.data.company.size() <= 120))
+        && (!('broughtHere' in request.resource.data.keys())
+            || (request.resource.data.broughtHere is string
+                && request.resource.data.broughtHere.size() <= 500))
+        && (!('email' in request.resource.data.keys())
+            || (request.resource.data.email is string
+                && request.resource.data.email.size() <= 200));
+
+      // Owner can update their own doc (profile edits + usage
+      // counter increments via FieldValue.increment).
+      allow update: if request.auth != null
+        && request.auth.uid == userId;
+
+      // No self-delete; keep the audit trail intact.
+      allow delete: if false;
+    }
+
     // Deny everything else
     match /{document=**} {
       allow read, write: if false;

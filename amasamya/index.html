@@ -2562,6 +2562,70 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
   </main>
 </div>
 
+<!-- ═══ v5.3.0 Welcome onboarding modal ═══
+     Shown on first sign-in only (see the welcome-modal IIFE at
+     the bottom of the last <script> block). Hidden by default;
+     JS toggles `hidden` on modal + backdrop when a user with no
+     users/{uid} doc signs in. -->
+<div id="welcome-backdrop"
+     style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;"
+     hidden></div>
+<div id="welcome-modal" role="dialog" aria-modal="true"
+     aria-labelledby="welcome-title" aria-describedby="welcome-desc"
+     style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+            background:#fff;color:#1a1a1a;max-width:560px;width:calc(100vw - 40px);
+            max-height:calc(100vh - 40px);overflow-y:auto;
+            border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);
+            padding:24px 28px;z-index:9999;font-family:'Segoe UI',system-ui,sans-serif;"
+     hidden>
+  <h2 id="welcome-title" tabindex="-1"
+      style="font-size:1.35rem;color:#003366;margin:0 0 8px 0;">Welcome to AMASAMYA</h2>
+  <p id="welcome-desc" style="font-size:0.95rem;color:#333;margin:0 0 16px 0;line-height:1.5;">
+    A few quick details so we can personalise your experience. Only your name is required; skip anything else.
+  </p>
+
+  <div id="welcome-live-assertive" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+  <div id="welcome-live-polite"    class="sr-only" aria-live="polite"    aria-atomic="false"></div>
+
+  <form id="welcome-form" novalidate onsubmit="return false;">
+    <div style="margin-bottom:14px;">
+      <label for="welcome-name" style="display:block;font-weight:600;margin-bottom:4px;">Your name (required)</label>
+      <input type="text" id="welcome-name" maxlength="120" required
+             autocomplete="name"
+             style="width:100%;padding:8px 10px;border:1px solid #ccd;border-radius:4px;font-size:1rem;">
+    </div>
+
+    <fieldset style="margin-bottom:14px;border:0;padding:0;">
+      <legend style="font-weight:600;margin-bottom:4px;">Which best describes you?</legend>
+      <div><label><input type="radio" name="welcome-role" value="auditor"> Accessibility auditor or consultant</label></div>
+      <div><label><input type="radio" name="welcome-role" value="developer"> Developer or engineer</label></div>
+      <div><label><input type="radio" name="welcome-role" value="designer"> Designer or product</label></div>
+      <div><label><input type="radio" name="welcome-role" value="other" checked> Something else</label></div>
+    </fieldset>
+
+    <div style="margin-bottom:14px;">
+      <label for="welcome-company" style="display:block;font-weight:600;margin-bottom:4px;">Company or organisation (optional)</label>
+      <input type="text" id="welcome-company" maxlength="120" autocomplete="organization"
+             style="width:100%;padding:8px 10px;border:1px solid #ccd;border-radius:4px;font-size:1rem;">
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <label for="welcome-brought-here" style="display:block;font-weight:600;margin-bottom:4px;">What brought you here? (optional)</label>
+      <textarea id="welcome-brought-here" maxlength="500" rows="3"
+                style="width:100%;padding:8px 10px;border:1px solid #ccd;border-radius:4px;font-size:1rem;resize:vertical;"></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button type="button" id="welcome-skip"
+              style="padding:9px 18px;border:1px solid #99a;background:#f0f4f8;color:#333;
+                     border-radius:4px;font-weight:600;cursor:pointer;">Skip for now</button>
+      <button type="submit" id="welcome-save"
+              style="padding:9px 18px;border:0;background:#003366;color:#fff;
+                     border-radius:4px;font-weight:600;cursor:pointer;">Save and continue</button>
+    </div>
+  </form>
+</div>
+
 
 <script>
 /* ═══════════════════════════════════════════════════════════
@@ -8486,6 +8550,151 @@ if ($('mob-export-txt')) {
   } else {
     document.addEventListener('DOMContentLoaded', init);
   }
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   v5.3.0 Welcome onboarding modal + user doc bootstrap
+   Shown on first sign-in only (no users/{uid} doc yet).
+   Prompts for name (required), role (required), company (opt),
+   why-here (opt). Save writes full doc; Skip writes minimal doc
+   so the modal never nags on future logins.
+═══════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  if (typeof auth === 'undefined' || !auth || typeof db === 'undefined' || !db) return;
+  if (!document.getElementById('welcome-modal')) return;
+
+  var USERS = 'users';
+
+  function welcomeAnnounce(msg, urgency) {
+    var id = urgency === 'assertive' ? 'welcome-live-assertive' : 'welcome-live-polite';
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = '';
+    setTimeout(function () { el.textContent = msg; }, 50);
+  }
+
+  function prefillName(user) {
+    if (user.displayName) return user.displayName;
+    if (user.email) return user.email.split('@')[0];
+    return '';
+  }
+
+  function openModal(user) {
+    var modal = document.getElementById('welcome-modal');
+    var backdrop = document.getElementById('welcome-backdrop');
+    var nameField = document.getElementById('welcome-name');
+    if (!modal || !nameField) return;
+
+    nameField.value = prefillName(user);
+    /* Reset the other fields in case a previous open pre-populated them. */
+    var roleRadio = document.querySelector('[name="welcome-role"][value="other"]');
+    if (roleRadio) roleRadio.checked = true;
+    document.getElementById('welcome-company').value = '';
+    document.getElementById('welcome-brought-here').value = '';
+
+    modal.hidden = false;
+    if (backdrop) backdrop.hidden = false;
+    var title = document.getElementById('welcome-title');
+    if (title) title.focus();
+    welcomeAnnounce('Welcome to AMASAMYA. Please tell us who you are so we can personalise your experience.');
+  }
+
+  function closeModal() {
+    var modal = document.getElementById('welcome-modal');
+    var backdrop = document.getElementById('welcome-backdrop');
+    if (modal) modal.hidden = true;
+    if (backdrop) backdrop.hidden = true;
+  }
+
+  function writeUserDoc(user, extra) {
+    var now = firebase.firestore.FieldValue.serverTimestamp();
+    var doc = Object.assign({
+      email:          user.email || null,
+      name:           prefillName(user),
+      role:           'other',
+      createdAt:      now,
+      lastActiveAt:   now,
+      usage: {
+        audits:        0,
+        crawls:        0,
+        exports:       0,
+        schedules:     0,
+        visionAiCalls: 0
+      }
+    }, extra || {});
+    return db.collection(USERS).doc(user.uid).set(doc);
+  }
+
+  function submitWelcome() {
+    var user = auth.currentUser;
+    if (!user) { welcomeAnnounce('Not signed in.', 'assertive'); return; }
+    var name = document.getElementById('welcome-name').value.trim();
+    if (!name) {
+      welcomeAnnounce('Please enter your name.', 'assertive');
+      document.getElementById('welcome-name').focus();
+      return;
+    }
+    var role = (document.querySelector('[name="welcome-role"]:checked') || {}).value || 'other';
+    var company = document.getElementById('welcome-company').value.trim();
+    var broughtHere = document.getElementById('welcome-brought-here').value.trim();
+
+    var extra = { name: name, role: role };
+    if (company) extra.company = company;
+    if (broughtHere) extra.broughtHere = broughtHere;
+
+    writeUserDoc(user, extra)
+      .then(function () {
+        welcomeAnnounce('Profile saved. Welcome to AMASAMYA.', 'assertive');
+        closeModal();
+      })
+      .catch(function (err) {
+        console.error('[Welcome] save failed', err);
+        welcomeAnnounce('Save failed. ' + err.message, 'assertive');
+      });
+  }
+
+  function skipWelcome() {
+    var user = auth.currentUser;
+    if (!user) { closeModal(); return; }
+    /* Skip still writes a minimal doc so we do not re-prompt on
+       every future sign-in. Uses the displayName or email prefix
+       for the name field so the doc is queryable in the admin
+       dashboard even without a manual entry. */
+    writeUserDoc(user, {})
+      .then(function () {
+        welcomeAnnounce('Skipped. You can update your profile later from Settings.');
+        closeModal();
+      })
+      .catch(function (err) {
+        /* Still close on error to avoid a modal trap. */
+        console.error('[Welcome] skip write failed', err);
+        closeModal();
+      });
+  }
+
+  function bindOnce() {
+    var saveBtn   = document.getElementById('welcome-save');
+    var skipBtn   = document.getElementById('welcome-skip');
+    if (saveBtn && !saveBtn.__wBound) { saveBtn.addEventListener('click', submitWelcome); saveBtn.__wBound = true; }
+    if (skipBtn && !skipBtn.__wBound) { skipBtn.addEventListener('click', skipWelcome);   skipBtn.__wBound = true; }
+  }
+
+  auth.onAuthStateChanged(function (user) {
+    if (!user) return;
+    bindOnce();
+    db.collection(USERS).doc(user.uid).get()
+      .then(function (snap) {
+        if (!snap.exists) {
+          openModal(user);
+        }
+      })
+      .catch(function (err) {
+        /* Do not open modal if the read failed. A rules
+           misconfiguration should not trap the user. */
+        console.warn('[Welcome] user doc read failed', err);
+      });
+  });
 })();
 </script>
 </body>
