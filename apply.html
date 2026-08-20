@@ -13,6 +13,11 @@
   <link rel="preload" href="styles.css" as="style">
   <link rel="stylesheet" href="styles.css">
 
+  <!-- Firebase SDK for Cloud Persistence -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script defer src="firebase-config.js"></script>
+
   <script>
     (function(){
       var h = document.documentElement;
@@ -430,24 +435,48 @@
 
   <script>
     function announce(msg) {
-      document.getElementById('apply-announcer').textContent = msg;
+      var el = document.getElementById('apply-announcer');
+      if (el) el.textContent = msg;
     }
 
     function handleApplicationSubmit(e) {
       e.preventDefault();
 
+      var submitBtn = document.querySelector('.btn-submit');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting Application...';
+      }
+
+      announce("Processing application and calculating placement score...");
+
       var name = document.getElementById('learner-name').value.trim();
       var email = document.getElementById('learner-email').value.trim();
+      var phone = document.getElementById('learner-phone') ? document.getElementById('learner-phone').value.trim() : '';
       var location = document.getElementById('learner-location').value.trim();
       var goal = document.getElementById('learning-goal').value;
 
+      var atBoxes = document.querySelectorAll('input[name="at-tool"]:checked');
+      var atList = [];
+      for (var i = 0; i < atBoxes.length; i++) {
+        atList.push(atBoxes[i].value);
+      }
+
+      var q1 = document.querySelector('input[name="q1"]:checked')?.value || '';
+      var q2 = document.querySelector('input[name="q2"]:checked')?.value || '';
+      var q3 = document.querySelector('input[name="q3"]:checked')?.value || '';
+      var q4 = document.querySelector('input[name="q4"]:checked')?.value || '';
+      var q5 = document.querySelector('input[name="q5"]:checked')?.value || '';
+
+      var answers = { q1: q1, q2: q2, q3: q3, q4: q4, q5: q5 };
+
       // Calculate Placement Score
       var score = 0;
-      if (document.querySelector('input[name="q1"]:checked')?.value === 'B') score++;
-      if (document.querySelector('input[name="q2"]:checked')?.value === 'B') score++;
-      if (document.querySelector('input[name="q3"]:checked')?.value === 'A') score++;
-      if (document.querySelector('input[name="q4"]:checked')?.value === 'A') score++;
-      if (document.querySelector('input[name="q5"]:checked')?.value === 'B') score++;
+      if (q1 === 'B') score++;
+      if (q2 === 'B') score++;
+      if (q3 === 'A') score++;
+      if (q4 === 'A') score++;
+      if (q5 === 'B') score++;
 
       var placementTrack = "";
       var placementRationale = "";
@@ -460,23 +489,56 @@
         placementRationale = "You scored " + score + " of 5 on the placement screening. Starting in Track A will build solid sentence construction, phonetics, and screen-reader grammar fundamentals before moving to corporate writing.";
       }
 
-      // Save application record to localStorage
+      // Application Payload
       var appRecord = {
         name: name,
         email: email,
+        phone: phone,
         location: location,
-        goal: goal,
+        assistiveTech: atList,
+        learningGoal: goal,
+        screeningAnswers: answers,
         placementScore: score,
         assignedTrack: placementTrack,
+        cohort: "Cohort 1",
+        status: "submitted",
         timestamp: new Date().toISOString()
       };
-      localStorage.setItem('amasamya_application', JSON.stringify(appRecord));
 
-      // Display Result
+      // Always backup locally
+      try {
+        localStorage.setItem('amasamya_application', JSON.stringify(appRecord));
+      } catch (err) {}
+
+      // Save to Firebase Firestore if online and initialized
+      if (typeof db !== 'undefined' && db !== null) {
+        var firestoreRecord = Object.assign({}, appRecord, {
+          submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        db.collection('academy_applications').add(firestoreRecord)
+          .then(function() {
+            renderPlacementResult(name, placementTrack, placementRationale, true);
+          })
+          .catch(function(err) {
+            console.warn('Firestore write warning (local record saved):', err);
+            renderPlacementResult(name, placementTrack, placementRationale, false);
+          });
+      } else {
+        renderPlacementResult(name, placementTrack, placementRationale, false);
+      }
+    }
+
+    function renderPlacementResult(name, placementTrack, placementRationale, isCloudSynced) {
       document.getElementById('enrolment-form').style.display = 'none';
       var resBox = document.getElementById('placement-result');
+      
+      var cloudStatusNote = isCloudSynced
+        ? "<p style='font-size: 0.9rem; color: #059669; font-weight: 700; margin-top: 14px;'>Application confirmed and securely stored in AMASAMYA cloud registry.</p>"
+        : "<p style='font-size: 0.9rem; color: #0369a1; margin-top: 14px;'>Application recorded on this device.</p>";
+
       document.getElementById('placement-summary').textContent = "Thank you, " + name + ". Your enrolment for AMASAMYA Academy Cohort 1 has been recorded.";
-      document.getElementById('placement-details').innerHTML = "<strong>Recommended Starting Track:</strong> " + placementTrack + "<br><br>" + placementRationale;
+      document.getElementById('placement-details').innerHTML = "<strong>Recommended Starting Track:</strong> " + placementTrack + "<br><br>" + placementRationale + cloudStatusNote;
       
       resBox.style.display = 'block';
       announce("Application submitted successfully. Recommended starting track: " + placementTrack);
