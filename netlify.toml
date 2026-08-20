@@ -52,6 +52,26 @@
   to = "/checker.html"
   status = 200
 
+[[redirects]]
+  from = "/extension"
+  to = "/amasamya.html"
+  status = 200
+
+[[redirects]]
+  from = "/doc-checker"
+  to = "/doc-checker.html"
+  status = 200
+
+[[redirects]]
+  from = "/author"
+  to = "/academy-author.html"
+  status = 200
+
+[[redirects]]
+  from = "/accessibility"
+  to = "/accessibility.html"
+  status = 200
+
 # AMASAMYA subdomain - root path serves the public landing page so that
 # Google has something indexable to find. The auth-walled app at
 # /amasamya/index.html still emits <meta robots="noindex,nofollow"> and

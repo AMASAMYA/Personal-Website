@@ -422,8 +422,11 @@ var SITEMAP_SKIP_DIRS = new Set([
 /* Priority table. Any file not matched here gets DEFAULT_PRIORITY. */
 var SITEMAP_PRIORITIES = {
   '':                       { priority: '1.0',  freq: 'weekly'  }, /* root index.html -> "/" */
+  'amasamya-home.html':     { priority: '0.95', freq: 'weekly'  },
   'amasamya.html':          { priority: '0.95', freq: 'monthly' },
   'academy.html':           { priority: '0.95', freq: 'weekly'  },
+  'apply.html':             { priority: '0.9',  freq: 'weekly'  },
+  'academy-author.html':    { priority: '0.7',  freq: 'monthly' },
   'checker.html':           { priority: '0.9',  freq: 'monthly' },
   'doc-checker.html':       { priority: '0.9',  freq: 'monthly' },
   'accessibility.html':     { priority: '0.6',  freq: 'monthly' },
