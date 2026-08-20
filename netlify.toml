@@ -11,6 +11,47 @@
   to = "/library-admin.html"
   status = 301
 
+# AMASAMYA apex & www domain - root path serves the dedicated AMASAMYA platform homepage
+[[redirects]]
+  from = "https://amasamya.com/"
+  to = "/amasamya-home.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://www.amasamya.com/"
+  to = "/amasamya-home.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "http://amasamya.com/"
+  to = "/amasamya-home.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "http://www.amasamya.com/"
+  to = "/amasamya-home.html"
+  status = 200
+  force = true
+
+# Clean URL aliases
+[[redirects]]
+  from = "/academy"
+  to = "/academy.html"
+  status = 200
+
+[[redirects]]
+  from = "/apply"
+  to = "/apply.html"
+  status = 200
+
+[[redirects]]
+  from = "/checker"
+  to = "/checker.html"
+  status = 200
+
 # AMASAMYA subdomain - root path serves the public landing page so that
 # Google has something indexable to find. The auth-walled app at
 # /amasamya/index.html still emits <meta robots="noindex,nofollow"> and

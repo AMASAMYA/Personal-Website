@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AMASAMYA is an inclusive technology and professional learning platform. Founded and created by Akhilesh Malani. Featuring the AMASAMYA Accessibility Audit Suite and AMASAMYA Academy co-led by L. Subramani.">
+  <meta name="keywords" content="AMASAMYA, accessibility audit, WCAG 2.2, GIGW 3.0, IS 17802, AMASAMYA Academy, inclusive education, screen reader training, L. Subramani, Akhilesh Malani">
+  <meta name="author" content="Akhilesh Malani">
+  <meta name="theme-color" content="#0b192c">
+  <link rel="canonical" href="https://amasamya.com/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://amasamya.com/">
+  <meta property="og:title" content="AMASAMYA - Inclusive Technology & Professional Learning Platform">
+  <meta property="og:description" content="Barrier-free technology, enterprise accessibility auditing, and executive communication education for persons with disabilities and mainstream learners worldwide. Founded by Akhilesh Malani.">
+  <meta property="og:site_name" content="AMASAMYA">
+  <meta property="og:image" content="https://akhileshmalani.com/images/og-banner.png">
+
+  <title>AMASAMYA - Inclusive Technology & Professional Learning Platform</title>
+  <link rel="icon" type="image/svg+xml" href="images/logo-icon.svg">
+  <link rel="preload" href="styles.css" as="style">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preload" href="script.js" as="script">
+
+  <script>
+    (function(){
+      var h = document.documentElement;
+      var t = localStorage.getItem('theme');
+      if (t) { h.setAttribute('data-theme', t); }
+      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches) {
+        h.setAttribute('data-theme', 'dark');
+      }
+      var s = localStorage.getItem('a11y-text-size');
+      if (s && s !== 'normal') h.setAttribute('data-text-size', s);
+      if (localStorage.getItem('a11y-high-contrast') === 'true') h.setAttribute('data-high-contrast', 'true');
+      if (localStorage.getItem('a11y-dyslexia-font') === 'true') h.setAttribute('data-dyslexia-font', 'true');
+      if (localStorage.getItem('a11y-reduce-motion') === 'true') h.setAttribute('data-reduce-motion', 'true');
+    })();
+  </script>
+
+  <style>
+    .platform-hero {
+      background: linear-gradient(135deg, #0b192c 0%, #0d2240 60%, #003366 100%);
+      color: #ffffff;
+      padding: 64px 0 52px;
+      border-bottom: 4px solid #0072bc;
+    }
+    .platform-hero .container { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+    .badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .hero-badge {
+      background: rgba(0, 114, 188, 0.25);
+      border: 1px solid #0072bc;
+      color: #93c5fd;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .platform-hero h1 {
+      font-size: 2.4rem; line-height: 1.2; color: #ffffff; font-weight: 800; margin: 0 0 12px;
+    }
+    .platform-hero .byline {
+      font-size: 1.1rem; color: #cbd5e1; max-width: 820px; line-height: 1.6; margin-bottom: 24px;
+    }
+    .cta-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 24px; }
+    .btn-hero-primary {
+      background: #0072bc;
+      color: #ffffff;
+      border: 2px solid #38bdf8;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 1rem;
+      display: inline-block;
+    }
+    .btn-hero-primary:hover, .btn-hero-primary:focus {
+      background: #005a96;
+      outline: 3px solid #38bdf8;
+    }
+    .btn-hero-sec {
+      background: transparent;
+      color: #ffffff;
+      border: 2px solid #94a3b8;
+      padding: 12px 22px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 1rem;
+      display: inline-block;
+    }
+    .btn-hero-sec:hover, .btn-hero-sec:focus {
+      background: rgba(255,255,255,0.1);
+      outline: 3px solid #93c5fd;
+    }
+
+    .platform-section { padding: 56px 0; }
+    .platform-section .container { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+    .section-title {
+      font-size: 1.8rem; color: #0b192c; border-bottom: 3px solid #0072bc; padding-bottom: 8px; margin-bottom: 20px;
+    }
+    [data-theme="dark"] .section-title { color: #38bdf8; }
+
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      margin-top: 32px;
+    }
+    .pillar-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-top: 5px solid #0072bc;
+      border-radius: 8px;
+      padding: 28px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+    }
+    [data-theme="dark"] .pillar-card {
+      background: #0f172a;
+      border-color: #334155;
+      border-top-color: #38bdf8;
+    }
+    .pillar-card h3 { font-size: 1.35rem; color: #0c4a6e; margin: 0 0 10px; }
+    [data-theme="dark"] .pillar-card h3 { color: #38bdf8; }
+    .pillar-lead { font-size: 0.92rem; color: #059669; font-weight: 700; margin-bottom: 14px; }
+    [data-theme="dark"] .pillar-lead { color: #4ade80; }
+    .pillar-card p { font-size: 0.98rem; line-height: 1.6; color: #334155; margin-bottom: 16px; }
+    [data-theme="dark"] .pillar-card p { color: #cbd5e1; }
+    .pillar-features { list-style: none; padding: 0; margin: 0 0 24px; }
+    .pillar-features li {
+      padding: 6px 0 6px 18px;
+      position: relative;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: #1e293b;
+    }
+    [data-theme="dark"] .pillar-features li { color: #cbd5e1; }
+    .pillar-features li::before {
+      content: "•";
+      color: #0072bc;
+      font-weight: bold;
+      position: absolute;
+      left: 0;
+    }
+    .pillar-card .btn-link {
+      margin-top: auto;
+      background: #0072bc;
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 700;
+      text-align: center;
+      display: block;
+    }
+    .pillar-card .btn-link:hover, .pillar-card .btn-link:focus {
+      background: #005a96;
+      outline: 2px solid #38bdf8;
+    }
+
+    .trust-banner {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 24px;
+      margin-top: 40px;
+    }
+    [data-theme="dark"] .trust-banner {
+      background: #1e293b;
+      border-color: #334155;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header role="banner" class="site-header">
+    <div class="container header-container">
+      <a href="/" class="logo-link" aria-label="AMASAMYA Home">
+        <span class="logo-text">AMASAMYA</span>
+      </a>
+      <nav role="navigation" aria-label="Main Navigation" class="main-nav">
+        <ul class="nav-list">
+          <li><a href="/" aria-current="page" class="active">Home</a></li>
+          <li><a href="/amasamya.html">Audit Suite</a></li>
+          <li><a href="/checker.html">Web Audit Portal</a></li>
+          <li><a href="/academy.html">Academy</a></li>
+          <li><a href="/apply.html">Apply (Cohort 1)</a></li>
+          <li><a href="https://akhileshmalani.com" rel="external">Founder Bio</a></li>
+          <li><a href="/accessibility.html">Accessibility Statement</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+    <!-- Adaptive Accessibility Toolbar -->
+    <div class="adaptive-toolbar" role="region" aria-label="Display and Accessibility Preferences Toolbar" style="background: #0f172a; border-bottom: 1px solid #334155; padding: 10px 20px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center;">
+      <span style="color: #38bdf8; font-weight: bold; font-size: 0.9rem;">Display Settings:</span>
+      <button type="button" onclick="toggleHighContrast()" style="background: #1e293b; color: #fff; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;" aria-label="Toggle high contrast display mode">High Contrast Mode</button>
+      <button type="button" onclick="changeFontSize(1.2)" style="background: #1e293b; color: #fff; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;" aria-label="Increase text size to 120 percent">A+ Larger Text</button>
+      <button type="button" onclick="changeFontSize(1.0)" style="background: #1e293b; color: #fff; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;" aria-label="Reset text size to default 100 percent">Reset Text</button>
+    </div>
+
+    <!-- Platform Hero Header -->
+    <section class="platform-hero" aria-labelledby="platform-title">
+      <div class="container">
+        <div class="badge-row">
+          <span class="hero-badge">Enterprise Accessibility Suite</span>
+          <span class="hero-badge">Screen-Reader First Academy</span>
+          <span class="hero-badge">WCAG 2.2, GIGW 3.0 & IS 17802</span>
+        </div>
+        <h1 id="platform-title">AMASAMYA</h1>
+        <p class="byline">
+          <strong>Inclusive Technology & Professional Learning Platform.</strong> Founded and engineered by <strong>Akhilesh Malani</strong>. AMASAMYA creates a unified, barrier-free ecosystem where persons with disabilities and mainstream society audit software, master executive English communication, and build equal career opportunities together.
+        </p>
+
+        <div class="cta-row">
+          <a href="/academy.html" class="btn-hero-primary">Explore AMASAMYA Academy</a>
+          <a href="/checker.html" class="btn-hero-sec">Launch Web Audit Portal</a>
+          <a href="/apply.html" class="btn-hero-sec">Apply for Cohort 1 (Free)</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two Pillars Overview -->
+    <div class="platform-section">
+      <div class="container">
+        <h2 class="section-title">The Two Pillars of AMASAMYA</h2>
+        <p style="font-size: 1.05rem; line-height: 1.6; color: #334155;">
+          AMASAMYA bridges the gap between digital accessibility compliance and human career empowerment under one unified architecture.
+        </p>
+
+        <div class="pillars-grid">
+
+          <!-- Pillar 1: Software & Audit Suite -->
+          <article class="pillar-card" tabindex="0" aria-labelledby="p1-title">
+            <h3 id="p1-title">1. Accessibility Software & Audit Suite</h3>
+            <p class="pillar-lead">Architected & Engineered by Akhilesh Malani</p>
+            <p>
+              Automated and manual testing tools built to be operated by screen reader users, not just for them. Evaluates digital interfaces against global WCAG 2.2 Level AA and Indian national standards.
+            </p>
+            <ul class="pillar-features">
+              <li><strong>24 Audit Engines:</strong> Contrast (4.5:1), Focus Narrator, Touch Targets (48dp), Focus Traps, and Accessible Authentication.</li>
+              <li><strong>Indian Standards Support:</strong> First-class compliance with Guidelines for Indian Government Websites (GIGW 3.0) and BIS IS 17802.</li>
+              <li><strong>Multi-Platform:</strong> Available across Chrome, Edge, Firefox extensions (v5.3), Web Audit Portal, and Android scanner app.</li>
+              <li><strong>Official Reporting:</strong> One-click generation of VPAT 2.4 Accessibility Conformance Reports (ACR).</li>
+            </ul>
+            <a href="/amasamya.html" class="btn-link">Explore Audit Suite & Extensions</a>
+          </article>
+
+          <!-- Pillar 2: AMASAMYA Academy -->
+          <article class="pillar-card" tabindex="0" aria-labelledby="p2-title">
+            <h3 id="p2-title">2. AMASAMYA Academy</h3>
+            <p class="pillar-lead">School of English & Communication Co-Led by L. Subramani</p>
+            <p>
+              An inclusive, screen-reader native learning ecosystem where blind learners and mainstream professionals build corporate English mastery and accessibility engineering skills side by side.
+            </p>
+            <ul class="pillar-features">
+              <li><strong>School of English & Communication:</strong> Curated by L. Subramani (veteran Chief Copy Editor at Deccan Herald, Author of <em>Lights Out</em>). Foundations, Corporate Writing, Executive Speech, and Journalism.</li>
+              <li><strong>School of Accessibility Engineering:</strong> Led by Akhilesh Malani. Hands-on WCAG 2.2 auditing, Jetpack Compose UI accessibility, and GIGW 3.0 mastery.</li>
+              <li><strong>Audio-to-Text Writing Studio:</strong> Accessible drafting canvas with live statistics and the Subramani copyediting checklist.</li>
+              <li><strong>Blind-Educator Authoring Tool:</strong> In-browser audio recording and non-visual quiz builder for educators with disabilities.</li>
+            </ul>
+            <a href="/academy.html" class="btn-link">Enter Academy & Syllabus</a>
+          </article>
+
+        </div>
+
+        <!-- Trust & Compliance Banner -->
+        <section class="trust-banner" aria-labelledby="trust-title">
+          <h3 id="trust-title" style="margin-top: 0; color: #0c4a6e; font-size: 1.2rem;">Built on Lived Experience & Enterprise Standards</h3>
+          <p style="margin: 0; font-size: 0.95rem; line-height: 1.6; color: #475569;">
+            AMASAMYA is created by Akhilesh Malani, a blind Accessibility Architect with 16+ years of enterprise experience across Google, Bank of Montreal, Dun & Bradstreet, and Oracle Financial Services. All tools and learning surfaces are 100% compliant with WCAG 2.2 Level AA / Level AAA, RPwD Act 2016, and GIGW 3.0.
+          </p>
+        </section>
+
+      </div>
+    </div>
+
+  </main>
+
+  <footer role="contentinfo" class="site-footer" style="margin-top: 56px; border-top: 1px solid #cbd5e1; padding: 32px 0; background: #0b192c; color: #cbd5e1;">
+    <div class="container" style="max-width: 1040px; margin: 0 auto; padding: 0 20px; text-align: center;">
+      <p style="margin: 0 0 8px; font-size: 0.95rem;">
+        &copy; 2026 AMASAMYA. Founded, engineered, and owned by Akhilesh Malani. AMASAMYA Academy co-led by L. Subramani.
+      </p>
+      <p style="margin: 0; font-size: 0.85rem; color: #94a3b8;">
+        Equal opportunity in technology, accessibility engineering, and executive communication.
+      </p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    function toggleHighContrast() {
+      document.body.classList.toggle('high-contrast-mode');
+      var isHC = document.body.classList.contains('high-contrast-mode');
+      document.body.style.filter = isHC ? 'contrast(1.4) brightness(1.1)' : 'none';
+    }
+
+    function changeFontSize(scale) {
+      document.body.style.fontSize = scale === 1.0 ? '100%' : (scale * 100) + '%';
+    }
+  </script>
+</body>
+</html>
