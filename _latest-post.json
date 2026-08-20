@@ -1,7 +1,7 @@
 {
-  "slug": "screen-reader-testing-guide",
-  "title": "How to Test Your Website with a Screen Reader - A Beginner's Guide",
-  "date": "2026-03-15",
-  "description": "A practical, step-by-step guide to testing your website with screen readers like NVDA and JAWS - written by someone who uses them every day.",
-  "url": "https://akhileshmalani.com/blog/screen-reader-testing-guide.html"
+  "slug": "amasamya-audit-complete-diff-announcement",
+  "title": "The audit-complete announcement should tell you what changed. So AMASAMYA does.",
+  "date": "2026-07-29",
+  "description": "AMASAMYA v4.3.0 concatenates the audit-complete announcement with the diff summary so NVDA and JAWS users hear what changed in one polite-region utterance. Why one utterance and not two, and why the sighted seat cannot verify this class of bug exists.",
+  "url": "https://akhileshmalani.com/blog/amasamya-audit-complete-diff-announcement.html"
 }

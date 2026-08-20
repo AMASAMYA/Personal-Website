@@ -1,18 +1,24 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "AMASAMYA - Accessibility Audit Tool",
-  "version": "2.0.0",
-  "description": "Blind-first accessibility audit tool. 13 WCAG 2.2 audit engines with accessible sidebar results. Built by Akhilesh Malani.",
+  "version": "5.3.0",
+  "description": "Blind-first WCAG 2.2, GIGW 3.0 & IS 17802 audit tool. VPAT 2.4 ACR exporter, site crawler, visual diffs, and accessible sidebar results.",
   "author": "Akhilesh Malani",
   "homepage_url": "https://amasamya.akhileshmalani.com",
 
   "permissions": [
     "activeTab",
+    "scripting",
     "tabs",
-    "storage"
+    "storage",
+    "alarms"
   ],
 
-  "browser_action": {
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "action": {
     "default_title": "Run AMASAMYA Audit (Ctrl+Shift+U)",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -32,10 +38,11 @@
   },
 
   "commands": {
-    "_execute_browser_action": {
+    "_execute_action": {
       "suggested_key": {
         "default": "Ctrl+Shift+U",
         "windows": "Ctrl+Shift+U",
+        "linux": "Ctrl+Shift+U",
         "mac": "Command+Shift+U"
       },
       "description": "Run AMASAMYA accessibility audit on the current page"
@@ -64,7 +71,10 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "AMASAMYA@akhileshmalani.com",
-      "strict_min_version": "109.0"
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   }
 }

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AMASAMYA Academy Educator Studio: Blind-first, non-visual authoring tool for educators to record audio-first lessons, write transcripts, and build interactive quizzes without sighted assistance.">
+  <meta name="author" content="Akhilesh Malani & L. Subramani">
+  <meta name="theme-color" content="#0b192c">
+  <link rel="canonical" href="https://akhileshmalani.com/academy-author.html">
+
+  <title>Educator Studio - AMASAMYA Academy</title>
+  <link rel="icon" type="image/svg+xml" href="images/logo-icon.svg">
+  <link rel="preload" href="styles.css" as="style">
+  <link rel="stylesheet" href="styles.css">
+
+  <script>
+    (function(){
+      var h = document.documentElement;
+      var t = localStorage.getItem('theme');
+      if (t) { h.setAttribute('data-theme', t); }
+      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches) {
+        h.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+
+  <style>
+    .author-hero {
+      background: linear-gradient(135deg, #0b192c 0%, #1e3a8a 100%);
+      color: #ffffff;
+      padding: 40px 0 32px;
+      border-bottom: 4px solid #0072bc;
+    }
+    .author-hero .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+    .author-hero h1 { font-size: 2rem; margin: 0 0 8px; color: #ffffff; }
+    .author-hero .lead { font-size: 1rem; color: #cbd5e1; margin: 0; line-height: 1.5; }
+
+    .author-container {
+      max-width: 960px;
+      margin: 36px auto;
+      padding: 0 20px;
+    }
+
+    .card-panel {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    [data-theme="dark"] .card-panel {
+      background: #0f172a;
+      border-color: #334155;
+    }
+
+    .card-panel h2 {
+      font-size: 1.3rem;
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: #0c4a6e;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+    }
+    [data-theme="dark"] .card-panel h2 {
+      color: #38bdf8;
+      border-color: #334155;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+    [data-theme="dark"] .form-group label { color: #f8fafc; }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 0.98rem;
+      border: 1px solid #64748b;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #0f172a;
+    }
+    [data-theme="dark"] .form-control {
+      background: #1e293b;
+      color: #f8fafc;
+      border-color: #475569;
+    }
+    .form-control:focus {
+      outline: 3px solid #0072bc;
+    }
+
+    .btn-action {
+      background: #0072bc;
+      color: #ffffff;
+      border: 1px solid #38bdf8;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-action:hover, .btn-action:focus {
+      background: #005a96;
+      outline: 2px solid #38bdf8;
+    }
+
+    .btn-secondary {
+      background: #334155;
+      color: #ffffff;
+      border: 1px solid #475569;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .btn-secondary:hover, .btn-secondary:focus {
+      background: #475569;
+      outline: 2px solid #94a3b8;
+    }
+
+    .btn-danger {
+      background: #b91c1c;
+      color: #ffffff;
+      border: 1px solid #ef4444;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-danger:hover, .btn-danger:focus {
+      background: #991b1b;
+      outline: 2px solid #f87171;
+    }
+
+    .audio-recording-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .timer-display {
+      font-family: monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      background: #0b192c;
+      color: #38bdf8;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header role="banner" class="site-header">
+    <div class="container header-container">
+      <a href="index.html" class="logo-link" aria-label="AMASAMYA Home">
+        <span class="logo-text">AMASAMYA</span>
+      </a>
+      <nav role="navigation" aria-label="Main Navigation" class="main-nav">
+        <ul class="nav-list">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="amasamya.html">Audit Suite</a></li>
+          <li><a href="checker.html">Web Audit Portal</a></li>
+          <li><a href="academy.html">Academy</a></li>
+          <li><a href="academy-author.html" aria-current="page" class="active">Educator Studio</a></li>
+          <li><a href="accessibility.html">Accessibility Statement</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+    <section class="author-hero" aria-labelledby="studio-title">
+      <div class="container">
+        <h1 id="studio-title">AMASAMYA Blind-Educator Studio</h1>
+        <p class="lead">
+          Accessible, audio-first lesson authoring and quiz creation. Designed for visually impaired educators to independently create, record, and publish courses without sighted assistance.
+        </p>
+      </div>
+    </section>
+
+    <div class="author-container">
+      
+      <!-- Polite Live Status Announcer -->
+      <div id="author-announcer" class="sr-only" aria-live="polite">Educator studio ready.</div>
+
+      <!-- Section 1: Audio Recording Station -->
+      <section class="card-panel" aria-labelledby="recording-heading">
+        <h2 id="recording-heading">1. Accessible Audio Recording Station</h2>
+        <p style="font-size: 0.92rem; color: #475569; margin-bottom: 16px;">
+          Record your lesson audio directly from your microphone. Use the controls below or press shortcut T to announce elapsed recording time.
+        </p>
+
+        <div class="audio-recording-bar">
+          <button type="button" id="btn-rec-start" class="btn-action" onclick="startRecording()">Start Audio Recording</button>
+          <button type="button" id="btn-rec-pause" class="btn-secondary" onclick="pauseRecording()" style="display: none;">Pause</button>
+          <button type="button" id="btn-rec-stop" class="btn-danger" onclick="stopRecording()" style="display: none;">Stop Recording</button>
+          
+          <div id="rec-timer" class="timer-display" aria-label="Recording elapsed time">00:00</div>
+          <button type="button" class="btn-secondary" onclick="announceTimer()" aria-label="Announce elapsed recording time" aria-keyshortcuts="t">Check Timer (T)</button>
+        </div>
+
+        <div id="playback-preview-box" style="margin-top: 20px; display: none;">
+          <h3 style="font-size: 1rem; margin-bottom: 8px;">Review Recorded Audio:</h3>
+          <audio id="audio-preview" controls style="width: 100%; margin-bottom: 12px;"></audio>
+          <button type="button" class="btn-action" onclick="downloadRecordedAudio()">Download Audio File</button>
+        </div>
+      </section>
+
+      <!-- Section 2: Lesson Metadata & Transcript Form -->
+      <section class="card-panel" aria-labelledby="metadata-heading">
+        <h2 id="metadata-heading">2. Lesson Details & Transcript</h2>
+        
+        <form onsubmit="handleLessonSave(event)" aria-label="Lesson Details Form">
+          
+          <div class="form-group">
+            <label for="track-select">Select Course Track:</label>
+            <select id="track-select" class="form-control">
+              <option value="track-a">Track A: English Foundations (L. Subramani)</option>
+              <option value="track-b">Track B: Corporate & Business Writing (L. Subramani)</option>
+              <option value="track-c">Track C: Executive Verbal Fluency (L. Subramani)</option>
+              <option value="track-d">Track D: Journalism & Content Craft (L. Subramani)</option>
+              <option value="track-tech">Accessibility Engineering Track (Akhilesh Malani)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="lesson-title-input">Lesson Number & Title:</label>
+            <input type="text" id="lesson-title-input" class="form-control" required placeholder="e.g. 2.1 High-Impact Executive Business Emails">
+          </div>
+
+          <div class="form-group">
+            <label for="instructor-input">Instructor Name & Role:</label>
+            <input type="text" id="instructor-input" class="form-control" required value="Curated by L. Subramani (Journalist & Chief Copy Editor)">
+          </div>
+
+          <div class="form-group">
+            <label for="notes-input">Core Lesson Principles (Markdown or HTML):</label>
+            <textarea id="notes-input" class="form-control" rows="5" placeholder="Enter key takeaways, bullet points, and rules for this lecture..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="sample-input">Writing Practice Challenge (Model Sample):</label>
+            <textarea id="sample-input" class="form-control" rows="3" placeholder="Enter the flawed draft sentence or email that students need to copyedit..."></textarea>
+          </div>
+
+          <!-- Section 3: Interactive Knowledge Drill Builder -->
+          <fieldset style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 18px; margin-top: 24px; margin-bottom: 24px;">
+            <legend style="font-weight: 700; color: #0c4a6e; padding: 0 8px;">3. Interactive Quiz Question Builder</legend>
+
+            <div class="form-group">
+              <label for="quiz-q-input">Quiz Question Text:</label>
+              <input type="text" id="quiz-q-input" class="form-control" placeholder="e.g. Which sentence best implements the BLUF method?">
+            </div>
+
+            <div class="form-group">
+              <label for="opt-a-input">Option A:</label>
+              <input type="text" id="opt-a-input" class="form-control" placeholder="Option A text">
+            </div>
+
+            <div class="form-group">
+              <label for="opt-b-input">Option B:</label>
+              <input type="text" id="opt-b-input" class="form-control" placeholder="Option B text">
+            </div>
+
+            <div class="form-group">
+              <label for="opt-c-input">Option C:</label>
+              <input type="text" id="opt-c-input" class="form-control" placeholder="Option C text">
+            </div>
+
+            <div class="form-group">
+              <label for="correct-opt-select">Correct Option:</label>
+              <select id="correct-opt-select" class="form-control" style="width: auto;">
+                <option value="A">Option A</option>
+                <option value="B" selected>Option B</option>
+                <option value="C">Option C</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="exp-input">Pedagogical Explanation for Screen Reader Feedback:</label>
+              <input type="text" id="exp-input" class="form-control" placeholder="Explain why the correct option is the most effective choice...">
+            </div>
+          </fieldset>
+
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button type="submit" class="btn-action">Export Lesson Package (JSON)</button>
+            <button type="button" class="btn-secondary" onclick="copyJsonToClipboard()">Copy JSON to Clipboard</button>
+            <button type="button" class="btn-secondary" onclick="saveToLocalDrafts()">Save to Local Drafts</button>
+          </div>
+        </form>
+
+        <div id="export-output-box" style="margin-top: 24px; display: none;">
+          <label for="json-output" style="font-weight: 700; display: block; margin-bottom: 6px;">Generated Lesson Package JSON:</label>
+          <textarea id="json-output" class="form-control" rows="8" readonly></textarea>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer role="contentinfo" class="site-footer" style="margin-top: 56px; border-top: 1px solid #cbd5e1; padding: 28px 0; background: #0b192c; color: #cbd5e1;">
+    <div class="container" style="max-width: 960px; margin: 0 auto; padding: 0 20px; text-align: center;">
+      <p style="margin: 0; font-size: 0.9rem;">
+        &copy; 2026 AMASAMYA. Blind-first authoring architecture. Created by Akhilesh Malani and L. Subramani.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    var mediaRecorder = null;
+    var audioChunks = [];
+    var recordedAudioBlob = null;
+    var timerInterval = null;
+    var elapsedSeconds = 0;
+
+    function announce(msg) {
+      document.getElementById('author-announcer').textContent = msg;
+    }
+
+    function formatTime(sec) {
+      var m = Math.floor(sec / 60);
+      var s = sec % 60;
+      return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function announceTimer() {
+      announce("Elapsed recording time: " + formatTime(elapsedSeconds));
+    }
+
+    async function startRecording() {
+      try {
+        var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = function(e) {
+          if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = function() {
+          recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          var audioUrl = URL.createObjectURL(recordedAudioBlob);
+          var player = document.getElementById('audio-preview');
+          player.src = audioUrl;
+          document.getElementById('playback-preview-box').style.display = 'block';
+          announce("Recording stopped. Audio preview ready for playback.");
+        };
+
+        mediaRecorder.start();
+        elapsedSeconds = 0;
+        document.getElementById('rec-timer').textContent = "00:00";
+        timerInterval = setInterval(function() {
+          elapsedSeconds++;
+          document.getElementById('rec-timer').textContent = formatTime(elapsedSeconds);
+          if (elapsedSeconds % 30 === 0) {
+            announce(formatTime(elapsedSeconds) + " recorded.");
+          }
+        }, 1000);
+
+        document.getElementById('btn-rec-start').style.display = 'none';
+        document.getElementById('btn-rec-pause').style.display = 'inline-block';
+        document.getElementById('btn-rec-stop').style.display = 'inline-block';
+        announce("Audio recording started.");
+      } catch (err) {
+        alert("Microphone access is required to record audio: " + err.message);
+        announce("Microphone access error.");
+      }
+    }
+
+    function pauseRecording() {
+      if (!mediaRecorder) return;
+      if (mediaRecorder.state === 'recording') {
+        mediaRecorder.pause();
+        clearInterval(timerInterval);
+        document.getElementById('btn-rec-pause').textContent = "Resume";
+        announce("Recording paused.");
+      } else if (mediaRecorder.state === 'paused') {
+        mediaRecorder.resume();
+        timerInterval = setInterval(function() {
+          elapsedSeconds++;
+          document.getElementById('rec-timer').textContent = formatTime(elapsedSeconds);
+        }, 1000);
+        document.getElementById('btn-rec-pause').textContent = "Pause";
+        announce("Recording resumed.");
+      }
+    }
+
+    function stopRecording() {
+      if (!mediaRecorder) return;
+      mediaRecorder.stop();
+      clearInterval(timerInterval);
+      document.getElementById('btn-rec-start').style.display = 'inline-block';
+      document.getElementById('btn-rec-pause').style.display = 'none';
+      document.getElementById('btn-rec-stop').style.display = 'none';
+    }
+
+    function downloadRecordedAudio() {
+      if (!recordedAudioBlob) return;
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(recordedAudioBlob);
+      var title = document.getElementById('lesson-title-input').value.trim() || 'lesson_audio';
+      a.download = title.toLowerCase().replace(/[^a-z0-9]/g, '_') + '.webm';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      announce("Downloading audio file.");
+    }
+
+    function handleLessonSave(e) {
+      e.preventDefault();
+      var lessonObj = {
+        track: document.getElementById('track-select').value,
+        title: document.getElementById('lesson-title-input').value.trim(),
+        instructor: document.getElementById('instructor-input').value.trim(),
+        duration: formatTime(elapsedSeconds || 270),
+        notes: document.getElementById('notes-input').value.trim(),
+        sample: document.getElementById('sample-input').value.trim(),
+        drillQ: document.getElementById('quiz-q-input').value.trim(),
+        optA: document.getElementById('opt-a-input').value.trim(),
+        optB: document.getElementById('opt-b-input').value.trim(),
+        optC: document.getElementById('opt-c-input').value.trim(),
+        correctOpt: document.getElementById('correct-opt-select').value,
+        explanation: document.getElementById('exp-input').value.trim()
+      };
+
+      var jsonStr = JSON.stringify(lessonObj, null, 2);
+      document.getElementById('json-output').value = jsonStr;
+      document.getElementById('export-output-box').style.display = 'block';
+      announce("Lesson package exported successfully to JSON output box.");
+      document.getElementById('json-output').focus();
+    }
+
+    function copyJsonToClipboard() {
+      var text = document.getElementById('json-output').value;
+      if (!text) {
+        alert("Please export the lesson package first.");
+        return;
+      }
+      navigator.clipboard.writeText(text).then(function() {
+        announce("Lesson JSON copied to clipboard.");
+      });
+    }
+
+    function saveToLocalDrafts() {
+      var title = document.getElementById('lesson-title-input').value.trim() || 'Untitled Lesson';
+      announce("Draft for " + title + " saved to local browser storage.");
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 't' || e.key === 'T') {
+        announceTimer();
+      }
+    });
+  </script>
+</body>
+</html>

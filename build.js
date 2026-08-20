@@ -423,6 +423,7 @@ var SITEMAP_SKIP_DIRS = new Set([
 var SITEMAP_PRIORITIES = {
   '':                       { priority: '1.0',  freq: 'weekly'  }, /* root index.html -> "/" */
   'amasamya.html':          { priority: '0.95', freq: 'monthly' },
+  'academy.html':           { priority: '0.95', freq: 'weekly'  },
   'checker.html':           { priority: '0.9',  freq: 'monthly' },
   'doc-checker.html':       { priority: '0.9',  freq: 'monthly' },
   'accessibility.html':     { priority: '0.6',  freq: 'monthly' },

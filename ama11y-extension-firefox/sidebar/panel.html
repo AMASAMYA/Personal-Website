@@ -3,35 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AMASAMYA Audit Results</title>
+  <title>AMASAMYA Audit Panel</title>
   <link rel="stylesheet" href="panel.css">
 </head>
 <body>
-  <!-- Skip Navigation -->
-  <a href="#findings-section" class="skip-link">Skip to findings</a>
 
-  <!-- Header -->
-  <header role="banner">
-    <div class="header-bar">
-      <h1 id="panel-title">AMASAMYA</h1>
-      <span class="version">v2.0.0</span>
-    </div>
-    <p id="page-info" class="page-info">Waiting for audit...</p>
-  </header>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <main id="main-content">
-    <!-- Live Region for screen reader announcements -->
-    <div id="live-region" aria-live="assertive" aria-atomic="true" class="sr-only"></div>
+<!--
+  Global live regions for screen-reader announcements.
+  Polite for routine status (filters cleared, export complete, audit
+  ready). Assertive for genuine errors and security-relevant alerts
+  that must interrupt whatever the user's screen reader is currently
+  reading. Splitting these stops every "Settings saved" cutting off
+  an NVDA/JAWS read of the findings table.
+-->
+<div id="live-region-polite"    aria-live="polite"    aria-atomic="true" class="sr-only"></div>
+<div id="live-region-assertive" aria-live="assertive" aria-atomic="true" class="sr-only"></div>
 
-    <!-- Summary Section -->
+<!-- Header -->
+<header role="banner">
+  <div class="header-bar">
+    <h1>AMASAMYA</h1>
+    <span class="version">v4.3</span>
+    <button id="close-panel-btn" type="button" class="btn btn-small close-panel-btn"
+            aria-label="Close AMASAMYA panel">Close</button>
+  </div>
+  <p id="page-info" class="page-info">Waiting for audit…</p>
+</header>
+
+<!-- Panel navigation tabs -->
+<nav aria-label="AMASAMYA panel sections" class="panel-nav">
+  <!-- v4.2.1 kbd/SR fix (K2): the arrow-key hint used to sit as a
+       <p> inside <ul> with hidden. Two problems: <p> is invalid
+       inside <ul>, and hidden removes it from the accessibility
+       tree so aria-describedby never resolved. Moved outside the
+       tablist and swapped hidden for the sr-only class so NVDA and
+       JAWS can read the hint when the user focuses the tab list. -->
+  <p id="panel-nav-hint" class="sr-only">Use Left and Right arrow keys to switch panels.</p>
+  <ul role="tablist" aria-label="Panel tabs" aria-orientation="horizontal"
+      aria-describedby="panel-nav-hint">
+    <li role="presentation">
+      <button class="panel-tab" role="tab" id="ptab-wcag"
+              aria-controls="ppanel-wcag" aria-selected="true" tabindex="0"
+              type="button">WCAG Audit</button>
+    </li>
+    <li role="presentation">
+      <button class="panel-tab" role="tab" id="ptab-visual"
+              aria-controls="ppanel-visual" aria-selected="false" tabindex="-1"
+              type="button">Visual Audit</button>
+    </li>
+    <li role="presentation">
+      <button class="panel-tab" role="tab" id="ptab-settings"
+              aria-controls="ppanel-settings" aria-selected="false" tabindex="-1"
+              type="button">Settings</button>
+    </li>
+    <!--
+      Site Crawl tab. Visibility is gated by SITE_CRAWL_ENABLED in
+      panel.js. While the flag is false (default in v4.0.x) panel.js
+      sets the li to hidden and removes the tab from the keyboard
+      navigation cycle, so users see and Tab through only three tabs.
+      Markup lives here so the v4.2.0 UI ships alongside the engine
+      modules and can be light-switched on by flipping the flag.
+    -->
+    <li role="presentation" id="ptab-crawl-item" hidden>
+      <button class="panel-tab" role="tab" id="ptab-crawl"
+              aria-controls="ppanel-crawl" aria-selected="false" tabindex="-1"
+              type="button">Site Crawl</button>
+    </li>
+  </ul>
+</nav>
+
+<main id="main-content" tabindex="-1">
+
+  <!-- ═══════════════════════════════════════════════
+       PANEL 1: WCAG AUDIT (existing)
+  ═══════════════════════════════════════════════ -->
+  <div role="tabpanel" id="ppanel-wcag" aria-labelledby="ptab-wcag" tabindex="-1">
+
     <section aria-labelledby="summary-heading">
       <h2 id="summary-heading">Summary</h2>
       <div id="summary-cards" class="summary-cards" role="region" aria-label="Finding counts">
-        <div class="card"><span class="count count-fail" id="count-fail">-</span><span class="label">Failures</span></div>
-        <div class="card"><span class="count count-warn" id="count-warn">-</span><span class="label">Warnings</span></div>
-        <div class="card"><span class="count count-pass" id="count-pass">-</span><span class="label">Passes</span></div>
-        <div class="card"><span class="count count-info" id="count-info">-</span><span class="label">Info</span></div>
-        <div class="card"><span class="count count-total" id="count-total">-</span><span class="label">Total</span></div>
+        <!--
+          tabindex=0 + aria-label lets screen-reader users Tab through
+          the count cards and hear each total without reading every
+          intervening heading. Counts are still visible to sighted users
+          inside the card span; aria-label is updated alongside the
+          number when the audit completes.
+        -->
+        <div class="card" tabindex="0" id="card-fail"  role="group" aria-label="Failures: 0"><span class="count count-fail" id="count-fail">-</span><span class="label">Failures</span></div>
+        <div class="card" tabindex="0" id="card-warn"  role="group" aria-label="Warnings: 0"><span class="count count-warn" id="count-warn">-</span><span class="label">Warnings</span></div>
+        <div class="card" tabindex="0" id="card-pass"  role="group" aria-label="Passes: 0"><span class="count count-pass" id="count-pass">-</span><span class="label">Passes</span></div>
+        <div class="card" tabindex="0" id="card-info"  role="group" aria-label="Info: 0"><span class="count count-info" id="count-info">-</span><span class="label">Info</span></div>
+        <div class="card" tabindex="0" id="card-total" role="group" aria-label="Total: 0"><span class="count count-total" id="count-total">-</span><span class="label">Total</span></div>
       </div>
       <div class="severity-row" role="region" aria-label="Severity breakdown">
         <span class="sev-badge sev-critical"><span id="sev-critical">0</span> Critical</span>
@@ -41,15 +105,12 @@
       </div>
     </section>
 
-    <!-- Filters Section -->
     <section aria-labelledby="filters-heading">
       <h2 id="filters-heading">Filters</h2>
       <div class="filters-row">
         <div class="filter-group">
           <label for="filter-engine">Engine</label>
-          <select id="filter-engine">
-            <option value="all">All Engines</option>
-          </select>
+          <select id="filter-engine"><option value="all">All Engines</option></select>
         </div>
         <div class="filter-group">
           <label for="filter-verdict">Verdict</label>
@@ -71,18 +132,25 @@
             <option value="Minor">Minor</option>
           </select>
         </div>
-        <button id="clear-filters" type="button" class="btn btn-small">Clear Filters</button>
+        <button id="clear-filters" type="button" class="btn btn-small">Clear</button>
       </div>
       <p id="filter-status" class="filter-status" aria-live="polite"></p>
     </section>
 
-    <!-- Findings Section -->
+    <!-- v4.3.0: When a previous audit exists for the current URL, the
+         panel renders a one-sentence summary through a polite live
+         region so JAWS/NVDA users hear the diff shape as soon as the
+         current audit finishes. Hidden by default; unhidden by
+         panel.js only when a diff has been computed. -->
+    <p id="diff-summary" class="diff-summary" aria-live="polite" hidden></p>
+
     <section id="findings-section" aria-labelledby="findings-heading">
       <h2 id="findings-heading">Findings <span id="findings-count"></span></h2>
       <div id="findings-container" role="region" aria-labelledby="findings-heading">
         <table id="findings-table" class="findings-table" aria-label="Accessibility audit findings">
           <thead>
             <tr>
+              <th scope="col" class="col-change" hidden>Change</th>
               <th scope="col">ID</th>
               <th scope="col">Engine</th>
               <th scope="col">Verdict</th>
@@ -91,33 +159,533 @@
             </tr>
           </thead>
           <tbody id="findings-body">
-            <tr><td colspan="5" class="empty-state">Press Alt+Shift+A on any page to run an audit.</td></tr>
+            <tr><td colspan="5" class="empty-state" id="empty-state-row">Press Alt+Shift+1 on any page to run an audit, or click the AMASAMYA toolbar icon. You can change the keyboard shortcut at chrome://extensions/shortcuts.</td></tr>
           </tbody>
         </table>
       </div>
     </section>
 
-    <!-- Export Section -->
+    <!-- v4.3.0: Audit History. Collapsed by default so users who do
+         not care about history are not visually or cognitively taxed.
+         Screen reader users get a "History" heading level for
+         predictable navigation. Loading an older audit swaps the
+         Findings table content for that audit's rows and computes the
+         diff against the current one. Storage is on-device only. -->
+    <section id="history-section" aria-labelledby="history-heading" class="history-section" hidden>
+      <h2 id="history-heading">Audit History</h2>
+      <details id="history-details">
+        <summary>Show past audits for this URL</summary>
+        <p id="history-desc" class="section-desc">
+          Older audits of the current URL are stored on your device only. Nothing is uploaded. Up to 10 audits per URL are kept; loading an older one compares it with the current one and shows what changed. When you delete history, it is gone from your device with no way to recover.
+        </p>
+        <div id="history-table-wrap" role="region" aria-labelledby="history-heading">
+          <table class="findings-table" aria-label="Past audits for this URL">
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                <th scope="col">Findings</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+        <div class="settings-actions history-actions">
+          <button id="history-clear-url-btn" type="button" class="btn btn-danger-sm">Clear history for this URL</button>
+          <button id="history-clear-all-btn" type="button" class="btn btn-danger-sm">Clear all AMASAMYA history</button>
+        </div>
+      </details>
+    </section>
+
     <section aria-labelledby="export-heading">
       <h2 id="export-heading">Export</h2>
       <div id="export-toolbar" role="toolbar" aria-label="Export formats" class="export-toolbar">
-        <button id="export-json" type="button" class="btn" disabled>JSON</button>
-        <button id="export-html" type="button" class="btn" disabled>HTML Report</button>
-        <button id="export-csv" type="button" class="btn" disabled>CSV</button>
-        <button id="export-text" type="button" class="btn" disabled>Plain Text</button>
+        <button id="export-json"       type="button" class="btn" disabled>JSON</button>
+        <button id="export-html"       type="button" class="btn" disabled>HTML</button>
+        <button id="export-csv"        type="button" class="btn" disabled>CSV</button>
+        <button id="export-text"       type="button" class="btn" disabled>Text</button>
+        <button id="export-vpat"       type="button" class="btn" disabled title="VPAT 2.4 / ACR Report mapped to WCAG 2.2, GIGW 3.0 & IS 17802">VPAT 2.4 ACR</button>
+        <button id="export-sarif"      type="button" class="btn" disabled title="SARIF 2.1.0 - for GitHub Code Scanning / CI">SARIF</button>
+        <button id="export-annotated"  type="button" class="btn btn-screenshot" disabled title="Annotated PNG screenshot with numbered issue boxes">Annotated screenshot</button>
+        <!-- v4.3.0: Diff CSV. Only enabled when a diff view is active,
+             writes just the New and Regressed rows so the file is
+             directly consumable as a ticket-import CSV. -->
+        <button id="export-diff-csv"   type="button" class="btn" hidden title="CSV with only the new and regressed findings vs a prior audit">Diff CSV (new + regressed)</button>
       </div>
     </section>
 
-    <!-- Re-audit Button -->
+    <section aria-labelledby="baseline-heading" class="baseline-section">
+      <h2 id="baseline-heading">Baseline</h2>
+      <div class="baseline-toolbar">
+        <button id="save-baseline-btn"    type="button" class="btn" disabled>💾 Save Baseline</button>
+        <button id="clear-baseline-btn"   type="button" class="btn btn-danger-sm" disabled title="Remove saved baseline for this URL">Clear</button>
+        <span   id="baseline-status"      class="baseline-status" aria-live="polite"></span>
+      </div>
+      <div id="regression-banner" class="regression-banner" hidden></div>
+    </section>
+
     <div class="reaudit-section">
       <button id="reaudit-btn" type="button" class="btn btn-primary">Re-run Audit</button>
     </div>
-  </main>
 
-  <footer role="contentinfo">
-    <p>AMASAMYA v2.0.0 - AMASAMYA.akhileshmalani.com - Private and Confidential</p>
-  </footer>
+  </div><!-- /ppanel-wcag -->
 
-  <script src="panel.js"></script>
+
+  <!-- ═══════════════════════════════════════════════
+       PANEL 2: VISUAL AUDIT
+         2a. Focus Indicator Narrator  (Module 2)
+         2b. Visual Layout Auditor     (Module 1)
+  ═══════════════════════════════════════════════ -->
+  <div role="tabpanel" id="ppanel-visual" aria-labelledby="ptab-visual" tabindex="-1" hidden>
+
+    <!-- ── 2a: Focus Indicator Narrator ── -->
+    <section aria-labelledby="fn-heading">
+      <h2 id="fn-heading">Focus Indicator Narrator</h2>
+      <p class="section-desc">
+        Tabs through every interactive element on the active page, takes a screenshot
+        at each focus state, and uses Vision AI to verify whether a visible focus
+        indicator is present and WCAG-compliant. Gives blind testers independence on
+        SC 2.4.7 and SC 2.4.11 checks.
+      </p>
+
+      <div class="action-bar">
+        <button id="fn-run-btn" type="button" class="btn btn-primary">
+          Run Focus Audit
+        </button>
+        <button id="fn-export-btn" type="button" class="btn" disabled>
+          Export CSV
+        </button>
+      </div>
+
+      <!-- Progress. v4.2.1 K5: aria-live moved from the wrapper (which
+           starts hidden and only becomes live at insertion time; NVDA
+           may not track this reliably) onto the label paragraph itself,
+           which is always present in the a11y tree even while the
+           wrapper is hidden. aria-atomic ensures the full sentence is
+           spoken on each update instead of a diff. -->
+      <div id="fn-progress-wrap" hidden class="progress-wrap">
+        <div class="progress-bar-track" role="progressbar"
+             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+             aria-label="Focus audit progress" id="fn-progress-bar">
+          <div class="progress-bar-fill" id="fn-progress-fill" style="width:0%"></div>
+        </div>
+        <p id="fn-progress-label" class="progress-label"
+           aria-live="polite" aria-atomic="true">Starting.</p>
+      </div>
+
+      <!-- Results -->
+      <div id="fn-results-wrap" hidden>
+        <h3 id="fn-results-heading" class="results-subheading">
+          Focus Audit Results - <span id="fn-page-title"></span>
+        </h3>
+        <div id="fn-summary-strip" class="fn-summary-strip" role="region" aria-label="Focus audit summary">
+          <span id="fn-count-pass"  class="fn-badge fn-pass">0 Pass</span>
+          <span id="fn-count-fail"  class="fn-badge fn-fail">0 Fail</span>
+          <span id="fn-count-warn"  class="fn-badge fn-warn">0 Warning</span>
+          <span id="fn-count-total" class="fn-badge fn-total">0 Checked</span>
+        </div>
+        <div role="region" aria-labelledby="fn-results-heading" style="overflow-x:auto;">
+          <table class="findings-table" aria-label="Focus indicator findings">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Element</th>
+                <th scope="col">Label / Text</th>
+                <th scope="col">Verdict</th>
+                <th scope="col">Indicator</th>
+                <th scope="col">SC 2.4.7</th>
+                <th scope="col">SC 2.4.11</th>
+                <th scope="col">Description</th>
+              </tr>
+            </thead>
+            <tbody id="fn-results-body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <hr class="module-divider" aria-hidden="true">
+
+    <!-- ── 2b: Visual Layout Auditor ── -->
+    <section aria-labelledby="vla-heading">
+      <h2 id="vla-heading">Visual Layout Auditor</h2>
+      <p class="section-desc">
+        Emulates four viewport widths (320px, 375px, 768px, 1280px), captures a
+        screenshot at each breakpoint, and uses Vision AI to detect overlapping
+        elements, clipped content, reflow failures, and small touch targets.
+        Covers WCAG 1.4.10 (Reflow) and SC 2.5.5 (Target Size) visually.
+      </p>
+
+      <div class="action-bar">
+        <button id="vla-run-btn" type="button" class="btn btn-primary">
+          Run Layout Audit
+        </button>
+        <button id="vla-export-btn" type="button" class="btn" disabled>
+          Export Report
+        </button>
+      </div>
+
+      <!-- Progress. v4.2.1 K5: same rationale as the Focus Narrator
+           progress region above - aria-live lives on the persistent
+           label element. -->
+      <div id="vla-progress-wrap" hidden class="progress-wrap">
+        <div class="progress-bar-track" role="progressbar"
+             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+             aria-label="Layout audit progress" id="vla-progress-bar">
+          <div class="progress-bar-fill" id="vla-progress-fill" style="width:0%"></div>
+        </div>
+        <p id="vla-progress-label" class="progress-label"
+           aria-live="polite" aria-atomic="true">Starting.</p>
+      </div>
+
+      <!-- Results -->
+      <div id="vla-results-wrap" hidden>
+        <h3 id="vla-results-heading" class="results-subheading">
+          Layout Audit Results - <span id="vla-page-title"></span>
+        </h3>
+        <div id="vla-breakpoints-container" class="vla-bps">
+          <!-- Populated by JS: one card per breakpoint -->
+        </div>
+      </div>
+    </section>
+
+    <hr class="module-divider" aria-hidden="true">
+
+    <!-- ── 2c: State Change Watchdog ── -->
+    <section aria-labelledby="scw-heading">
+      <h2 id="scw-heading">State Change Watchdog</h2>
+      <p class="section-desc">
+        Monitors the active page in real time using a MutationObserver. Detects dynamic
+        content additions, ARIA state changes, dialog appearances, and hidden-attribute
+        toggles - then checks whether each change is correctly surfaced to assistive
+        technology via live regions or focus management. Covers WCAG SC 4.1.3 (Status
+        Messages) and SC 2.4.3 (Focus Order).
+      </p>
+
+      <div class="action-bar">
+        <button id="scw-start-btn" type="button" class="btn btn-primary">
+          Start Monitoring
+        </button>
+        <button id="scw-stop-btn" type="button" class="btn" disabled>
+          Stop
+        </button>
+        <button id="scw-clear-btn" type="button" class="btn btn-small" disabled>
+          Clear
+        </button>
+        <button id="scw-export-btn" type="button" class="btn" disabled>
+          Export CSV
+        </button>
+      </div>
+
+      <!-- Live status line -->
+      <p id="scw-status" class="scw-status" aria-live="polite"></p>
+
+      <!-- Results -->
+      <div id="scw-results-wrap" hidden>
+        <h3 id="scw-results-heading" class="results-subheading">
+          State Change Events -
+          <span id="scw-event-count">0</span> detected
+        </h3>
+        <div id="scw-summary-strip" class="fn-summary-strip" role="region"
+             aria-label="State change event summary">
+          <span id="scw-count-fail"  class="fn-badge fn-fail">0 Fail</span>
+          <span id="scw-count-warn"  class="fn-badge fn-warn">0 Warning</span>
+          <span id="scw-count-info"  class="fn-badge fn-total">0 Info</span>
+        </div>
+        <div role="region" aria-labelledby="scw-results-heading" style="overflow-x:auto;">
+          <table class="findings-table" aria-label="State change events">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Time</th>
+                <th scope="col">Verdict</th>
+                <th scope="col">Type</th>
+                <th scope="col">Element</th>
+                <th scope="col">WCAG SC</th>
+                <th scope="col">Description</th>
+              </tr>
+            </thead>
+            <tbody id="scw-results-body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /ppanel-visual -->
+
+
+  <!-- ═══════════════════════════════════════════════
+       PANEL 3: SETTINGS
+  ═══════════════════════════════════════════════ -->
+  <div role="tabpanel" id="ppanel-settings" aria-labelledby="ptab-settings" tabindex="-1" hidden>
+
+    <section aria-labelledby="settings-heading">
+      <h2 id="settings-heading">Vision AI Settings</h2>
+      <p class="section-desc">
+        Focus Narrator and Visual Layout Auditor send screenshots to a Vision LLM for
+        analysis. Add at least one API key. Keys are stored locally in the extension
+        and never transmitted anywhere except the selected provider.
+      </p>
+
+      <fieldset class="settings-fieldset">
+        <legend>AI Provider</legend>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="vision-provider" id="provider-gemini" value="gemini" checked>
+            Google Gemini (free tier - easiest to set up)
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="vision-provider" id="provider-anthropic" value="anthropic">
+            Anthropic (Claude - highest quality)
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="vision-provider" id="provider-openai" value="openai">
+            OpenAI (GPT-4o)
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="settings-field">
+        <label for="gemini-key">Google Gemini API Key</label>
+        <input type="password" id="gemini-key" class="key-input"
+               placeholder="AIza…" autocomplete="off"
+               aria-describedby="gemini-key-hint">
+        <p id="gemini-key-hint" class="field-hint">
+          Get your key at aistudio.google.com/app/apikey. Free tier includes generous daily usage at no cost. Used for Gemini Vision analysis.
+        </p>
+      </div>
+
+      <div class="settings-field">
+        <label for="anthropic-key">Anthropic API Key</label>
+        <input type="password" id="anthropic-key" class="key-input"
+               placeholder="sk-ant-…" autocomplete="off"
+               aria-describedby="anthropic-key-hint">
+        <p id="anthropic-key-hint" class="field-hint">
+          Get your key at console.anthropic.com. Paid, highest quality. Used for Claude Vision analysis.
+        </p>
+      </div>
+
+      <div class="settings-field">
+        <label for="openai-key">OpenAI API Key</label>
+        <input type="password" id="openai-key" class="key-input"
+               placeholder="sk-…" autocomplete="off"
+               aria-describedby="openai-key-hint">
+        <p id="openai-key-hint" class="field-hint">
+          Get your key at platform.openai.com. Paid. Used for GPT-4o Vision analysis.
+        </p>
+      </div>
+
+      <div class="settings-actions">
+        <button id="save-settings-btn" type="button" class="btn btn-primary">Save Settings</button>
+        <button id="clear-settings-btn" type="button" class="btn btn-danger">Clear Keys</button>
+      </div>
+
+      <p id="settings-status" class="settings-status" aria-live="polite"></p>
+    </section>
+
+    <section aria-labelledby="about-heading">
+      <h2 id="about-heading">About</h2>
+      <p class="section-desc">
+        AMASAMYA v4.3 - Built by Akhilesh Malani, Accessibility Architect &amp;
+        Digital Inclusion Strategist.<br>
+        <a href="https://amasamya.akhileshmalani.com" target="_blank" rel="noopener"
+           aria-label="Visit AMASAMYA.akhileshmalani.com (opens in a new tab)">
+          AMASAMYA.akhileshmalani.com
+        </a>
+      </p>
+    </section>
+
+  </div><!-- /ppanel-settings -->
+
+
+  <!-- ═══════════════════════════════════════════════
+       PANEL 4: SITE CRAWL (v4.2.0)
+       Hidden by default. panel.js exposes this when
+       SITE_CRAWL_ENABLED is true. Auditor flow:
+         1. Pick URL source (sitemap.xml or paste list)
+         2. Press Start crawl
+         3. Watch progress, with per-page status
+         4. On completion, results summary + export
+  ═══════════════════════════════════════════════ -->
+  <div role="tabpanel" id="ppanel-crawl" aria-labelledby="ptab-crawl" tabindex="-1" hidden>
+
+    <section aria-labelledby="crawl-heading">
+      <h2 id="crawl-heading">Audit a whole website (Site Crawl)</h2>
+      <p class="section-desc">
+        This runs the AMASAMYA audit on many pages of a website, one
+        after another, instead of just the page you are on. The
+        results go to the AMASAMYA web platform if you have it open
+        in another tab. Up to 200 pages per run.
+      </p>
+
+      <fieldset class="settings-fieldset">
+        <legend>Which pages do you want to check?</legend>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="crawl-source" id="crawl-src-list" value="list" checked>
+            I will paste the page addresses myself (works on any site)
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="crawl-source" id="crawl-src-sitemap" value="sitemap">
+            Let AMASAMYA find the pages from the website's own list (only works on sites that publish a list)
+          </label>
+        </div>
+        <p class="field-hint" style="margin-top:8px;">
+          If you are not sure which option to pick, choose the first one
+          and paste 3 or 4 page addresses to start.
+        </p>
+      </fieldset>
+
+      <!-- v4.2.1 UX:
+           - Pasted-URL-list is now the default because it works on every
+             site, including large e-commerce and banking sites that
+             block sitemap access.
+           - type="text" + inputmode="url" + autocomplete="off" stops
+             Chrome's URL autocomplete dropdown from intercepting Left /
+             Right arrow keys, which was making focus jump for JAWS
+             users reading the field character by character.
+           - role="application" on each field wrapper: Chrome side
+             panels do not always trigger JAWS / NVDA auto-forms-mode
+             when Tab lands on a text field, so arrow keys were being
+             consumed by the virtual PC cursor and moving the reading
+             cursor off the field. role="application" tells the screen
+             reader to pass keys straight to the control inside that
+             wrapper. Scoped tightly (one field per wrapper) so
+             everything outside - radio group, headings, links - keeps
+             normal virtual-cursor navigation. -->
+      <div class="settings-field" id="crawl-list-wrap" role="application">
+        <label for="crawl-url-list">Page addresses to check, one per line</label>
+        <textarea id="crawl-url-list" rows="8" class="key-input"
+                  autocomplete="off" spellcheck="false"
+                  placeholder="https://example.com/&#10;https://example.com/about&#10;https://example.com/contact"
+                  aria-describedby="crawl-list-hint"></textarea>
+        <p id="crawl-list-hint" class="field-hint">
+          Each line must start with https:// or http://. Up to 200
+          addresses. If you paste more, the extra ones are ignored
+          with a notice before the audit starts.
+        </p>
+      </div>
+
+      <div class="settings-field" id="crawl-sitemap-wrap" role="application" hidden>
+        <label for="crawl-sitemap-url">Website address (homepage URL)</label>
+        <input type="text" inputmode="url"
+               id="crawl-sitemap-url" class="key-input"
+               autocomplete="off" spellcheck="false"
+               placeholder="https://example.com"
+               aria-describedby="crawl-sitemap-hint">
+        <p id="crawl-sitemap-hint" class="field-hint">
+          AMASAMYA tries to read the website's published list of pages
+          (called a sitemap). This works on most marketing and content
+          sites. Large stores like Amazon and most banks block this on
+          purpose; for those sites, switch to the first option above
+          and paste the page addresses yourself.
+        </p>
+      </div>
+
+      <div class="settings-actions">
+        <button id="crawl-start-btn"  type="button" class="btn btn-primary">Start crawl</button>
+        <button id="crawl-cancel-btn" type="button" class="btn btn-danger" hidden>Cancel crawl</button>
+      </div>
+
+      <p id="crawl-status" class="settings-status" aria-live="polite"></p>
+
+      <!--
+        Progress region. The visual bar is decorative for sighted
+        users. The accessible state is carried by:
+          1. role="progressbar" with aria-valuenow + aria-valuetext on
+             the track, so NVDA / JAWS announce the percent + context
+             when the user navigates to it directly.
+          2. aria-live="polite" + aria-atomic="true" on the label, so
+             updates are spoken without the user having to seek out
+             the control.
+        The label phrasing is short enough that polite queues do not
+        back up on fast crawls.
+      -->
+      <div id="crawl-progress-wrap" hidden class="progress-wrap"
+           role="region" aria-label="Crawl progress">
+        <div class="progress-bar-track" role="progressbar"
+             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+             aria-valuetext="Not started"
+             aria-label="Crawl progress" id="crawl-progress-bar">
+          <div class="progress-bar-fill" id="crawl-progress-fill" style="width:0%"></div>
+        </div>
+        <p id="crawl-progress-label" class="progress-label"
+           aria-live="polite" aria-atomic="true">Starting.</p>
+      </div>
+
+      <!-- Results -->
+      <div id="crawl-results-wrap" hidden>
+        <h3 id="crawl-results-heading" class="results-subheading">
+          Crawl results - <span id="crawl-pages-completed">0</span> of <span id="crawl-pages-total">0</span> pages audited
+        </h3>
+        <div id="crawl-summary-strip" class="fn-summary-strip" role="region" aria-label="Crawl summary">
+          <span id="crawl-count-audited"  class="fn-badge fn-pass">0 Audited</span>
+          <span id="crawl-count-auth"     class="fn-badge fn-warn">0 Auth wall</span>
+          <span id="crawl-count-timeout"  class="fn-badge fn-fail">0 Timed out</span>
+          <span id="crawl-count-error"    class="fn-badge fn-fail">0 Errors</span>
+        </div>
+        <div role="region" aria-labelledby="crawl-results-heading" style="overflow-x:auto;">
+          <table class="findings-table" aria-label="Per-page crawl results">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">URL</th>
+                <th scope="col">Status</th>
+                <th scope="col">Duration</th>
+              </tr>
+            </thead>
+            <tbody id="crawl-results-body"></tbody>
+          </table>
+        </div>
+        <div class="settings-actions">
+          <button id="crawl-export-btn" type="button" class="btn">Export crawl report (JSON)</button>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /ppanel-crawl -->
+
+</main>
+
+<footer role="contentinfo">
+  <p>AMASAMYA v4.3 - Private and Confidential</p>
+</footer>
+
+<!-- v4.2.1: Close-confirmation dialog. Shown whenever the user tries
+     to close the panel via the header Close button or by pressing
+     Escape. Explicit confirmation guards against accidental
+     dismissal (Escape is a common finger-slip for screen-reader users
+     who are trying to clear a JAWS message). Focus starts on Cancel
+     so a stray Enter after triggering close does not confirm. The
+     dialog uses role=dialog + aria-modal=true and traps Tab inside
+     itself while open. -->
+<div id="close-confirm-dialog"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="close-confirm-title"
+     aria-describedby="close-confirm-desc"
+     hidden>
+  <div class="dialog-backdrop" aria-hidden="true"></div>
+  <div class="dialog-body">
+    <h2 id="close-confirm-title">Close AMASAMYA panel?</h2>
+    <p id="close-confirm-desc">
+      The panel will close and any findings that are not exported will
+      be lost. To open AMASAMYA again, activate the toolbar icon or
+      press the AMASAMYA keyboard shortcut.
+    </p>
+    <div class="dialog-actions">
+      <button type="button" id="close-confirm-cancel" class="btn btn-primary">
+        Cancel, keep panel open
+      </button>
+      <button type="button" id="close-confirm-yes" class="btn btn-danger">
+        Yes, close the panel
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="panel.js"></script>
 </body>
 </html>

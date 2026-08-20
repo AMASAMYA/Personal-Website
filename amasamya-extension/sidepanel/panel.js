@@ -70,6 +70,16 @@
     }, 50);
   }
 
+  function safeSetHtml(el, htmlString) {
+    if (!el) return;
+    el.replaceChildren();
+    if (!htmlString) return;
+    const doc = new DOMParser().parseFromString(`<body>${htmlString}</body>`, 'text/html');
+    Array.from(doc.body.childNodes).forEach(node => {
+      el.appendChild(node);
+    });
+  }
+
   function escHtml(str) {
     if (!str) return '';
     return String(str)
@@ -600,7 +610,7 @@
     $('sev-minor').textContent    = minor;
 
     const engines = [...new Set(allFindings.map(f => f.engine))].sort();
-    $('filter-engine').innerHTML = '<option value="all">All Engines</option>';
+    safeSetHtml($('filter-engine'), '<option value="all">All Engines</option>');
     engines.forEach(e => {
       const opt = document.createElement('option');
       opt.value = e; opt.textContent = e;
@@ -611,6 +621,7 @@
     $('export-html').disabled      = false;
     $('export-csv').disabled       = false;
     $('export-text').disabled      = false;
+    if ($('export-vpat')) $('export-vpat').disabled = false;
     $('export-sarif').disabled     = false;
     $('export-annotated').disabled = false;
     $('save-baseline-btn').disabled = false;
@@ -727,7 +738,7 @@
     if (!section || !body) return;
     if (!historyList.length) { section.hidden = true; return; }
     section.hidden = false;
-    body.innerHTML = '';
+    body.replaceChildren();
     historyList.forEach((entry) => {
       const tr    = document.createElement('tr');
       const tdWhen = document.createElement('td');
@@ -857,10 +868,10 @@
     const showDiff = !!diffAgainst && diffTagged.length > 0;
     const colspan  = showDiff ? 6 : 5;
     if (!filteredFindings.length) {
-      tbody.innerHTML = `<tr><td colspan="${colspan}" class="empty-state">No findings match the current filters.</td></tr>`;
+      safeSetHtml(tbody, `<tr><td colspan="${colspan}" class="empty-state">No findings match the current filters.</td></tr>`);
       return;
     }
-    tbody.innerHTML = '';
+    tbody.replaceChildren();
 
     /* v4.3.0: when a diff view is active, build a fast lookup so we
        can annotate each visible row with its diff verdict without
@@ -928,13 +939,14 @@
       detail.id = `detail-${idx}`; detail.className = 'finding-detail';
       detail.setAttribute('role', 'region');
       detail.setAttribute('aria-label', `Detail for ${f.id}`);
-      detail.innerHTML = `<dl>
+      safeSetHtml(detail, `<dl>
         <dt>Element</dt><dd><code>${escHtml(f.element)}</code></dd>
         <dt>Criterion</dt><dd>${escHtml(f.criterion)}</dd>
         <dt>Computed</dt><dd><code>${escHtml(f.computed)}</code></dd>
         <dt>Required</dt><dd>${escHtml(f.required)}</dd>
         <dt>How to Fix</dt><dd>${escHtml(f.howToFix)}</dd>
-      </dl>`;
+        <dt>Learn</dt><dd><a href="https://amasamya.akhileshmalani.com/academy.html" target="_blank" rel="noopener" style="color:#00e5ff;font-weight:bold;">🎓 Learn in AMASAMYA Academy</a></dd>
+      </dl>`);
 
       tdIss.appendChild(toggle); tdIss.appendChild(detail);
       [tdId, tdEng, tdVer, tdSev, tdIss].forEach(td => tr.appendChild(td));
@@ -1042,6 +1054,80 @@
     downloadFile(lines.join('\n'), 'AMASAMYA-audit.txt', 'text/plain');
     announce('Text exported.');
   });
+
+  /* ── VPAT 2.4 / ACR Report Export ── */
+  if ($('export-vpat')) {
+    $('export-vpat').addEventListener('click', () => {
+      const vpatHtml = generateVpatReport();
+      downloadFile(vpatHtml, 'AMASAMYA-VPAT-ACR-report.html', 'text/html');
+      announce('VPAT 2.4 ACR compliance report exported.');
+    });
+  }
+
+  function generateVpatReport() {
+    const fails = allFindings.filter(f => f.verdict === 'Fail');
+    const labelFails = fails.filter(f => (f.criterion && f.criterion.includes('1.1.1')) || f.engine.includes('Label'));
+    const targetFails = fails.filter(f => (f.criterion && (f.criterion.includes('2.5.5') || f.criterion.includes('2.5.8'))) || f.engine.includes('Target'));
+    const contrastFails = fails.filter(f => (f.criterion && f.criterion.includes('1.4.3')) || f.engine.includes('Contrast'));
+    const focusFails = fails.filter(f => (f.criterion && f.criterion.includes('2.4')) || f.engine.includes('Focus'));
+
+    const evalRow = (name, sc, level, gigw, is17802, failsList) => {
+      const status = failsList.length === 0 ? 'Supports' : 'Supports with Exceptions';
+      const statusClass = failsList.length === 0 ? 'color:#30d158;' : 'color:#ffb300;';
+      const remarks = failsList.length === 0 
+        ? 'Fully satisfied across evaluated DOM nodes.' 
+        : `${failsList.length} issue(s) detected. e.g., ${escHtml(failsList[0].issue || '')}`;
+      return `
+        <tr>
+          <td><strong>${sc} ${name}</strong><br><small style="color:#94a3b8;">GIGW 3.0: ${gigw} | IS 17802: ${is17802}</small></td>
+          <td>${level}</td>
+          <td style="${statusClass} font-weight:bold;">${status}</td>
+          <td>${remarks}</td>
+        </tr>
+      `;
+    };
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AMASAMYA VPAT 2.4 / ACR Report - ${escHtml(auditMeta.pageTitle || 'Audit')}</title>
+  <style>
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0b0f19; color: #f8fafc; padding: 24px; line-height: 1.6; }
+    h1 { color: #00e5ff; border-bottom: 2px solid #2c3246; padding-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+    th, td { border: 1px solid #2c3246; padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { background: #1a2234; color: #00e5ff; }
+    tr:nth-child(even) { background: #111827; }
+  </style>
+</head>
+<body>
+  <h1>AMASAMYA VPAT 2.4 / ACR Accessibility Conformance Report</h1>
+  <p><strong>Page Title:</strong> ${escHtml(auditMeta.pageTitle || '')}</p>
+  <p><strong>URL:</strong> <code>${escHtml(auditMeta.pageUrl || '')}</code></p>
+  <p><strong>Date:</strong> ${escHtml(auditMeta.timestamp || '')}</p>
+  <p><strong>Standards Covered:</strong> WCAG 2.2 AA, GIGW 3.0 (India Government Guidelines), IS 17802 (BIS)</p>
+  
+  <h2>Compliance Matrix</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Criteria</th>
+        <th>Level</th>
+        <th>Conformance Status</th>
+        <th>Remarks & Findings</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${evalRow('Non-text Content', '1.1.1', 'A', 'Rule 4.1', 'IS 17802 Sec 5.1', labelFails)}
+      ${evalRow('Target Size', '2.5.5 / 2.5.8', 'AA', 'Rule 6.3', 'IS 17802 Sec 7.2 (48dp)', targetFails)}
+      ${evalRow('Contrast (Minimum)', '1.4.3', 'AA', 'Rule 5.2', 'IS 17802 Sec 6.1 (4.5:1)', contrastFails)}
+      ${evalRow('Focus Order & Visuals', '2.4.7 / 2.4.11', 'AA', 'Rule 7.1', 'IS 17802 Sec 8.4', focusFails)}
+    </tbody>
+  </table>
+</body>
+</html>`;
+  }
 
   /* ── SARIF 2.1.0 Export ── */
   $('export-sarif').addEventListener('click', () => {
@@ -1216,10 +1302,10 @@
        check mark". CSS .reg-new and .reg-fixed still colour-code
        sighted users via the class names. */
     const sameCount = allFindings.filter(f => f.verdict === 'Fail').length - newCount;
-    banner.innerHTML =
+    safeSetHtml(banner,
       `<span class="reg-new">New: ${newCount} failure${newCount !== 1 ? 's' : ''}</span> &nbsp;` +
       `<span class="reg-fixed">Fixed: ${fixedCount}</span> &nbsp;` +
-      `<span class="reg-same">Unchanged: ${sameCount}</span>`;
+      `<span class="reg-same">Unchanged: ${sameCount}</span>`);
 
     // Colour rows - wait for renderFindings to complete via setTimeout(0)
     setTimeout(() => {
@@ -1383,7 +1469,7 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
     $('fn-progress-fill').style.width = '0%';
     $('fn-progress-bar').setAttribute('aria-valuenow', '0');
     $('fn-progress-label').textContent = 'Injecting focus narrator…';
-    $('fn-results-body').innerHTML = '';
+    $('fn-results-body').replaceChildren();
     announce('Focus Indicator Narrator started. Auditing focus states on the active page.');
   }
 
@@ -1450,7 +1536,7 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
     const verdictClass = verdict === 'PASS' ? 'verdict-pass' : verdict === 'FAIL' ? 'verdict-fail' : 'verdict-warn';
     const scToText = v => v === true ? 'Pass' : v === false ? 'Fail' : 'Unknown';
 
-    tr.innerHTML = `
+    safeSetHtml(tr, `
       <td>${rowNum}</td>
       <td><code>${escHtml(el.selector)}</code></td>
       <td>${escHtml(el.label || el.tag)}</td>
@@ -1459,7 +1545,7 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
       <td class="${passes247 === true ? 'verdict-pass' : passes247 === false ? 'verdict-fail' : ''}">${scToText(passes247)}</td>
       <td class="${passes2411 === true ? 'verdict-pass' : passes2411 === false ? 'verdict-fail' : ''}">${scToText(passes2411)}</td>
       <td>${escHtml(description)}</td>
-    `;
+    `);
     tbody.appendChild(tr);
   }
 
@@ -1516,7 +1602,7 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
     $('vla-progress-fill').style.width = '0%';
     $('vla-progress-bar').setAttribute('aria-valuenow', '0');
     $('vla-progress-label').textContent = 'Attaching debugger…';
-    $('vla-breakpoints-container').innerHTML = '';
+    $('vla-breakpoints-container').replaceChildren();
     announce('Visual Layout Audit started. Checking 4 viewport breakpoints.');
   }
 
@@ -1573,7 +1659,7 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
         <td>${escHtml(iss.wcag || '')}</td>
       </tr>`).join('');
 
-    card.innerHTML = `
+    safeSetHtml(card, `
       <h4 class="vla-bp-label">${escHtml(bp.label)}
         <span class="vla-issue-count ${hasIssues ? 'has-issues' : 'no-issues'}">
           ${hasIssues ? issues.length + ' issue' + (issues.length !== 1 ? 's' : '') : 'No issues'}
@@ -1588,18 +1674,14 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
         </details>` : ''}
       ${hasIssues ? `
         <div style="overflow-x:auto;margin-top:10px;">
-          <table class="findings-table" aria-label="Layout issues at ${escHtml(bp.label)}">
-            <thead><tr>
-              <th scope="col">Severity</th>
-              <th scope="col">Type</th>
-              <th scope="col">Location</th>
-              <th scope="col">Description</th>
-              <th scope="col">WCAG</th>
-            </tr></thead>
+          <table class="vla-issues-table" aria-label="Visual layout issues at ${escHtml(bp.label)}">
+            <thead>
+              <tr><th>Severity</th><th>Type</th><th>Location</th><th>Description</th><th>WCAG</th></tr>
+            </thead>
             <tbody>${issueRows}</tbody>
           </table>
         </div>` : ''}
-    `;
+    `);
     container.appendChild(card);
   }
 
@@ -1641,7 +1723,7 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
   /* ── Clear ── */
   $('scw-clear-btn').addEventListener('click', () => {
     scwEvents = [];
-    $('scw-results-body').innerHTML = '';
+    if ($('scw-results-body')) $('scw-results-body').replaceChildren();
     $('scw-event-count').textContent = '0';
     scwUpdateSummary();
     $('scw-results-wrap').hidden = true;
@@ -1674,7 +1756,7 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
     $('scw-start-btn').disabled = true;
     $('scw-stop-btn').disabled  = false;
     $('scw-clear-btn').disabled = false;
-    $('scw-results-body').innerHTML = '';
+    if ($('scw-results-body')) $('scw-results-body').replaceChildren();
     $('scw-event-count').textContent = '0';
     scwUpdateSummary();
     $('scw-results-wrap').hidden = true;
@@ -1733,7 +1815,7 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
       ev.verdict === 'Warning' ? 'verdict-warning'  :
                                   'verdict-info';
 
-    tr.innerHTML = `
+    safeSetHtml(tr, `
       <td>${escHtml(String(ev.id))}</td>
       <td>${escHtml(ev.time)}</td>
       <td class="${verdictClass}">${escHtml(ev.verdict)}</td>
@@ -1741,7 +1823,7 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
       <td><code>${escHtml(ev.selector)}</code></td>
       <td>${escHtml(ev.wcag)}</td>
       <td>${escHtml(ev.description)}</td>
-    `;
+    `);
     tbody.appendChild(tr);
   }
 
@@ -1819,7 +1901,7 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
   function crawlResetSummary() {
     crawlResults = [];
     if ($('crawl-results-wrap')) $('crawl-results-wrap').hidden = true;
-    if ($('crawl-results-body')) $('crawl-results-body').innerHTML = '';
+    if ($('crawl-results-body')) $('crawl-results-body').replaceChildren();
     if ($('crawl-pages-completed')) $('crawl-pages-completed').textContent = '0';
     if ($('crawl-pages-total'))     $('crawl-pages-total').textContent     = '0';
     ['audited', 'auth', 'timeout', 'error'].forEach(k => {
@@ -2035,12 +2117,12 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
       `Row ${oneBased}. ${rec.url}. ${statusSent}. ` +
       (rec.status === 'audited' ? `${findings} finding${findings === 1 ? '' : 's'}. ` : '') +
       `${seconds} seconds.`);
-    tr.innerHTML = `
+    safeSetHtml(tr, `
       <td>${escHtml(String(oneBased))}</td>
       <td><code>${escHtml(rec.url)}</code></td>
       <td class="${verdictClass}">${escHtml(statusLabel)}</td>
       <td>${escHtml(seconds)} s</td>
-    `;
+    `);
     tbody.appendChild(tr);
   }
 

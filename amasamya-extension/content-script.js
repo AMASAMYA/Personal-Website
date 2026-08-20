@@ -242,7 +242,7 @@
       const idRef = (href || '').replace(/^#/, '');
       if (idRef) return 'icon=' + idRef;
       if (el.id) return 'icon=' + el.id;
-      return 'html=' + (el.innerHTML || '').replace(/\s+/g, ' ').trim().slice(0, 160);
+      return 'html=' + (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160);
     }
 
     Array.from(document.querySelectorAll('img,[role="img"],svg')).filter(el => {

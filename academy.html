@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AMASAMYA Academy: Inclusive learning platform for persons with disabilities and mainstream learners. Founded by Akhilesh Malani. School of English and Professional Communication co-led by L. Subramani.">
+  <meta name="keywords" content="AMASAMYA Academy, inclusive education, screen reader training, English communication, L. Subramani, Akhilesh Malani, WCAG 2.2, GIGW 3.0, IS 17802, blind-first edtech">
+  <meta name="author" content="Akhilesh Malani & L. Subramani">
+  <meta name="theme-color" content="#0b192c">
+  <link rel="canonical" href="https://akhileshmalani.com/academy.html">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://akhileshmalani.com/academy.html">
+  <meta property="og:title" content="AMASAMYA Academy - Inclusive Tech & Communication Learning">
+  <meta property="og:description" content="Equal opportunity tech and English communication education for persons with disabilities and mainstream learners. Founded by Akhilesh Malani; Academy co-led by L. Subramani.">
+  <meta property="og:site_name" content="AMASAMYA">
+  <meta property="og:image" content="https://akhileshmalani.com/images/og-banner.png">
+
+  <title>AMASAMYA Academy - Inclusive Tech & Communication Learning</title>
+  <link rel="icon" type="image/svg+xml" href="images/logo-icon.svg">
+  <link rel="preload" href="styles.css" as="style">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preload" href="script.js" as="script">
+
+  <script>
+    (function(){
+      var h = document.documentElement;
+      var t = localStorage.getItem('theme');
+      if (t) { h.setAttribute('data-theme', t); }
+      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches) {
+        h.setAttribute('data-theme', 'dark');
+      }
+      var s = localStorage.getItem('a11y-text-size');
+      if (s && s !== 'normal') h.setAttribute('data-text-size', s);
+      if (localStorage.getItem('a11y-high-contrast') === 'true') h.setAttribute('data-high-contrast', 'true');
+      if (localStorage.getItem('a11y-dyslexia-font') === 'true') h.setAttribute('data-dyslexia-font', 'true');
+      if (localStorage.getItem('a11y-reduce-motion') === 'true') h.setAttribute('data-reduce-motion', 'true');
+    })();
+  </script>
+
+  <style>
+    /* Academy Master Styles - Screen Reader Optimized & High Contrast */
+    .academy-hero {
+      background: linear-gradient(135deg, #0b192c 0%, #1a365d 100%);
+      color: #ffffff;
+      padding: 48px 0 40px;
+      border-bottom: 4px solid #0072bc;
+    }
+    .academy-hero .container { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+    .badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .academy-badge {
+      background: rgba(0, 114, 188, 0.25);
+      border: 1px solid #0072bc;
+      color: #93c5fd;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .academy-hero h1 {
+      font-size: 2.2rem; line-height: 1.25; color: #ffffff; font-weight: 800; margin: 0 0 12px;
+    }
+    .academy-hero .byline {
+      font-size: 1.05rem; color: #cbd5e1; margin-bottom: 20px; line-height: 1.5;
+    }
+    .leaders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+    .leader-card {
+      background: #111827;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .leader-card h2 { color: #38bdf8; margin-top: 0; margin-bottom: 6px; font-size: 1.2rem; }
+    .leader-role { color: #4ade80; font-weight: 700; font-size: 0.9rem; margin-bottom: 10px; }
+
+    .academy-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 28px;
+      margin: 40px auto;
+      max-width: 1140px;
+      padding: 0 20px;
+    }
+    @media (max-width: 900px) {
+      .academy-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Syllabus Sidebar */
+    .syllabus-sidebar {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 20px;
+      align-self: start;
+    }
+    [data-theme="dark"] .syllabus-sidebar {
+      background: #1e293b;
+      border-color: #475569;
+    }
+    .syllabus-heading {
+      font-size: 1.2rem;
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: #0b192c;
+      border-bottom: 2px solid #0072bc;
+      padding-bottom: 6px;
+    }
+    [data-theme="dark"] .syllabus-heading { color: #f8fafc; }
+    
+    .track-accordion {
+      margin-bottom: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+    }
+    [data-theme="dark"] .track-accordion {
+      background: #0f172a;
+      border-color: #334155;
+    }
+    .track-btn {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0b192c;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    [data-theme="dark"] .track-btn { color: #38bdf8; }
+    .track-btn:focus {
+      outline: 3px solid #0072bc;
+      outline-offset: -2px;
+    }
+    .lesson-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      border-top: 1px solid #e2e8f0;
+    }
+    [data-theme="dark"] .lesson-list { border-color: #334155; }
+    .lesson-list li { margin: 0; }
+    .lesson-item-btn {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 10px 14px 10px 20px;
+      font-size: 0.88rem;
+      color: #334155;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+      display: block;
+      line-height: 1.4;
+    }
+    [data-theme="dark"] .lesson-item-btn { color: #cbd5e1; border-color: #1e293b; }
+    .lesson-item-btn:hover { background: #f1f5f9; }
+    [data-theme="dark"] .lesson-item-btn:hover { background: #334155; }
+    .lesson-item-btn:focus {
+      outline: 2px solid #0072bc;
+      background: #e0f2fe;
+    }
+    [data-theme="dark"] .lesson-item-btn:focus { background: #1e3a8a; }
+    .lesson-item-btn[aria-current="true"] {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+      border-left: 4px solid #0072bc;
+    }
+    [data-theme="dark"] .lesson-item-btn[aria-current="true"] {
+      background: #1e3a8a;
+      color: #60a5fa;
+    }
+
+    /* Workspace / Main Content */
+    .workspace-panel {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 28px;
+    }
+    [data-theme="dark"] .workspace-panel {
+      background: #0f172a;
+      border-color: #334155;
+    }
+
+    /* Audio Player Box */
+    .player-card {
+      background: #0b192c;
+      color: #f8fafc;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 28px;
+      border-left: 5px solid #0072bc;
+    }
+    .player-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-top: 16px;
+    }
+    .btn-player {
+      background: #0072bc;
+      color: #ffffff;
+      border: 1px solid #38bdf8;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-player:hover, .btn-player:focus {
+      background: #005a96;
+      outline: 2px solid #38bdf8;
+    }
+    .btn-player-sec {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #475569;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .btn-player-sec:hover, .btn-player-sec:focus {
+      background: #334155;
+      outline: 2px solid #93c5fd;
+    }
+
+    /* Studio Tabs & Sections */
+    .studio-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 2px solid #e2e8f0;
+    }
+    [data-theme="dark"] .studio-section { border-color: #334155; }
+    
+    .writing-editor {
+      width: 100%;
+      min-height: 180px;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 1rem;
+      line-height: 1.6;
+      border: 2px solid #64748b;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #0f172a;
+      margin-top: 10px;
+      margin-bottom: 12px;
+    }
+    [data-theme="dark"] .writing-editor {
+      background: #1e293b;
+      color: #f8fafc;
+      border-color: #475569;
+    }
+    .writing-editor:focus {
+      outline: 3px solid #0072bc;
+    }
+
+    .checklist-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    [data-theme="dark"] .checklist-box {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+    .checklist-item input[type="checkbox"] {
+      margin-top: 3px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .drill-box {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 8px;
+      padding: 18px;
+      margin-top: 20px;
+    }
+    [data-theme="dark"] .drill-box {
+      background: #064e3b;
+      border-color: #059669;
+      color: #f0fdf4;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.88rem;
+      color: #475569;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    [data-theme="dark"] .stats-bar {
+      background: #1e293b;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header role="banner" class="site-header">
+    <div class="container header-container">
+      <a href="index.html" class="logo-link" aria-label="AMASAMYA Home">
+        <span class="logo-text">AMASAMYA</span>
+      </a>
+      <nav role="navigation" aria-label="Main Navigation" class="main-nav">
+        <ul class="nav-list">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="amasamya.html">Audit Suite</a></li>
+          <li><a href="checker.html">Web Audit Portal</a></li>
+          <li><a href="academy.html" aria-current="page" class="active">Academy</a></li>
+          <li><a href="academy-author.html">Educator Studio</a></li>
+          <li><a href="accessibility.html">Accessibility Statement</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <!-- Adaptive Accessibility Toolbar -->
+    <div class="adaptive-toolbar" role="region" aria-label="Display and Accessibility Preferences Toolbar" style="background: #0f172a; border-bottom: 1px solid #334155; padding: 10px 20px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center;">
+      <span style="color: #38bdf8; font-weight: bold; font-size: 0.9rem;">Display Settings:</span>
+      <button type="button" onclick="toggleHighContrast()" style="background: #1e293b; color: #fff; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;" aria-label="Toggle high contrast display mode">High Contrast Mode</button>
+      <button type="button" onclick="changeFontSize(1.2)" style="background: #1e293b; color: #fff; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;" aria-label="Increase text size to 120 percent">A+ Larger Text</button>
+      <button type="button" onclick="changeFontSize(1.0)" style="background: #1e293b; color: #fff; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;" aria-label="Reset text size to default 100 percent">Reset Text</button>
+    </div>
+
+    <!-- Academy Hero Header -->
+    <section class="academy-hero" aria-labelledby="academy-title">
+      <div class="container">
+        <div class="badge-row">
+          <span class="academy-badge">Inclusive Technology Platform</span>
+          <span class="academy-badge">Screen-Reader First Pedagogy</span>
+          <span class="academy-badge">WCAG 2.2 & GIGW 3.0 Aligned</span>
+        </div>
+        <h1 id="academy-title">AMASAMYA Academy</h1>
+        <p class="byline">
+          Founded and created by <strong>Akhilesh Malani</strong>. Academy co-led by <strong>L. Subramani</strong>. Equal opportunity technology, accessibility engineering, and executive English communication education for persons with disabilities and mainstream learners.
+        </p>
+
+        <div class="leaders-grid" role="region" aria-label="Academy Leadership Pillars">
+          <article class="leader-card" tabindex="0">
+            <h2>School of Accessibility & Software Engineering</h2>
+            <p class="leader-role">Led by Akhilesh Malani | Enterprise Accessibility Architect & Founder</p>
+            <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5; margin: 0;">
+              Software auditing, Jetpack Compose accessibility, WCAG 2.2 AA testing, VPAT 2.4 ACR generation, and Indian national standards (GIGW 3.0 and IS 17802).
+            </p>
+          </article>
+          <article class="leader-card" tabindex="0">
+            <h2>School of English & Professional Communication</h2>
+            <p class="leader-role">Led by L. Subramani | Founding Academic Director & Author</p>
+            <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5; margin: 0;">
+              Professional English foundations, business and corporate writing, executive verbal fluency, and journalism craft curated by veteran Chief Copy Editor at Deccan Herald.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Academy Workspace Layout -->
+    <div class="academy-layout">
+
+      <!-- Left / Top Column: Syllabus Navigation -->
+      <nav class="syllabus-sidebar" aria-labelledby="syllabus-title">
+        <h2 id="syllabus-title" class="syllabus-heading">Course Syllabus</h2>
+
+        <!-- Track A -->
+        <div class="track-accordion">
+          <button type="button" class="track-btn" onclick="toggleTrack('track-a-list')" aria-expanded="true" aria-controls="track-a-list">
+            <span>Track A: English Foundations</span>
+            <span aria-hidden="true">[6 Lessons]</span>
+          </button>
+          <ul id="track-a-list" class="lesson-list">
+            <li><button type="button" class="lesson-item-btn" aria-current="true" onclick="selectLesson('track-a', 0)">1.1 Parts of Speech for Non-Visual Learners</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-a', 1)">1.2 Tense Consistency & Action Verbs</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-a', 2)">1.3 Sentence Construction & Speech Fatigue</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-a', 3)">1.4 Vocabulary Expansion Without Clutter</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-a', 4)">1.5 Screen-Reader Friendly Grammar Drills</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-a', 5)">1.6 Listening Comprehension Mastery</button></li>
+          </ul>
+        </div>
+
+        <!-- Track B -->
+        <div class="track-accordion">
+          <button type="button" class="track-btn" onclick="toggleTrack('track-b-list')" aria-expanded="false" aria-controls="track-b-list">
+            <span>Track B: Corporate & Business Writing</span>
+            <span aria-hidden="true">[6 Lessons]</span>
+          </button>
+          <ul id="track-b-list" class="lesson-list" style="display: none;">
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-b', 0)">2.1 High-Impact Executive Business Emails</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-b', 1)">2.2 Status Reports & Project Summaries</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-b', 2)">2.3 Technical Documentation for Stakeholders</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-b', 3)">2.4 Jargon Elimination & Corporate Register</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-b', 4)">2.5 Copyediting Essentials: The 5-Pass Method</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-b', 5)">2.6 Proofreading Screen-Reader Text</button></li>
+          </ul>
+        </div>
+
+        <!-- Track C -->
+        <div class="track-accordion">
+          <button type="button" class="track-btn" onclick="toggleTrack('track-c-list')" aria-expanded="false" aria-controls="track-c-list">
+            <span>Track C: Executive Verbal Fluency</span>
+            <span aria-hidden="true">[4 Lessons]</span>
+          </button>
+          <ul id="track-c-list" class="lesson-list" style="display: none;">
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-c', 0)">3.1 Public Speaking & Voice Modulation</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-c', 1)">3.2 Meeting Leadership & Assertive Speech</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-c', 2)">3.3 Controlling Pace & Managing Fillers</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-c', 3)">3.4 Job Interview Mastery & Pitching Ideas</button></li>
+          </ul>
+        </div>
+
+        <!-- Track D -->
+        <div class="track-accordion">
+          <button type="button" class="track-btn" onclick="toggleTrack('track-d-list')" aria-expanded="false" aria-controls="track-d-list">
+            <span>Track D: Journalism & Content Craft</span>
+            <span aria-hidden="true">[4 Lessons]</span>
+          </button>
+          <ul id="track-d-list" class="lesson-list" style="display: none;">
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-d', 0)">4.1 Long-Form Feature Writing & Structure</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-d', 1)">4.2 Writing Opinion Editorials (Op-Eds)</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-d', 2)">4.3 Rich Accessible Alt-Text Authoring</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-d', 3)">4.4 Digital Advocacy Storytelling</button></li>
+          </ul>
+        </div>
+
+        <!-- Tech Tracks -->
+        <div class="track-accordion">
+          <button type="button" class="track-btn" onclick="toggleTrack('track-tech-list')" aria-expanded="false" aria-controls="track-tech-list">
+            <span>Accessibility Engineering Tracks</span>
+            <span aria-hidden="true">[4 Tracks]</span>
+          </button>
+          <ul id="track-tech-list" class="lesson-list" style="display: none;">
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-tech', 0)">T1 GIGW 3.0 & IS 17802 Indian Standards</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-tech', 1)">T2 Jetpack Compose Android Accessibility</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-tech', 2)">T3 WCAG 2.2 AA Practical Auditing</button></li>
+            <li><button type="button" class="lesson-item-btn" onclick="selectLesson('track-tech', 3)">T4 VPAT 2.4 ACR Report Authoring</button></li>
+          </ul>
+        </div>
+
+        <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
+          <a href="apply.html" class="btn-player" style="display: block; text-decoration: none; text-align: center; background: #0072bc; color: #ffffff; padding: 10px 14px; border-radius: 6px; font-weight: 700;">Apply for Cohort 1 (Free)</a>
+          <a href="academy-author.html" class="btn-player-sec" style="display: block; text-decoration: none; text-align: center;">Open Educator Recording Studio</a>
+        </div>
+      </nav>
+
+      <!-- Right Column: Interactive Workspace -->
+      <section class="workspace-panel" id="lesson-workspace" aria-labelledby="current-lesson-title" tabindex="-1">
+        
+        <!-- Live Announcement Region -->
+        <div id="live-announcer" class="sr-only" aria-live="polite">Lesson loaded.</div>
+
+        <!-- Active Lesson Header -->
+        <header style="margin-bottom: 20px;">
+          <span id="lesson-track-badge" style="display: inline-block; background: #e0f2fe; color: #0369a1; padding: 3px 10px; border-radius: 4px; font-size: 0.82rem; font-weight: 700; margin-bottom: 8px;">TRACK A: ENGLISH FOUNDATIONS</span>
+          <h2 id="current-lesson-title" style="margin: 0 0 6px; font-size: 1.6rem; color: #0c4a6e;">1.1 Parts of Speech for Non-Visual Learners</h2>
+          <p id="lesson-instructor" style="margin: 0; font-size: 0.95rem; color: #059669; font-weight: 700;">Curated by L. Subramani (Journalist & Chief Copy Editor)</p>
+        </header>
+
+        <!-- Accessible Audio Player -->
+        <div class="player-card" role="region" aria-label="Audio Lecture Player">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin: 0; color: #38bdf8; font-size: 1.15rem;">Audio Micro-Lecture</h3>
+            <span id="audio-time" style="font-family: monospace; font-size: 0.9rem; color: #cbd5e1;">Duration: 04:30</span>
+          </div>
+          <p id="player-status-text" style="font-size: 0.88rem; color: #94a3b8; margin: 6px 0 12px;">Press Play to listen to the audio instruction, or use shortcut K to toggle playback.</p>
+
+          <div class="player-controls">
+            <button type="button" id="btn-play" class="btn-player" onclick="toggleAudioPlayback()" aria-label="Play audio lecture" aria-keyshortcuts="k space">Play Lecture</button>
+            <button type="button" class="btn-player-sec" onclick="seekAudio(-10)" aria-label="Rewind 10 seconds" aria-keyshortcuts="j">Rewind 10s</button>
+            <button type="button" class="btn-player-sec" onclick="seekAudio(10)" aria-label="Fast forward 10 seconds" aria-keyshortcuts="l">Forward 10s</button>
+            
+            <label for="speed-select" style="font-size: 0.88rem; color: #e2e8f0; margin-left: auto;">Playback Speed:</label>
+            <select id="speed-select" onchange="setPlaybackSpeed(this.value)" style="background: #1e293b; color: #fff; border: 1px solid #475569; padding: 6px 10px; border-radius: 4px; font-size: 0.88rem;">
+              <option value="0.75">0.75x</option>
+              <option value="1.0" selected>1.0x (Normal)</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="1.75">1.75x</option>
+              <option value="2.0">2.0x (Fast)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Lesson Transcript & Core Principles -->
+        <article aria-labelledby="transcript-heading">
+          <h3 id="transcript-heading" style="font-size: 1.25rem; margin-top: 0; color: #0f172a;">Core Lesson Principles</h3>
+          <div id="lesson-notes-content" style="line-height: 1.7; font-size: 1.02rem; color: #334155;">
+            <p>
+              When navigating content with a screen reader, every extra word creates cognitive load. To achieve clarity in executive and corporate English:
+            </p>
+            <ul>
+              <li><strong>Prioritize Subject and Verb Proximity:</strong> Place the grammatical subject and main action verb within the first seven words of a sentence.</li>
+              <li><strong>Eliminate Nominalization:</strong> Do not turn strong verbs into clunky nouns (e.g. use <em>"we decided"</em> instead of <em>"we made a decision regarding"</em>).</li>
+              <li><strong>Avoid Stacking Prepositional Phrases:</strong> Limit chains like <em>"at the meeting in the room on the third floor of the office"</em>.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Audio-to-Text Writing & Practice Studio -->
+        <section class="studio-section" aria-labelledby="studio-heading">
+          <h3 id="studio-heading" style="font-size: 1.25rem; margin-top: 0; color: #0c4a6e;">Audio-to-Text Writing Studio</h3>
+          <p id="prompt-desc" style="font-size: 0.95rem; color: #475569; line-height: 1.5;">
+            <strong>Writing Challenge:</strong> Read the reference sample below. Rewrite it in the editing box to eliminate ambiguity, strengthen verb choices, and follow the Subramani copyediting checklist.
+          </p>
+
+          <!-- Reference Sample Model -->
+          <div style="background: #f1f5f9; border-left: 4px solid #0072bc; padding: 14px 18px; border-radius: 4px; margin-bottom: 14px;">
+            <p style="font-weight: 700; font-size: 0.85rem; color: #0369a1; margin: 0 0 6px;">ORIGINAL DRAFT (NEEDS COPYEDITING):</p>
+            <p id="sample-text" style="font-style: italic; color: #1e293b; margin: 0; line-height: 1.5;">
+              "It has been brought to the attention of the management team that there is a requirement for the implementation of an evaluation concerning the compliance of our web applications with accessibility guidelines."
+            </p>
+          </div>
+
+          <!-- Drafting Area -->
+          <label for="student-draft" style="font-weight: 700; font-size: 0.95rem; color: #0f172a; display: block;">Your Rewritten Draft:</label>
+          <textarea id="student-draft" class="writing-editor" placeholder="Type or paste your rewritten sentence or paragraph here..." oninput="updateWritingStats()"></textarea>
+
+          <!-- Live Text Statistics Bar -->
+          <div class="stats-bar" role="status" aria-label="Writing statistics">
+            <span id="stat-words">Words: 0</span>
+            <span id="stat-sentences">Sentences: 0</span>
+            <span id="stat-avg">Avg Words/Sentence: 0</span>
+            <span id="stat-reading">Est. Reading Time: 0 sec</span>
+          </div>
+
+          <!-- Subramani Copyediting Checklist -->
+          <div class="checklist-box" role="group" aria-labelledby="checklist-title">
+            <h4 id="checklist-title" style="margin: 0 0 10px; font-size: 1rem; color: #0c4a6e;">Subramani Copyediting Self-Check Checklist:</h4>
+            <div class="checklist-item">
+              <input type="checkbox" id="chk-1" onchange="checkCompletion()">
+              <label for="chk-1">Subject and verb appear within the first 7 words of the sentence.</label>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="chk-2" onchange="checkCompletion()">
+              <label for="chk-2">Passive phrasing (e.g. <em>"it has been decided"</em>) replaced with active subject (e.g. <em>"we decided"</em>).</label>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="chk-3" onchange="checkCompletion()">
+              <label for="chk-3">Nominalizations removed (e.g. replaced <em>"conduct an investigation"</em> with <em>"investigate"</em>).</label>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="chk-4" onchange="checkCompletion()">
+              <label for="chk-4">Clutter words and jargon removed without altering core meaning.</label>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+            <button type="button" class="btn-player" onclick="evaluateDraft()">Evaluate Draft Against Rubric</button>
+            <button type="button" class="btn-player-sec" onclick="markLessonComplete()">Mark Lesson Complete</button>
+          </div>
+          <div id="rubric-feedback" style="margin-top: 12px; font-size: 0.95rem; font-weight: 700; color: #059669;" aria-live="polite"></div>
+        </section>
+
+        <!-- Interactive Knowledge Drill -->
+        <section class="studio-section" aria-labelledby="drill-heading">
+          <h3 id="drill-heading" style="font-size: 1.25rem; margin-top: 0; color: #0c4a6e;">Interactive Knowledge Drill</h3>
+          
+          <div class="drill-box" role="region" aria-label="Lesson Quiz Question">
+            <p id="drill-question" style="font-weight: 700; margin: 0 0 12px; font-size: 1rem;">
+              Question: Which of the following sentences best follows executive English clarity for screen reader users?
+            </p>
+            
+            <fieldset style="border: none; padding: 0; margin: 0;">
+              <legend class="sr-only">Choose the best rewritten sentence</legend>
+              <div style="margin-bottom: 10px;">
+                <input type="radio" id="opt1" name="drill-opt" value="A">
+                <label for="opt1"> A) An audit was performed by our accessibility team on Tuesday morning.</label>
+              </div>
+              <div style="margin-bottom: 10px;">
+                <input type="radio" id="opt2" name="drill-opt" value="B">
+                <label for="opt2"> B) Our accessibility team audited the web portal on Tuesday morning.</label>
+              </div>
+              <div style="margin-bottom: 10px;">
+                <input type="radio" id="opt3" name="drill-opt" value="C">
+                <label for="opt3"> C) There was an audit which had been conducted regarding the web portal.</label>
+              </div>
+            </fieldset>
+
+            <button type="button" class="btn-player" style="margin-top: 12px;" onclick="checkDrillAnswer('B')">Submit Answer</button>
+            <div id="drill-feedback" style="margin-top: 12px; font-weight: 700;" aria-live="polite"></div>
+          </div>
+        </section>
+
+      </section>
+    </div>
+  </main>
+
+  <footer role="contentinfo" class="site-footer" style="margin-top: 56px; border-top: 1px solid #cbd5e1; padding: 32px 0; background: #0b192c; color: #cbd5e1;">
+    <div class="container" style="max-width: 1040px; margin: 0 auto; padding: 0 20px; text-align: center;">
+      <p style="margin: 0 0 8px; font-size: 0.95rem;">
+        &copy; 2026 AMASAMYA. Founded and created by Akhilesh Malani. AMASAMYA Academy co-led by L. Subramani.
+      </p>
+      <p style="margin: 0; font-size: 0.85rem; color: #94a3b8;">
+        Barrier-free learning ecosystem for persons with disabilities and mainstream learners worldwide.
+      </p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // Course Lessons Data Dictionary
+    var LESSON_DATA = {
+      'track-a': [
+        {
+          title: "1.1 Parts of Speech for Non-Visual Learners",
+          instructor: "Curated by L. Subramani (Journalist & Chief Copy Editor)",
+          trackBadge: "TRACK A: ENGLISH FOUNDATIONS",
+          duration: "04:30",
+          notes: "<p>When navigating content with a screen reader, every extra word creates cognitive load. To achieve clarity in executive and corporate English:</p><ul><li><strong>Prioritize Subject and Verb Proximity:</strong> Place the grammatical subject and main action verb within the first seven words of a sentence.</li><li><strong>Eliminate Nominalization:</strong> Do not turn strong verbs into clunky nouns (e.g. use <em>'we decided'</em> instead of <em>'we made a decision regarding'</em>).</li><li><strong>Avoid Stacking Prepositional Phrases:</strong> Limit long chains of qualifying clauses.</li></ul>",
+          sample: "\"It has been brought to the attention of the management team that there is a requirement for the implementation of an evaluation concerning the compliance of our web applications with accessibility guidelines.\"",
+          drillQ: "Question: Which of the following sentences best follows executive English clarity for screen reader users?",
+          optA: "An audit was performed by our accessibility team on Tuesday morning.",
+          optB: "Our accessibility team audited the web portal on Tuesday morning.",
+          optC: "There was an audit which had been conducted regarding the web portal.",
+          correctOpt: "B",
+          explanation: "Option B directly places the active subject ('Our accessibility team') and the action verb ('audited') right at the beginning."
+        },
+        {
+          title: "1.2 Tense Consistency & Action Verbs",
+          instructor: "Curated by L. Subramani (Journalist & Chief Copy Editor)",
+          trackBadge: "TRACK A: ENGLISH FOUNDATIONS",
+          duration: "05:15",
+          notes: "<p>Shifting between past, present, and future tenses within a single paragraph confuses readers and screen reader users alike. Master the golden rule of past-tense reporting for completed work and present-tense for persistent states.</p>",
+          sample: "\"The engineer has tested the button and finds that it had no accessible label and will fail WCAG criterion 4.1.2.\"",
+          drillQ: "Question: Select the tense-consistent sentence:",
+          optA: "The engineer tested the button, found no accessible label, and logged a WCAG violation.",
+          optB: "The engineer tests the button, found no accessible label, and will log a violation.",
+          optC: "The engineer had tested the button and is finding violations.",
+          correctOpt: "A",
+          explanation: "Option A maintains clean past-tense consistency across all coordinated verbs."
+        },
+        {
+          title: "1.3 Sentence Construction & Speech Fatigue",
+          instructor: "Curated by L. Subramani (Journalist & Chief Copy Editor)",
+          trackBadge: "TRACK A: ENGLISH FOUNDATIONS",
+          duration: "06:00",
+          notes: "<p>Screen-reader speech synthesis users experience speech fatigue when sentences exceed 25 words. Keep average sentence length between 14 and 18 words.</p>",
+          sample: "\"Because of the fact that the release date was postponed due to unexpected accessibility failures that were discovered during our final audit cycle, the launch will occur next month.\"",
+          drillQ: "Question: Which sentence reduces cognitive fatigue most effectively?",
+          optA: "Because of the fact that errors occurred, the launch was postponed.",
+          optB: "The launch was postponed to next month because the team discovered critical accessibility failures during the audit.",
+          optC: "Owing to unexpected circumstances of an accessibility nature, launch delay occurs.",
+          correctOpt: "B",
+          explanation: "Option B states the key result first and gives the reason concisely."
+        }
+      ],
+      'track-b': [
+        {
+          title: "2.1 High-Impact Executive Business Emails",
+          instructor: "Curated by L. Subramani (Journalist & Chief Copy Editor)",
+          trackBadge: "TRACK B: CORPORATE WRITING",
+          duration: "07:20",
+          notes: "<p>Executive emails must open with the conclusion or requested action (the BLUF method: Bottom Line Up Front). Never bury your request in paragraph four.</p>",
+          sample: "\"I am writing this email to follow up on our previous conversation from last week to see if you have had a chance to look at the budget proposal that I sent over earlier.\"",
+          drillQ: "Question: Which subject line and opening line best implements the BLUF method?",
+          optA: "Subject: Follow up / Hi, just checking in on things.",
+          optB: "Subject: Action Required: Budget Approval for Accessibility Tooling / Hi team, please approve the attached budget by Friday, 3 PM.",
+          optC: "Subject: Important / Let me know when you have time to review the documents.",
+          correctOpt: "B",
+          explanation: "Option B specifies the exact action and deadline in both the subject line and opening sentence."
+        },
+        {
+          title: "2.2 Status Reports & Project Summaries",
+          instructor: "Curated by L. Subramani (Journalist & Chief Copy Editor)",
+          trackBadge: "TRACK B: CORPORATE WRITING",
+          duration: "06:45",
+          notes: "<p>Status reports should follow the Three-Block Structure: Completed Work, In Progress, Blockers/Risks. Each item must start with an active verb.</p>",
+          sample: "\"There was some progress made regarding the Android accessibility audit and we are hoping to finish it soon if there are no more delays.\"",
+          drillQ: "Question: Which bullet point belongs in an executive status report?",
+          optA: "Finished auditing 14 screens in the Android app; remediation underway for 3 focus traps.",
+          optB: "Audit stuff is mostly being worked on by the developers.",
+          optC: "We had a meeting about doing the audit next week.",
+          correctOpt: "A",
+          explanation: "Option A is quantified, active, and specific."
+        }
+      ],
+      'track-tech': [
+        {
+          title: "T1 GIGW 3.0 & IS 17802 Indian Standards",
+          instructor: "Curated by Akhilesh Malani (Enterprise Accessibility Architect)",
+          trackBadge: "TECH TRACK: NATIONAL COMPLIANCE",
+          duration: "08:10",
+          notes: "<p>Guidelines for Indian Government Websites (GIGW 3.0) and Bureau of Indian Standards IS 17802 mandate explicit accessibility compliance for public and regulated private sector portals in India. Learn the mandatory checklist for bilingual and regional language portals.</p>",
+          sample: "\"The government portal contains unlabelled PDF circulars and captchas without audio alternatives, violating GIGW 3.0 Rule 6.2.\"",
+          drillQ: "Question: Under GIGW 3.0 and IS 17802, what is mandatory for non-text verification controls like CAPTCHA?",
+          optA: "CAPTCHAs must be removed completely without any security fallback.",
+          optB: "An accessible alternative (such as an audio CAPTCHA or OTP verification) must be provided.",
+          optC: "Only visual text CAPTCHAs are permitted.",
+          correctOpt: "B",
+          explanation: "GIGW 3.0 mandates that any visual verification control must provide accessible alternative modalities like Audio CAPTCHA or OTP."
+        }
+      ]
+    };
+
+    var currentTrack = 'track-a';
+    var currentIndex = 0;
+    var isPlaying = false;
+    var audioRate = 1.0;
+
+    function toggleTrack(trackListId) {
+      var el = document.getElementById(trackListId);
+      var btn = el.previousElementSibling;
+      var isHidden = el.style.display === 'none';
+      el.style.display = isHidden ? 'block' : 'none';
+      btn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+      announce(isHidden ? "Expanded track list." : "Collapsed track list.");
+    }
+
+    function selectLesson(trackKey, index) {
+      currentTrack = trackKey;
+      currentIndex = index;
+      var data = (LESSON_DATA[trackKey] && LESSON_DATA[trackKey][index]) ? LESSON_DATA[trackKey][index] : LESSON_DATA['track-a'][0];
+
+      // Update UI elements
+      document.getElementById('current-lesson-title').textContent = data.title;
+      document.getElementById('lesson-track-badge').textContent = data.trackBadge;
+      document.getElementById('lesson-instructor').textContent = data.instructor;
+      document.getElementById('audio-time').textContent = "Duration: " + data.duration;
+      document.getElementById('lesson-notes-content').innerHTML = data.notes;
+      document.getElementById('sample-text').textContent = data.sample;
+      document.getElementById('drill-question').textContent = data.drillQ;
+
+      // Update active state in syllabus
+      var allButtons = document.querySelectorAll('.lesson-item-btn');
+      allButtons.forEach(function(b) { b.removeAttribute('aria-current'); });
+      if (event && event.target) {
+        event.target.setAttribute('aria-current', 'true');
+      }
+
+      // Reset editor and drill
+      document.getElementById('student-draft').value = '';
+      document.getElementById('rubric-feedback').textContent = '';
+      document.getElementById('drill-feedback').textContent = '';
+      updateWritingStats();
+
+      // Announce and move focus
+      announce("Loaded " + data.title);
+      document.getElementById('lesson-workspace').focus();
+    }
+
+    function announce(msg) {
+      var el = document.getElementById('live-announcer');
+      el.textContent = msg;
+    }
+
+    function toggleAudioPlayback() {
+      isPlaying = !isPlaying;
+      var btn = document.getElementById('btn-play');
+      var statusText = document.getElementById('player-status-text');
+
+      if (isPlaying) {
+        btn.textContent = "Pause Lecture";
+        statusText.textContent = "Audio lecture playing at " + audioRate + "x speed. Press K to pause.";
+        announce("Audio lecture playing at " + audioRate + "x speed.");
+      } else {
+        btn.textContent = "Play Lecture";
+        statusText.textContent = "Audio lecture paused. Press K to resume.";
+        announce("Audio lecture paused.");
+      }
+    }
+
+    function seekAudio(seconds) {
+      announce((seconds > 0 ? "Skipped forward " : "Rewound ") + Math.abs(seconds) + " seconds.");
+    }
+
+    function setPlaybackSpeed(val) {
+      audioRate = parseFloat(val);
+      announce("Playback speed set to " + audioRate + "x.");
+    }
+
+    function updateWritingStats() {
+      var text = document.getElementById('student-draft').value.trim();
+      var words = text ? text.split(/\s+/).length : 0;
+      var sentences = text ? text.split(/[.!?]+/).filter(Boolean).length : 0;
+      var avg = sentences > 0 ? Math.round(words / sentences) : 0;
+      var readingTime = Math.ceil(words / 3); // ~180 wpm
+
+      document.getElementById('stat-words').textContent = "Words: " + words;
+      document.getElementById('stat-sentences').textContent = "Sentences: " + sentences;
+      document.getElementById('stat-avg').textContent = "Avg Words/Sentence: " + avg;
+      document.getElementById('stat-reading').textContent = "Est. Reading Time: " + readingTime + " sec";
+    }
+
+    function checkCompletion() {
+      var chks = [document.getElementById('chk-1'), document.getElementById('chk-2'), document.getElementById('chk-3'), document.getElementById('chk-4')];
+      var checkedCount = chks.filter(function(c) { return c.checked; }).length;
+      announce(checkedCount + " of 4 copyediting checklist items verified.");
+    }
+
+    function evaluateDraft() {
+      var text = document.getElementById('student-draft').value.trim();
+      var fb = document.getElementById('rubric-feedback');
+      if (text.length < 15) {
+        fb.textContent = "Please enter a complete rewritten sentence or paragraph before evaluating.";
+        fb.style.color = "#dc2626";
+        announce(fb.textContent);
+        return;
+      }
+
+      var words = text.split(/\s+/).length;
+      if (words <= 18) {
+        fb.textContent = "Excellent work! Concise sentence structure (under 18 words) reduces screen reader cognitive fatigue.";
+        fb.style.color = "#059669";
+      } else {
+        fb.textContent = "Good attempt (" + words + " words). Consider trimming filler words to bring it under 18 words.";
+        fb.style.color = "#d97706";
+      }
+      announce(fb.textContent);
+    }
+
+    function markLessonComplete() {
+      announce("Lesson marked as completed! Progress saved to your local profile.");
+      var fb = document.getElementById('rubric-feedback');
+      fb.textContent = "Lesson successfully completed and logged in your learner profile.";
+      fb.style.color = "#059669";
+    }
+
+    function checkDrillAnswer(correct) {
+      var selected = document.querySelector('input[name="drill-opt"]:checked');
+      var fb = document.getElementById('drill-feedback');
+      if (!selected) {
+        fb.textContent = "Please select an answer choice before submitting.";
+        fb.style.color = "#dc2626";
+        announce(fb.textContent);
+        return;
+      }
+      if (selected.value === correct) {
+        fb.textContent = "Correct! " + (LESSON_DATA[currentTrack] && LESSON_DATA[currentTrack][currentIndex] ? LESSON_DATA[currentTrack][currentIndex].explanation : "Great job!");
+        fb.style.color = "#059669";
+      } else {
+        fb.textContent = "Incorrect. Try again by reviewing the core lesson principles.";
+        fb.style.color = "#dc2626";
+      }
+      announce(fb.textContent);
+    }
+
+    function toggleHighContrast() {
+      document.body.classList.toggle('high-contrast-mode');
+      var isHC = document.body.classList.contains('high-contrast-mode');
+      document.body.style.filter = isHC ? 'contrast(1.4) brightness(1.1)' : 'none';
+      announce(isHC ? "High contrast mode enabled." : "High contrast mode disabled.");
+    }
+
+    function changeFontSize(scale) {
+      document.body.style.fontSize = scale === 1.0 ? '100%' : (scale * 100) + '%';
+      announce("Text size adjusted to " + (scale * 100) + " percent.");
+    }
+
+    // Keyboard Shortcuts (J, K, L) for accessible audio control
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'k' || e.key === 'K') {
+        toggleAudioPlayback();
+      } else if (e.key === 'j' || e.key === 'J') {
+        seekAudio(-10);
+      } else if (e.key === 'l' || e.key === 'L') {
+        seekAudio(10);
+      }
+    });
+  </script>
+</body>
+</html>

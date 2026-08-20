@@ -1,7 +1,7 @@
 /**
  * AMASAMYA Extension - Content Script
- * Injected into the active tab to run all 13 audit engines.
- * Results are sent to the service worker via browser.runtime.sendMessage.
+ * Injected into the active tab to run all 24 audit engines.
+ * Results are sent to the service worker via chrome.runtime.sendMessage.
  */
 
 (function () {
@@ -15,7 +15,7 @@
      PHASE 1 ENGINES + UTILITIES (inlined from phase1-engines.js)
   ================================================================ */
 
-  const TOOL_VERSION = '2.0.0';
+  const TOOL_VERSION = '5.2.0';
   const CONTRAST = { NORMAL_AA: 4.5, LARGE_AA: 3.0, NORMAL_AAA: 7.0, LARGE_AAA: 4.5, NON_TEXT: 3.0 };
   const LARGE_TEXT_PT_BOLD = 14;
   const LARGE_TEXT_PT_NORMAL = 18;
@@ -209,21 +209,104 @@
 
   /* ================================================================
      ENGINE 6: IMAGES
+     ================================================================
+     Deduplicates structurally identical images. A real-world bank /
+     enterprise page often reuses the same icon hundreds of times via
+     <use href="#id"> or by pasting the same <img src> in every row.
+     Reporting each occurrence individually produced reports with
+     700+ identical lines (Mujtaba IOB audit, May 2026). We now
+     fingerprint each unique problem and emit one finding per unique
+     fingerprint with an occurrence count.
   ================================================================ */
   function auditImages() {
     const findings = [];
-    Array.from(document.querySelectorAll('img,[role="img"],svg')).filter(el => { const cs = window.getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden'; }).forEach(el => {
+    /* Map fingerprint -> { count, sampleEl, kind } so we can emit one
+       finding per unique problem with the occurrence count. */
+    const seen = new Map();
+
+    function record(kind, key, el, build) {
+      const fp = kind + ':' + key;
+      const prior = seen.get(fp);
+      if (prior) { prior.count++; return; }
+      seen.set(fp, { count: 1, sampleEl: el, build });
+    }
+
+    function fingerprintSvg(el) {
+      /* Unified key - every reference to the same icon (whether
+         <svg id="X"> in a defs block or <svg><use href="#X"/></svg>
+         reusing it) produces the same fingerprint. So fixing one
+         source icon resolves every reuse on the page; one finding,
+         not many. */
+      const u = el.querySelector('use');
+      const href = u && (u.getAttribute('href') || u.getAttribute('xlink:href'));
+      const idRef = (href || '').replace(/^#/, '');
+      if (idRef) return 'icon=' + idRef;
+      if (el.id) return 'icon=' + el.id;
+      return 'html=' + (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160);
+    }
+
+    Array.from(document.querySelectorAll('img,[role="img"],svg')).filter(el => {
+      const cs = window.getComputedStyle(el);
+      return cs.display !== 'none' && cs.visibility !== 'hidden';
+    }).forEach(el => {
       const tag = el.tagName.toLowerCase();
       if (tag === 'img') {
         const alt = el.getAttribute('alt');
-        if (alt === null) findings.push({ id: generateId(), engine: 'Images', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.1.1 (Level A)', issue: 'Missing alt attribute.', computed: 'absent', required: 'alt attribute required', verdict: 'Fail', severity: SEV.CRITICAL, howToFix: 'Add alt="" if decorative, or descriptive alt text.' });
-        else if (alt.trim() === '') findings.push({ id: generateId(), engine: 'Images', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.1.1 (Level A)', issue: `Decorative image (alt=""). Verify. File: ${(el.src || '').split('/').pop().split('?')[0]}`, computed: 'alt=""', required: 'Correct for decorative only', verdict: 'Info', severity: SEV.MINOR, howToFix: 'Confirm image is decorative.' });
-        else { const bad = ['image','photo','picture','graphic','icon','img','.png','.jpg','.gif','.svg','.webp']; if (bad.some(p => alt.toLowerCase() === p || alt.toLowerCase().endsWith(p))) findings.push({ id: generateId(), engine: 'Images', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.1.1 (Level A)', issue: `Generic alt "${alt}".`, computed: `alt="${alt}"`, required: 'Descriptive text', verdict: 'Fail', severity: SEV.SERIOUS, howToFix: 'Replace with meaningful description.' }); }
+        const srcKey = (el.getAttribute('src') || '') + '|' + (alt === null ? 'NULL' : alt);
+        if (alt === null) {
+          record('img-noalt', srcKey, el, ({ count, sampleEl }) => ({
+            id: generateId(), engine: 'Images', element: describeEl(sampleEl) + (count > 1 ? '  (and ' + (count - 1) + ' more identical)' : ''),
+            criterion: 'WCAG 2.2 SC 1.1.1 (Level A)',
+            issue: count > 1 ? `Missing alt attribute (${count} identical images on this page).` : 'Missing alt attribute.',
+            computed: 'absent' + (count > 1 ? ` × ${count}` : ''),
+            required: 'alt attribute required',
+            verdict: 'Fail', severity: SEV.CRITICAL,
+            howToFix: 'Add alt="" if decorative, or a descriptive alt text. Fixing one source fixes every occurrence.'
+          }));
+        } else if (alt.trim() === '') {
+          record('img-emptyalt', srcKey, el, ({ count, sampleEl }) => ({
+            id: generateId(), engine: 'Images', element: describeEl(sampleEl) + (count > 1 ? '  (and ' + (count - 1) + ' more identical)' : ''),
+            criterion: 'WCAG 2.2 SC 1.1.1 (Level A)',
+            issue: `Decorative image (alt=""). Verify. File: ${(sampleEl.src || '').split('/').pop().split('?')[0]}` + (count > 1 ? ` (${count} identical occurrences)` : ''),
+            computed: 'alt=""' + (count > 1 ? ` × ${count}` : ''),
+            required: 'Correct for decorative only',
+            verdict: 'Info', severity: SEV.MINOR,
+            howToFix: 'Confirm image is decorative.'
+          }));
+        } else {
+          const bad = ['image','photo','picture','graphic','icon','img','.png','.jpg','.gif','.svg','.webp'];
+          if (bad.some(p => alt.toLowerCase() === p || alt.toLowerCase().endsWith(p))) {
+            record('img-genericalt', srcKey, el, ({ count, sampleEl }) => ({
+              id: generateId(), engine: 'Images', element: describeEl(sampleEl) + (count > 1 ? '  (and ' + (count - 1) + ' more identical)' : ''),
+              criterion: 'WCAG 2.2 SC 1.1.1 (Level A)',
+              issue: `Generic alt "${alt}"` + (count > 1 ? ` (${count} identical occurrences)` : '') + '.',
+              computed: `alt="${alt}"` + (count > 1 ? ` × ${count}` : ''),
+              required: 'Descriptive text',
+              verdict: 'Fail', severity: SEV.SERIOUS,
+              howToFix: 'Replace with meaningful description. Fixing the source fixes every occurrence.'
+            }));
+          }
+        }
       }
       if (tag === 'svg' && el.getAttribute('aria-hidden') !== 'true' && !getAccessibleName(el) && !el.querySelector('title')) {
-        findings.push({ id: generateId(), engine: 'Images', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.1.1 (Level A)', issue: 'SVG has no accessible name.', computed: 'No title/aria-label', required: 'Accessible name or aria-hidden', verdict: 'Fail', severity: SEV.SERIOUS, howToFix: 'Add <title> or aria-hidden="true".' });
+        record('svg-noname', fingerprintSvg(el), el, ({ count, sampleEl }) => ({
+          id: generateId(), engine: 'Images', element: describeEl(sampleEl) + (count > 1 ? '  (and ' + (count - 1) + ' more identical reuses)' : ''),
+          criterion: 'WCAG 2.2 SC 1.1.1 (Level A)',
+          issue: count > 1
+            ? `SVG has no accessible name (${count} identical reuses of this icon on the page - typically a <use href> reference).`
+            : 'SVG has no accessible name.',
+          computed: 'No title/aria-label' + (count > 1 ? ` × ${count}` : ''),
+          required: 'Accessible name or aria-hidden',
+          verdict: 'Fail', severity: SEV.SERIOUS,
+          howToFix: 'Add <title> inside the SVG, or aria-hidden="true" if decorative. Fixing the source icon fixes every reuse on the page.'
+        }));
       }
     });
+
+    /* Emit one finding per unique problem. */
+    for (const entry of seen.values()) {
+      findings.push(entry.build(entry));
+    }
     return findings;
   }
 
@@ -310,14 +393,20 @@
     const ts = document.createElement('style'); ts.id = sid;
     ts.textContent = '* { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; } p,div,li,td,th,dd,dt,blockquote,figcaption,label,span { margin-bottom: 2em !important; }';
     document.head.appendChild(ts); document.body.offsetHeight;
-    overflows.forEach(el => {
-      const cs = window.getComputedStyle(el);
-      if (el.scrollHeight > el.clientHeight + 2 && (cs.height !== 'auto' || cs.maxHeight !== 'none')) findings.push({ id: generateId(), engine: 'Text Spacing', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.4.12 (Level AA)', issue: `Content clipped vertically (${el.scrollHeight - el.clientHeight}px hidden).`, computed: `overflow: hidden; height: ${cs.height}`, required: 'No content loss with increased spacing', verdict: 'Fail', severity: SEV.SERIOUS, howToFix: 'Use min-height and overflow: auto.' });
-      if (el.scrollWidth > el.clientWidth + 2 && cs.width !== 'auto') findings.push({ id: generateId(), engine: 'Text Spacing', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.4.12 (Level AA)', issue: 'Content clipped horizontally.', computed: `overflow: hidden; width: ${cs.width}`, required: 'No horizontal clipping', verdict: 'Fail', severity: SEV.SERIOUS, howToFix: 'Use flexible widths.' });
-      if (cs.textOverflow === 'ellipsis') findings.push({ id: generateId(), engine: 'Text Spacing', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.4.12 (Level AA)', issue: 'text-overflow: ellipsis may hide content.', computed: 'text-overflow: ellipsis', required: 'Full text accessible', verdict: 'Warning', severity: SEV.MODERATE, howToFix: 'Allow container expansion.' });
-    });
-    textEls.forEach(el => { const cs = window.getComputedStyle(el); if (cs.whiteSpace === 'nowrap' && (cs.overflow === 'hidden' || cs.textOverflow === 'ellipsis')) findings.push({ id: generateId(), engine: 'Text Spacing', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.4.12 (Level AA)', issue: 'white-space: nowrap with overflow hidden.', computed: `white-space: nowrap; overflow: ${cs.overflow}`, required: 'Allow wrapping', verdict: 'Warning', severity: SEV.MODERATE, howToFix: 'Remove white-space: nowrap or use overflow: visible.' }); });
-    ts.remove();
+    /* v4.3.1: wrap the analysis in try/finally so any exception thrown
+       inside the loops does NOT leave the injected stylesheet on the
+       user's page (which would break their real reading experience). */
+    try {
+      overflows.forEach(el => {
+        const cs = window.getComputedStyle(el);
+        if (el.scrollHeight > el.clientHeight + 2 && (cs.height !== 'auto' || cs.maxHeight !== 'none')) findings.push({ id: generateId(), engine: 'Text Spacing', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.4.12 (Level AA)', issue: `Content clipped vertically (${el.scrollHeight - el.clientHeight}px hidden).`, computed: `overflow: hidden; height: ${cs.height}`, required: 'No content loss with increased spacing', verdict: 'Fail', severity: SEV.SERIOUS, howToFix: 'Use min-height and overflow: auto.' });
+        if (el.scrollWidth > el.clientWidth + 2 && cs.width !== 'auto') findings.push({ id: generateId(), engine: 'Text Spacing', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.4.12 (Level AA)', issue: 'Content clipped horizontally.', computed: `overflow: hidden; width: ${cs.width}`, required: 'No horizontal clipping', verdict: 'Fail', severity: SEV.SERIOUS, howToFix: 'Use flexible widths.' });
+        if (cs.textOverflow === 'ellipsis') findings.push({ id: generateId(), engine: 'Text Spacing', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.4.12 (Level AA)', issue: 'text-overflow: ellipsis may hide content.', computed: 'text-overflow: ellipsis', required: 'Full text accessible', verdict: 'Warning', severity: SEV.MODERATE, howToFix: 'Allow container expansion.' });
+      });
+      textEls.forEach(el => { const cs = window.getComputedStyle(el); if (cs.whiteSpace === 'nowrap' && (cs.overflow === 'hidden' || cs.textOverflow === 'ellipsis')) findings.push({ id: generateId(), engine: 'Text Spacing', element: describeEl(el), criterion: 'WCAG 2.2 SC 1.4.12 (Level AA)', issue: 'white-space: nowrap with overflow hidden.', computed: `white-space: nowrap; overflow: ${cs.overflow}`, required: 'Allow wrapping', verdict: 'Warning', severity: SEV.MODERATE, howToFix: 'Remove white-space: nowrap or use overflow: visible.' }); });
+    } finally {
+      try { ts.remove(); } catch (_) { /* already gone */ }
+    }
     if (findings.length === 0) findings.push({ id: generateId(), engine: 'Text Spacing', element: 'Page', criterion: 'WCAG 2.2 SC 1.4.12 (Level AA)', issue: 'No text spacing issues.', computed: `${textEls.length} elements checked`, required: 'Content visible with spacing overrides', verdict: 'Pass', severity: SEV.MINOR, howToFix: 'No action.' });
     return findings;
   }
@@ -384,6 +473,899 @@
   }
 
   /* ================================================================
+     ENGINE 14: TARGET SIZE (WCAG 2.2 SC 2.5.8 - NEW)
+     Every interactive target must be ≥ 24×24 CSS pixels.
+     Inline text links are exempt per the SC 2.5.8 exception.
+  ================================================================ */
+  function auditTargetSize() {
+    const findings = [];
+    const SELECTOR = 'a[href],button,input:not([type="hidden"]),select,textarea,summary,[role="button"],[role="link"],[role="checkbox"],[role="radio"],[role="switch"],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"],[role="tab"],[role="slider"],[role="spinbutton"],[tabindex="0"]';
+    const MIN = 24;
+    const targets = Array.from(document.querySelectorAll(SELECTOR)).filter(el => {
+      if (el.disabled) return false;
+      const cs = window.getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return false;
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    });
+    targets.forEach(el => {
+      const cs = window.getComputedStyle(el);
+      // Inline text links are exempt (SC 2.5.8 exception 1 - inline)
+      if (el.tagName === 'A' && cs.display === 'inline') return;
+      const r = el.getBoundingClientRect();
+      const w = Math.round(r.width), h = Math.round(r.height);
+      if (w < MIN || h < MIN) {
+        findings.push({
+          id: generateId(), engine: 'Target Size',
+          element: describeEl(el),
+          criterion: 'WCAG 2.2 SC 2.5.8 Target Size Minimum (Level AA)',
+          issue: `Target ${w}×${h}px is below the 24×24 CSS px minimum.`,
+          computed: `${w}×${h}px`,
+          required: '24×24 CSS pixels',
+          verdict: 'Fail',
+          severity: (w < 16 || h < 16) ? SEV.SERIOUS : SEV.MODERATE,
+          howToFix: `Add min-width:24px; min-height:24px; or increase padding to reach 24×24px.`
+        });
+      }
+    });
+    if (findings.length === 0)
+      findings.push({ id: generateId(), engine: 'Target Size', element: 'Page', criterion: 'WCAG 2.2 SC 2.5.8 (Level AA)', issue: 'All interactive targets meet 24×24 CSS px minimum.', computed: `${targets.length} checked`, required: '24×24 CSS pixels', verdict: 'Pass', severity: SEV.MINOR, howToFix: 'No action required.' });
+    return findings;
+  }
+
+  /* ================================================================
+     ENGINE 15: LABEL IN NAME (WCAG 2.2 SC 2.5.3 - NEW)
+     For controls with visible text, the accessible name must CONTAIN
+     that visible text so speech-input users can activate by speaking it.
+  ================================================================ */
+  function auditLabelInName() {
+    const findings = [];
+    const SELECTOR = 'a[href],button,input,select,textarea,summary,[role="button"],[role="link"],[role="checkbox"],[role="radio"],[role="switch"],[role="menuitem"],[role="option"],[role="tab"]';
+    Array.from(document.querySelectorAll(SELECTOR)).filter(el => {
+      if (el.disabled) return false;
+      const cs = window.getComputedStyle(el);
+      return cs.display !== 'none' && cs.visibility !== 'hidden';
+    }).forEach(el => {
+      // Collect only direct visible text (not from aria-label override)
+      const visibleText = Array.from(el.childNodes)
+        .filter(n => n.nodeType === 3)
+        .map(n => n.textContent.trim())
+        .join(' ')
+        .trim()
+        || el.textContent.trim().slice(0, 100);
+      if (!visibleText || visibleText.length < 2) return; // no meaningful visible text
+
+      const accName = getAccessibleName(el);
+      if (!accName) return; // no accessible name to compare
+
+      // Case-insensitive substring check - normalise whitespace
+      const normVis = visibleText.toLowerCase().replace(/\s+/g, ' ');
+      const normAcc = accName.toLowerCase().replace(/\s+/g, ' ');
+      if (normAcc.includes(normVis)) return; // passes
+
+      // Ignore if difference is only punctuation / emoji (false-positive guard)
+      const alphaVis = normVis.replace(/[^a-z0-9]/g, '');
+      const alphaAcc = normAcc.replace(/[^a-z0-9]/g, '');
+      if (!alphaVis || alphaAcc.includes(alphaVis)) return;
+
+      findings.push({
+        id: generateId(), engine: 'Label in Name',
+        element: describeEl(el),
+        criterion: 'WCAG 2.2 SC 2.5.3 Label in Name (Level A)',
+        issue: `Accessible name "${accName.slice(0, 60)}" does not contain visible label "${visibleText.slice(0, 60)}".`,
+        computed: `Accessible name: "${accName.slice(0, 60)}"`,
+        required: `Must contain: "${visibleText.slice(0, 60)}"`,
+        verdict: 'Fail',
+        severity: SEV.SERIOUS,
+        howToFix: 'Start the aria-label with the visible text, or remove aria-label and rely on visible text alone.'
+      });
+    });
+    if (findings.length === 0)
+      findings.push({ id: generateId(), engine: 'Label in Name', element: 'Page', criterion: 'WCAG 2.2 SC 2.5.3 (Level A)', issue: 'No Label in Name mismatches found.', computed: 'All checked', required: 'Accessible name contains visible text', verdict: 'Pass', severity: SEV.MINOR, howToFix: 'No action required.' });
+    return findings;
+  }
+
+  /* ================================================================
+     ENGINE 16: RESIZE TEXT (WCAG 2.2 SC 1.4.4)
+     Verifies that the page survives a 200% zoom - the criterion
+     allows reflow, but content must not be lost or clipped. We
+     temporarily scale the page via CSS zoom, sample the layout,
+     compare against the baseline, then revert. Sites that hard-code
+     pixel heights, use `overflow:hidden` over text, or set
+     `white-space:nowrap` on long copy fail this engine.
+  ================================================================ */
+  function auditResizeText() {
+    const findings = [];
+    const TEXT_SELECTOR = 'p, li, td, th, dt, dd, figcaption, h1, h2, h3, h4, h5, h6, blockquote, label, button, a, span, div';
+    /* Baseline: collect bounding boxes and clip status BEFORE zoom. */
+    const probes = Array.from(document.querySelectorAll(TEXT_SELECTOR))
+      .filter(el => {
+        const cs = window.getComputedStyle(el);
+        if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+        /* Need actual text content, not nested element wrappers. */
+        const direct = Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent.trim().length > 4);
+        return direct;
+      })
+      .slice(0, 250);
+
+    const before = probes.map(el => {
+      const r = el.getBoundingClientRect();
+      return { el, w: r.width, h: r.height, sw: el.scrollWidth, sh: el.scrollHeight };
+    });
+    const docBefore = document.documentElement.scrollWidth;
+
+    /* Apply 200% zoom. CSS zoom (Chromium-supported) reflows text and
+       grows pixel sizes proportionally - closest in-page approximation
+       of browser-zoom-to-200%.
+
+       v4.3.1: wrap in try/finally so any exception between apply and
+       revert does not leave the user's page zoomed at 200%. */
+    const original = document.documentElement.style.zoom || '';
+    document.documentElement.style.zoom = '2';
+    void document.documentElement.offsetHeight;
+
+    let docAfter, horizScrollIntroduced, after;
+    try {
+      docAfter = document.documentElement.scrollWidth;
+      horizScrollIntroduced = docAfter > docBefore * 2.05;   /* 5% slack for legitimate growth */
+
+      after = probes.map(el => {
+        const r = el.getBoundingClientRect();
+        return { w: r.width, h: r.height, sw: el.scrollWidth, sh: el.scrollHeight };
+      });
+    } finally {
+      /* Always revert. */
+      document.documentElement.style.zoom = original;
+      void document.documentElement.offsetHeight;
+    }
+
+    /* Diagnose: an element fails resize if its scrollHeight/Width
+       grew but its visible height/width didn't (= clipping). */
+    let clipped = 0;
+    after.forEach((a, i) => {
+      const b = before[i];
+      const grewContent = (a.sh > b.sh + 2) || (a.sw > b.sw + 2);
+      const containedVisually = (a.h <= b.h * 1.05) && (a.w <= b.w * 1.05);
+      if (grewContent && containedVisually) {
+        clipped++;
+        if (clipped <= 8) {
+          findings.push({
+            id: generateId(), engine: 'Resize Text',
+            element: describeEl(b.el),
+            criterion: 'WCAG 2.2 SC 1.4.4 Resize Text (Level AA)',
+            issue: 'Element clips its content at 200% zoom. Content overflows but the visible box stays the same - text becomes inaccessible.',
+            computed: `before ${Math.round(b.w)}×${Math.round(b.h)} (scroll ${b.sw}×${b.sh}), after ${Math.round(a.w)}×${Math.round(a.h)} (scroll ${a.sw}×${a.sh})`,
+            required: 'No clipping at 200% zoom',
+            verdict: 'Fail', severity: SEV.SERIOUS,
+            howToFix: 'Replace fixed pixel heights with min-height. Remove overflow:hidden on text containers. Use auto/min-content for wrapping containers.'
+          });
+        }
+      }
+    });
+
+    if (horizScrollIntroduced) {
+      findings.push({
+        id: generateId(), engine: 'Resize Text', element: 'Document',
+        criterion: 'WCAG 2.2 SC 1.4.4 Resize Text (Level AA)',
+        issue: 'Page introduces horizontal scrolling at 200% zoom beyond the expected proportional growth.',
+        computed: `document.scrollWidth: ${docBefore}px before, ${docAfter}px after`,
+        required: 'Reflow without two-dimensional scrolling',
+        verdict: 'Fail', severity: SEV.SERIOUS,
+        howToFix: 'Use responsive layout with relative units (rem, %, fr). Avoid fixed pixel widths on top-level layout containers.'
+      });
+    }
+
+    if (clipped > 8) {
+      findings.push({
+        id: generateId(), engine: 'Resize Text', element: 'Document',
+        criterion: 'WCAG 2.2 SC 1.4.4 Resize Text (Level AA)',
+        issue: `Additional ${clipped - 8} elements also clip at 200% zoom (only first 8 listed above).`,
+        computed: `${clipped} clipped of ${before.length} sampled`,
+        required: 'No clipping at 200% zoom',
+        verdict: 'Fail', severity: SEV.SERIOUS,
+        howToFix: 'See above. Pattern is widespread across the page.'
+      });
+    }
+
+    if (findings.length === 0)
+      findings.push({ id: generateId(), engine: 'Resize Text', element: 'Page', criterion: 'WCAG 2.2 SC 1.4.4 (Level AA)', issue: 'Page survives 200% zoom without clipping.', computed: `${probes.length} text elements sampled`, required: 'No clipping at 200%', verdict: 'Pass', severity: SEV.MINOR, howToFix: 'Verify manually with browser zoom (Ctrl/Cmd +).' });
+    return findings;
+  }
+
+  /* ================================================================
+     ENGINE 17: DARK MODE CONTRAST (extends Engine 10)
+     Engine 10 detects whether the page declares dark-mode styles.
+     This engine goes further: parses every @media (prefers-color-scheme:
+     dark) rule, extracts the colour pairs the rule defines, and computes
+     contrast ratios for each pair. Catches dark themes that "support"
+     dark mode but ship low-contrast palettes - the most common pattern
+     in retrofitted dark themes.
+  ================================================================ */
+  function auditDarkModeContrast() {
+    const findings = [];
+    const darkRules = [];
+
+    /* Walk every reachable stylesheet collecting rules inside an
+       @media (prefers-color-scheme: dark) block. Cross-origin sheets
+       throw on access - skip silently. */
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      let rules;
+      try { rules = document.styleSheets[i].cssRules || []; }
+      catch (e) { continue; }
+      for (let j = 0; j < rules.length; j++) {
+        const r = rules[j];
+        if (r.conditionText && /prefers-color-scheme\s*:\s*dark/i.test(r.conditionText)) {
+          for (let k = 0; k < (r.cssRules || []).length; k++) {
+            darkRules.push(r.cssRules[k]);
+          }
+        }
+      }
+    }
+
+    if (darkRules.length === 0) {
+      findings.push({
+        id: generateId(), engine: 'Dark Mode Contrast', element: 'Page',
+        criterion: 'WCAG 2.2 SC 1.4.3 (dark mode)',
+        issue: 'No dark-mode CSS rules found, so dark-mode contrast cannot be verified.',
+        computed: '0 @media (prefers-color-scheme: dark) rules',
+        required: 'Either no dark mode (covered by Dark Mode engine) or dark rules present',
+        verdict: 'Info', severity: SEV.MINOR,
+        howToFix: 'If you intend to support dark mode, add @media (prefers-color-scheme: dark) styles.'
+      });
+      return findings;
+    }
+
+    /* For each dark rule that pairs a foreground color with an
+       inferable background, compute contrast. */
+    let pairsChecked = 0, pairsFailed = 0;
+    darkRules.forEach(rule => {
+      if (!rule.style) return;
+      const fg = rule.style.color;
+      const bg = rule.style.backgroundColor || rule.style.background;
+      if (!fg || !bg) return;
+      const fgC = parseColour(fg), bgC = parseColour(bg);
+      if (!fgC || !bgC) return;
+      const fgFinal = blendColour(fgC, bgC.a >= 1 ? bgC : { r: 18, g: 18, b: 18, a: 1 });
+      const bgFinal = bgC.a >= 1 ? bgC : { r: 18, g: 18, b: 18, a: 1 };
+      const ratio = contrastRatio(fgFinal, bgFinal);
+      pairsChecked++;
+      if (ratio < 4.5) {
+        pairsFailed++;
+        if (pairsFailed <= 6) {
+          findings.push({
+            id: generateId(), engine: 'Dark Mode Contrast',
+            element: `selector: ${rule.selectorText || '(unknown)'}`,
+            criterion: 'WCAG 2.2 SC 1.4.3 (Level AA - dark mode palette)',
+            issue: `Dark-mode rule pairs foreground "${fg}" with background "${bg}" - contrast ratio ${ratio.toFixed(2)}:1 fails 4.5:1.`,
+            computed: `${ratio.toFixed(2)}:1`,
+            required: '4.5:1 for normal text',
+            verdict: 'Fail', severity: ratio < 3.0 ? SEV.CRITICAL : SEV.SERIOUS,
+            howToFix: 'Lighten the foreground or darken the background. Most dark themes work well around #e0e0e0 on #1a1a1a (12.6:1).'
+          });
+        }
+      }
+    });
+
+    if (pairsFailed > 6) {
+      findings.push({
+        id: generateId(), engine: 'Dark Mode Contrast', element: 'Page',
+        criterion: 'WCAG 2.2 SC 1.4.3 (dark mode palette)',
+        issue: `Additional ${pairsFailed - 6} dark-mode contrast failures not listed.`,
+        computed: `${pairsFailed} failures of ${pairsChecked} declared pairs`,
+        required: '4.5:1', verdict: 'Fail', severity: SEV.SERIOUS,
+        howToFix: 'Re-tune the dark palette holistically rather than fixing individual pairs.'
+      });
+    }
+
+    if (pairsFailed === 0 && pairsChecked > 0) {
+      findings.push({ id: generateId(), engine: 'Dark Mode Contrast', element: 'Page', criterion: 'WCAG 2.2 SC 1.4.3 (dark mode)', issue: `${pairsChecked} dark-mode colour pairs all meet 4.5:1.`, computed: `${pairsChecked} pairs OK`, required: '4.5:1', verdict: 'Pass', severity: SEV.MINOR, howToFix: 'No action required.' });
+    } else if (pairsChecked === 0) {
+      findings.push({ id: generateId(), engine: 'Dark Mode Contrast', element: 'Page', criterion: 'WCAG 2.2 SC 1.4.3 (dark mode)', issue: 'Dark-mode rules present but no inline colour/background pairs found to verify. Many themes use CSS custom properties - those would need to be checked in the rendered DOM with prefers-color-scheme: dark active.', computed: `${darkRules.length} dark rules, 0 inline pairs`, required: 'Verifiable colour pairs', verdict: 'Info', severity: SEV.MINOR, howToFix: 'Run a manual check in dark mode, or expose colour custom properties on root element so this engine can sample them.' });
+    }
+
+    return findings;
+  }
+
+  /* ================================================================
+     ENGINE 18: COLOUR-ONLY MEANING (WCAG 2.2 SC 1.4.1)
+     Heuristic: flags suspicious patterns where colour is the only
+     way to convey meaning. False-positive prone by nature, so all
+     verdicts are Warnings, not Fails - they say "review this".
+  ================================================================ */
+  function auditColourOnlyMeaning() {
+    const findings = [];
+
+    /* Pattern 1: copy that literally references a colour as the
+       discriminator. "Click the red button" relies on sighted
+       perception; if a screen reader user heard that copy, they have
+       no way to distinguish the red button from any other button. */
+    const COLOUR_WORDS = '(red|green|blue|yellow|orange|purple|pink|black|white|grey|gray|brown|cyan|magenta|amber|lime|teal|violet|maroon)';
+    const COLOUR_REF = new RegExp(
+      '\\b(click|press|select|tap|see|find|the|use)\\s+(?:the\\s+)?' + COLOUR_WORDS +
+      '\\s+(button|link|icon|tab|item|box|cell|row|dot|circle|square|arrow|bar|highlight|text|word|number|line|area|section|panel|card|badge)\\b',
+      'i'
+    );
+    document.querySelectorAll('p, li, td, dd, span, label, button, a, h1, h2, h3, h4, h5, h6').forEach(el => {
+      const txt = el.textContent || '';
+      if (txt.length < 5 || txt.length > 400) return;
+      const m = txt.match(COLOUR_REF);
+      if (m) {
+        findings.push({
+          id: generateId(), engine: 'Colour-Only Meaning',
+          element: describeEl(el),
+          criterion: 'WCAG 2.2 SC 1.4.1 Use of Colour (Level A)',
+          issue: `Copy refers to UI by colour alone: "${m[0]}". Screen-reader users cannot distinguish elements by colour.`,
+          computed: m[0],
+          required: 'Refer to UI by name, position, or shape, not colour',
+          verdict: 'Warning', severity: SEV.SERIOUS,
+          howToFix: 'Rephrase to "Press Save" or "Click the rightmost button" - name the element, do not describe its colour.'
+        });
+      }
+    });
+
+    /* Pattern 2: required-field markers that rely on a red asterisk
+       or a colour change with no programmatic indicator. Flag any
+       <input required> or [aria-required="true"] whose nearest label
+       contains an asterisk but the field has no aria-invalid, no
+       describedby announcing "required", and no visible "required"
+       text near the label. */
+    document.querySelectorAll('input[required],select[required],textarea[required],[aria-required="true"]').forEach(field => {
+      const labelEl = field.id
+        ? document.querySelector('label[for="' + (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(field.id) : field.id) + '"]')
+        : field.closest('label');
+      if (!labelEl) return;
+      const labelText = labelEl.textContent || '';
+      const hasAsterisk = /\*/.test(labelText);
+      const saysRequired = /required|mandatory|must/i.test(labelText);
+      const hasAriaRequired = field.getAttribute('aria-required') === 'true' || field.required;
+      if (hasAsterisk && !saysRequired && !hasAriaRequired) {
+        findings.push({
+          id: generateId(), engine: 'Colour-Only Meaning',
+          element: describeEl(field),
+          criterion: 'WCAG 2.2 SC 1.4.1 / 3.3.2',
+          issue: 'Required field is marked only with an asterisk and colour, with no programmatic "required" indicator or text label.',
+          computed: 'Asterisk present in label; no aria-required; no "required" word',
+          required: 'Mark required fields with both visible text and aria-required',
+          verdict: 'Warning', severity: SEV.MODERATE,
+          howToFix: 'Add aria-required="true" on the field, and append visually-readable text such as "(required)" to the label.'
+        });
+      }
+    });
+
+    /* Pattern 3: status indicators where two adjacent siblings differ
+       only by background colour. Common pattern: green/red dots side
+       by side with no aria-label or text. */
+    const dots = Array.from(document.querySelectorAll('span, i, em, b, div')).filter(el => {
+      if (el.children.length > 0) return false;
+      if (el.textContent.trim()) return false;     /* has text - fine */
+      const cs = window.getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      if (r.width < 6 || r.width > 32) return false;   /* not a status-dot-sized element */
+      const bg = parseColour(cs.backgroundColor);
+      if (!bg || bg.a < 0.5) return false;
+      return !el.getAttribute('aria-label') && !el.getAttribute('title') && !el.getAttribute('aria-labelledby');
+    });
+    if (dots.length >= 3) {
+      findings.push({
+        id: generateId(), engine: 'Colour-Only Meaning', element: `${dots.length} small coloured elements`,
+        criterion: 'WCAG 2.2 SC 1.4.1 Use of Colour (Level A)',
+        issue: `${dots.length} small coloured shapes with no accessible name. Likely status indicators that convey meaning by colour alone.`,
+        computed: `${dots.length} matched`,
+        required: 'Each status indicator needs aria-label or visible text',
+        verdict: 'Warning', severity: SEV.MODERATE,
+        howToFix: 'Add aria-label="Active" / aria-label="Inactive" (or equivalent), or pair the dot with text such as "Online" / "Offline".'
+      });
+    }
+
+    if (findings.length === 0)
+      findings.push({ id: generateId(), engine: 'Colour-Only Meaning', element: 'Page', criterion: 'WCAG 2.2 SC 1.4.1 (Level A)', issue: 'No colour-only-meaning patterns detected by heuristic.', computed: 'Heuristic only - manual review still recommended', required: 'No colour-only meaning', verdict: 'Pass', severity: SEV.MINOR, howToFix: 'Manually verify any chart, badge, or status indicator on the page.' });
+    return findings;
+  }
+
+  /* ================================================================
+     ENGINE 19: TARGET SIZE - AAA (WCAG 2.2 SC 2.5.5, 44×44)
+     Engine 14 covers the AA minimum (24×24). This adds the AAA
+     check (44×44) as a Warning so designers can see the gap to
+     mobile-friendly sizing without it being treated as a failure.
+  ================================================================ */
+  function auditTargetSizeAAA() {
+    const findings = [];
+    const SELECTOR = 'a[href],button,input:not([type="hidden"]),select,textarea,summary,[role="button"],[role="link"],[role="checkbox"],[role="radio"],[role="switch"],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"],[role="tab"],[role="slider"],[role="spinbutton"],[tabindex="0"]';
+    const MIN = 44;
+    const targets = Array.from(document.querySelectorAll(SELECTOR)).filter(el => {
+      if (el.disabled) return false;
+      const cs = window.getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return false;
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    });
+    let count = 0;
+    targets.forEach(el => {
+      const cs = window.getComputedStyle(el);
+      if (el.tagName === 'A' && cs.display === 'inline') return;   /* exception: inline links */
+      const r = el.getBoundingClientRect();
+      const w = Math.round(r.width), h = Math.round(r.height);
+      /* Already at AA failure (< 24) - Engine 14 reported it. We add
+         AAA findings only for AA-passing targets that miss AAA. */
+      if (w >= 24 && h >= 24 && (w < MIN || h < MIN)) {
+        count++;
+        if (count <= 12) {
+          findings.push({
+            id: generateId(), engine: 'Target Size AAA',
+            element: describeEl(el),
+            criterion: 'WCAG 2.2 SC 2.5.5 Target Size (Level AAA)',
+            issue: `Target ${w}×${h}px meets AA (24×24) but is below the AAA recommendation of 44×44.`,
+            computed: `${w}×${h}px`,
+            required: '44×44 CSS pixels (AAA)',
+            verdict: 'Warning', severity: SEV.MODERATE,
+            howToFix: 'Mobile and motor-impaired users benefit from 44×44 targets. Add min-width/min-height: 44px or generous padding.'
+          });
+        }
+      }
+    });
+    if (count > 12) {
+      findings.push({ id: generateId(), engine: 'Target Size AAA', element: 'Page', criterion: 'WCAG 2.2 SC 2.5.5 (Level AAA)', issue: `Additional ${count - 12} targets meet AA but miss AAA 44×44.`, computed: `${count} sub-44 targets`, required: '44×44', verdict: 'Warning', severity: SEV.MODERATE, howToFix: 'Audit your design system component sizes globally.' });
+    }
+    if (findings.length === 0)
+      findings.push({ id: generateId(), engine: 'Target Size AAA', element: 'Page', criterion: 'WCAG 2.2 SC 2.5.5 (Level AAA)', issue: 'All AA-passing targets also meet the 44×44 AAA recommendation.', computed: `${targets.length} checked`, required: '44×44', verdict: 'Pass', severity: SEV.MINOR, howToFix: 'No action required.' });
+    return findings;
+  }
+
+  /* ================================================================
+     ENGINE 20: IDENTIFY INPUT PURPOSE (WCAG 2.2 SC 1.3.5 Level AA)
+     Standalone reference: engines/input-purpose.js (kept in sync).
+  ================================================================ */
+  function auditInputPurpose() {
+    const WCAG_TOKENS = new Set([
+      'name','honorific-prefix','given-name','additional-name','family-name',
+      'honorific-suffix','nickname','organization-title','username',
+      'new-password','current-password','organization',
+      'street-address','address-line1','address-line2','address-line3',
+      'address-level4','address-level3','address-level2','address-level1',
+      'country','country-name','postal-code',
+      'cc-name','cc-given-name','cc-additional-name','cc-family-name',
+      'cc-number','cc-exp','cc-exp-month','cc-exp-year','cc-csc','cc-type',
+      'transaction-currency','transaction-amount','language',
+      'bday','bday-day','bday-month','bday-year',
+      'sex','url','photo',
+      'tel','tel-country-code','tel-national','tel-area-code',
+      'tel-local','tel-local-prefix','tel-local-suffix','tel-extension',
+      'email','impp'
+    ]);
+    function labelTextFor(el) {
+      if (el.id) {
+        const lbl = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+        if (lbl) return (lbl.textContent || '').trim();
+      }
+      return el.closest('label')?.textContent?.trim() || '';
+    }
+    function haystack(el) {
+      return [el.name||'', el.id||'', el.getAttribute('placeholder')||'',
+              labelTextFor(el), el.getAttribute('aria-label')||''].join(' ');
+    }
+    function classify(el) {
+      const t = (el.type||'text').toLowerCase();
+      if (t === 'email') return { purpose: 'email', confidence: 'high' };
+      if (t === 'tel')   return { purpose: 'tel',   confidence: 'high' };
+      if (t === 'url')   return { purpose: 'url',   confidence: 'high' };
+      if (t === 'password') {
+        const form = el.form;
+        const pws = form ? form.querySelectorAll('input[type="password"]') : [];
+        return { purpose: pws.length > 1 ? 'new-password' : 'current-password', confidence: 'high' };
+      }
+      const h = haystack(el);
+      const rules = [
+        [/\bemail\b|e-mail/i,                                'email',          'medium'],
+        [/\b(first[\s_-]?name|given[\s_-]?name|fname)\b/i,   'given-name',     'medium'],
+        [/\b(last[\s_-]?name|family[\s_-]?name|surname|lname)\b/i, 'family-name', 'medium'],
+        [/\b(full[\s_-]?name|your[\s_-]?name)\b/i,           'name',           'medium'],
+        [/\b(phone|mobile|telephone|cell)\b/i,               'tel',            'medium'],
+        [/\b(street|address1|addr1)\b/i,                     'street-address', 'medium'],
+        [/\b(city|town)\b/i,                                 'address-level2', 'medium'],
+        [/\b(state|province|region)\b/i,                     'address-level1', 'medium'],
+        [/\b(zip|postcode|postal[\s_-]?code|pincode)\b/i,    'postal-code',    'medium'],
+        [/\bcountry\b/i,                                     'country',        'medium'],
+        [/\b(card[\s_-]?number|cardnum|creditcard)\b/i,      'cc-number',      'high'],
+        [/\b(cvv|cvc|csc|security[\s_-]?code)\b/i,           'cc-csc',         'high'],
+        [/\b(expir(y|ation)|exp[\s_-]?date)\b/i,             'cc-exp',         'medium'],
+        [/\b(username|userid|login)\b/i,                     'username',       'low'],
+        [/\b(birth|bday|dob)\b/i,                            'bday',           'medium']
+      ];
+      for (const [re, purpose, confidence] of rules) {
+        if (re.test(h)) return { purpose, confidence };
+      }
+      return null;
+    }
+    function getTokens(el) {
+      const raw = el.getAttribute('autocomplete');
+      if (raw == null) return { kind: 'absent', tokens: [] };
+      const lc = raw.trim().toLowerCase();
+      if (lc === '' || lc === 'off') return { kind: 'off', tokens: [] };
+      if (lc === 'on') return { kind: 'on', tokens: [] };
+      return { kind: 'present', tokens: lc.split(/\s+/) };
+    }
+    const findings = [];
+    document.querySelectorAll('input').forEach(el => {
+      if (el.tagName !== 'INPUT') return;
+      const t = (el.type||'text').toLowerCase();
+      const skip = new Set(['search','hidden','submit','reset','button','image','checkbox','radio','file','color','range','number']);
+      if (skip.has(t)) return;
+      if (el.closest('[role="search"], form[role="search"]')) return;
+      const cs = window.getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return;
+      const guess = classify(el);
+      if (!guess) return;
+      const decl = getTokens(el);
+      const base = {
+        id: generateId(), engine: 'Identify Input Purpose', element: describeEl(el),
+        criterion: 'WCAG 2.2 SC 1.3.5 Identify Input Purpose (Level AA)'
+      };
+      if (decl.kind === 'absent' || decl.kind === 'on') {
+        findings.push(Object.assign({}, base, {
+          issue: `Field collects ${guess.purpose} but has no autocomplete attribute.`,
+          computed: `autocomplete=${decl.kind}`, required: `autocomplete="${guess.purpose}"`,
+          verdict: 'Fail', severity: guess.confidence === 'high' ? SEV.SERIOUS : SEV.MODERATE,
+          howToFix: `Add autocomplete="${guess.purpose}" to this input.`
+        }));
+      } else if (decl.kind === 'off') {
+        findings.push(Object.assign({}, base, {
+          issue: `autocomplete="off" blocks SC 1.3.5 programmatic identification of ${guess.purpose}.`,
+          computed: 'autocomplete="off"', required: `autocomplete="${guess.purpose}"`,
+          verdict: 'Fail', severity: SEV.SERIOUS,
+          howToFix: `Replace autocomplete="off" with autocomplete="${guess.purpose}".`
+        }));
+      } else if (decl.tokens.includes(guess.purpose)) {
+        findings.push(Object.assign({}, base, {
+          issue: `Field correctly declares autocomplete="${guess.purpose}".`,
+          computed: `autocomplete="${decl.tokens.join(' ')}"`, required: `autocomplete="${guess.purpose}"`,
+          verdict: 'Pass', severity: SEV.MINOR, howToFix: ''
+        }));
+      } else if (decl.tokens.some(t => WCAG_TOKENS.has(t))) {
+        findings.push(Object.assign({}, base, {
+          issue: `Field declares "${decl.tokens.join(' ')}" but classifier expected "${guess.purpose}". Confirm which is correct.`,
+          computed: `autocomplete="${decl.tokens.join(' ')}"`, required: `autocomplete="${guess.purpose}"`,
+          verdict: 'Warning', severity: SEV.MINOR,
+          howToFix: `If the field truly collects ${guess.purpose}, change the autocomplete value.`
+        }));
+      } else {
+        findings.push(Object.assign({}, base, {
+          issue: `autocomplete="${decl.tokens.join(' ')}" is not a WCAG 2.2 input-purpose token.`,
+          computed: `autocomplete="${decl.tokens.join(' ')}"`, required: `autocomplete="${guess.purpose}"`,
+          verdict: 'Fail', severity: SEV.MODERATE,
+          howToFix: `Replace with autocomplete="${guess.purpose}".`
+        }));
+      }
+    });
+    return findings;
+  }
+
+  /* ================================================================
+     ENGINE 21: DRAGGING MOVEMENTS (WCAG 2.2 SC 2.5.7 Level AA)
+     Production detection is attribute and ARIA based; runtime
+     listener probing requires document_start injection which the
+     extension does not currently use. Standalone reference module
+     engines/dragging-movements.js covers the listener-probe path
+     for unit tests.
+  ================================================================ */
+  function auditDraggingMovements() {
+    const findings = [];
+    const INLINE_DRAG = ['ondragstart','ondrag','onpointerdown','onpointermove','onmousedown','onmousemove','ontouchstart','ontouchmove'];
+    function hasInlineDrag(el) {
+      return INLINE_DRAG.some(a => el.hasAttribute(a));
+    }
+    function isDraggable(el) {
+      if (el.getAttribute('draggable') === 'true') return 'html5-draggable';
+      if (hasInlineDrag(el)) return 'inline-handler';
+      const role = (el.getAttribute('role')||'').toLowerCase();
+      if ((role === 'slider' || role === 'scrollbar') && el.hasAttribute('aria-valuenow')) return 'aria-' + role;
+      const cs = window.getComputedStyle(el);
+      if (cs.cursor === 'grab' || cs.cursor === 'grabbing') return 'cursor-grab';
+      return null;
+    }
+    function hasAlternative(el) {
+      const role = (el.getAttribute('role')||'').toLowerCase();
+      if ((role === 'slider' || role === 'scrollbar') && el.tabIndex >= 0) return true;
+      if (el.hasAttribute('onkeydown') || el.hasAttribute('onkeyup') || el.hasAttribute('onkeypress')) return true;
+      const scope = el.parentElement || el;
+      const buttons = scope.querySelectorAll('button, [role="button"]');
+      return Array.from(buttons).some(b => {
+        const n = (b.getAttribute('aria-label') || b.textContent || '').trim();
+        return n.length > 0;
+      });
+    }
+    /*
+      v4.0.1 perf: previously this walked document.querySelectorAll('*')
+      and called window.getComputedStyle() twice per element, which
+      on a 10k-node enterprise page (Salesforce, Gmail) added hundreds
+      of ms. Now we pre-filter to a candidate set via narrow
+      selectors that cover every dragging signal except cursor:grab.
+      The cursor signal is checked only on visible elements that
+      survived the first pass, which keeps getComputedStyle calls
+      proportional to actual interactive elements rather than the
+      full DOM.
+    */
+    const candidateSelector = [
+      '[draggable="true"]',
+      '[role="slider"][aria-valuenow]',
+      '[role="scrollbar"][aria-valuenow]',
+      '[ondragstart]', '[ondrag]',
+      '[onpointerdown]', '[onpointermove]',
+      '[onmousedown]', '[onmousemove]',
+      '[ontouchstart]', '[ontouchmove]'
+    ].join(',');
+    const candidates = Array.from(document.querySelectorAll(candidateSelector));
+    candidates.forEach(el => {
+      const kind = isDraggable(el);
+      if (!kind) return;
+      const cs = window.getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return;
+      const alt = hasAlternative(el);
+      const base = {
+        id: generateId(), engine: 'Dragging Movements', element: describeEl(el),
+        criterion: 'WCAG 2.2 SC 2.5.7 Dragging Movements (Level AA)'
+      };
+      if (alt) {
+        findings.push(Object.assign({}, base, {
+          issue: `Dragging detected (${kind}) and a single-pointer alternative is present.`,
+          computed: kind, required: 'Single-pointer alternative',
+          verdict: 'Pass', severity: SEV.MINOR, howToFix: ''
+        }));
+      } else {
+        findings.push(Object.assign({}, base, {
+          issue: `Dragging detected (${kind}) but no single-pointer alternative found in parent scope.`,
+          computed: kind, required: 'Single-pointer alternative',
+          verdict: 'Warning', severity: SEV.MODERATE,
+          howToFix: 'Add a labelled button alternative (Move up / Move down, +/-) or expose role=slider with aria-valuenow + tabindex + keydown handler.'
+        }));
+      }
+    });
+    return findings;
+  }
+
+  /* ================================================================
+     ENGINE 22: CONSISTENT HELP (WCAG 2.2 SC 3.2.6 Level A)
+     Single-page detection emits Warnings only; cross-page comparison
+     comes in v4.1 audit-diff feature.
+  ================================================================ */
+  function auditConsistentHelp() {
+    function name(el) { return (el.getAttribute('aria-label')||el.textContent||'').trim(); }
+    const rules = [
+      ['human contact mechanism', el => el.tagName === 'A' && /^tel:/i.test(el.getAttribute('href')||'')],
+      ['human contact details',   el => el.tagName === 'A' && /^mailto:/i.test(el.getAttribute('href')||'')],
+      ['human contact mechanism', el => el.tagName === 'A' && /\bcontact\b/i.test(name(el))],
+      ['self-help option',        el => el.tagName === 'A' && /\b(faq|knowledge\s*base|documentation|docs|help center)\b/i.test(name(el))],
+      ['self-help option',        el => el.tagName === 'A' && /\b(help|support)\b/i.test(name(el))],
+      ['fully automated contact', el => (el.tagName === 'BUTTON' || el.getAttribute('role') === 'button') && /\b(chat|message us|live chat|chatbot)\b/i.test(name(el))]
+    ];
+    const findings = [];
+    const ordered = [];
+    document.querySelectorAll('a, button, [role="button"]').forEach(el => {
+      const cs = window.getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return;
+      let category = null;
+      for (const [cat, fn] of rules) { try { if (fn(el)) { category = cat; break; } } catch (_) {} }
+      if (!category) return;
+      ordered.push({ order: ordered.length+1, category, name: name(el).slice(0, 60) });
+      findings.push({
+        id: generateId(), engine: 'Consistent Help', element: describeEl(el),
+        criterion: 'WCAG 2.2 SC 3.2.6 Consistent Help (Level A)',
+        issue: `Help mechanism detected: ${category}. Single-page audit cannot verify "same relative order across pages".`,
+        computed: `${category} at position ${ordered.length}`,
+        required: 'Same relative order on every page where present',
+        verdict: 'Warning', severity: SEV.MINOR,
+        howToFix: `Re-run AMASAMYA on a second page of the same site and compare the order recorded here.`
+      });
+    });
+    try {
+      sessionStorage.setItem('__AMASAMYA_HelpOrder',
+        JSON.stringify({ url: location.href, taken: new Date().toISOString(), items: ordered }));
+    } catch (_) {}
+    return findings;
+  }
+
+  /* ================================================================
+     ENGINE 23: REDUNDANT ENTRY (WCAG 2.2 SC 3.3.7 Level A)
+  ================================================================ */
+  function auditRedundantEntry() {
+    const STEP_SELECTORS = ['ol.step-indicator','ol.steps','ol.wizard-steps',
+      '[role="progressbar"][aria-valuemax]','[aria-current="step"]',
+      '.step-progress','.checkout-steps'];
+    const REENTRY = /\b(re[-\s]?enter|enter again|for verification|confirm your|reconfirm)\b/i;
+    const AUTOFILL = /\b(same(\s+\w+){0,3}\s+as|use\s+(same|shipping|previous|saved)|copy\s+from|auto[-\s]?fill)\b/i;
+    function isMultiStep() {
+      if (STEP_SELECTORS.some(s => document.querySelector(s))) return true;
+      const h1 = document.querySelector('h1');
+      return h1 && /step\s*\d+\s*of\s*\d+/i.test(h1.textContent||'');
+    }
+    function hasAutofill(scope) {
+      return Array.from((scope||document).querySelectorAll('label, button'))
+        .some(el => AUTOFILL.test((el.textContent||'').trim()));
+    }
+    function nearbyText(el) {
+      let bag = '';
+      if (el.id) bag += ' ' + (document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent || '');
+      bag += ' ' + (el.closest('label')?.textContent || '');
+      let sib = el.previousElementSibling; let hops = 0;
+      while (sib && hops < 3) { bag += ' ' + (sib.textContent||''); sib = sib.previousElementSibling; hops++; }
+      return bag;
+    }
+    const findings = [];
+    if (hasAutofill(document)) {
+      const ctl = Array.from(document.querySelectorAll('label, button'))
+        .find(el => AUTOFILL.test((el.textContent||'').trim()));
+      if (ctl) findings.push({
+        id: generateId(), engine: 'Redundant Entry', element: describeEl(ctl),
+        criterion: 'WCAG 2.2 SC 3.3.7 Redundant Entry (Level A)',
+        issue: 'Auto-fill or "same as previous" control detected.',
+        computed: 'autofill control present', required: 'Auto-fill or selection for repeated values',
+        verdict: 'Pass', severity: SEV.MINOR, howToFix: ''
+      });
+    }
+    if (!isMultiStep()) return findings;
+
+    /* The previous implementation emitted a Warning per input on every
+       multi-step page, which produced 10+ low-value findings on any
+       checkout flow. Tighten to:
+
+         - Always Fail every input whose nearby text contains re-entry
+           wording AND has no autofill toggle in its form scope. These
+           are concrete violations.
+         - Emit ONE summary Warning per audit if any candidate fields
+           exist but no autofill toggle is present anywhere on the
+           page. The list of affected fields is included in the
+           computed column for the reviewer to triage.
+
+       This eliminates the warning flood while keeping the actual
+       finding the engine cares about. */
+
+    const candidates = Array.from(document.querySelectorAll(
+      'input[autocomplete]:not([autocomplete="off"])'
+    )).filter(el => {
+      const cs = window.getComputedStyle(el);
+      return cs.display !== 'none' && cs.visibility !== 'hidden';
+    });
+
+    const ambiguousCandidates = [];
+    candidates.forEach(el => {
+      const reentry = REENTRY.test(nearbyText(el));
+      const af = hasAutofill(el.closest('form, fieldset, section'));
+      const ac = el.getAttribute('autocomplete');
+      if (reentry && !af) {
+        findings.push({
+          id: generateId(), engine: 'Redundant Entry', element: describeEl(el),
+          criterion: 'WCAG 2.2 SC 3.3.7 Redundant Entry (Level A)',
+          issue: `Multi-step flow asks the user to re-enter ${ac} without an auto-fill option.`,
+          computed: 're-entry wording near field, no autofill',
+          required: 'Auto-fill or "use previous" control',
+          verdict: 'Fail', severity: SEV.MODERATE,
+          howToFix: 'Pre-populate the field or provide a "use previous"/"same as" control.'
+        });
+      } else if (!af) {
+        ambiguousCandidates.push(ac);
+      }
+    });
+
+    if (ambiguousCandidates.length > 0 && !hasAutofill(document)) {
+      /* Single summary Warning, not one per field. */
+      findings.push({
+        id: generateId(), engine: 'Redundant Entry', element: 'Page',
+        criterion: 'WCAG 2.2 SC 3.3.7 Redundant Entry (Level A)',
+        issue: `Multi-step flow detected with ${ambiguousCandidates.length} candidate field${ambiguousCandidates.length === 1 ? '' : 's'} that may repeat earlier entries. No auto-fill control found anywhere on the page.`,
+        computed: `Candidate autocomplete tokens: ${[...new Set(ambiguousCandidates)].join(', ')}`,
+        required: 'Verify against prior steps; expose an auto-fill or "use previous" control if any value repeats',
+        verdict: 'Warning', severity: SEV.MINOR,
+        howToFix: 'Run AMASAMYA on an earlier step of the same flow to confirm which values are being asked twice, then pre-populate or expose a "use previous" / "same as" control.'
+      });
+    }
+
+    return findings;
+  }
+
+  /* ================================================================
+     ENGINE 24: ACCESSIBLE AUTHENTICATION, MINIMUM
+                (WCAG 2.2 SC 3.3.8 Level AA)
+  ================================================================ */
+  function auditAccessibleAuth() {
+    const CAPTCHA_SRC  = /(google\.com\/recaptcha|hcaptcha\.com|turnstile\.cloudflare|captcha\.com)/i;
+    const CAPTCHA_TXT  = /\b(captcha|recaptcha|hcaptcha|i'?m not a robot|prove you are human)\b/i;
+    const PUZZLE_TXT   = /\b(select all|identify (the )?(images|pictures) (with|containing)|click each|drag the slider to)\b/i;
+    const MAGIC_LINK   = /\b(magic\s*link|sign\s*in\s*with\s*a\s*link|email\s*link|passwordless|email me a link)\b/i;
+    const MEMORABLE    = /\b(memorable|memorise|memorize|recall your)\s+(password|word)\b/i;
+    function name(el) { return (el.getAttribute('aria-label')||el.textContent||el.getAttribute('alt')||'').trim(); }
+    function isVis(el) {
+      const cs = window.getComputedStyle(el);
+      return !(cs.display === 'none' || cs.visibility === 'hidden');
+    }
+    const magicLink = Array.from(document.querySelectorAll('a, button'))
+      .some(l => MAGIC_LINK.test(name(l)));
+    const findings = [];
+
+    document.querySelectorAll('iframe').forEach(el => {
+      if (!isVis(el)) return;
+      const src = el.getAttribute('src')||'';
+      const title = el.getAttribute('title')||'';
+      if (!(CAPTCHA_SRC.test(src) || CAPTCHA_TXT.test(title))) return;
+      const base = {
+        id: generateId(), engine: 'Accessible Authentication', element: describeEl(el),
+        criterion: 'WCAG 2.2 SC 3.3.8 Accessible Authentication Minimum (Level AA)'
+      };
+      if (magicLink) {
+        findings.push(Object.assign({}, base, {
+          issue: 'CAPTCHA present but magic-link alternative is available on the same page.',
+          computed: 'CAPTCHA + alternative', required: 'Alternative authentication method',
+          verdict: 'Pass', severity: SEV.MINOR, howToFix: ''
+        }));
+      } else {
+        findings.push(Object.assign({}, base, {
+          issue: 'CAPTCHA iframe with no alternative authentication method on the page.',
+          computed: 'CAPTCHA, no alternative', required: 'Alternative method',
+          verdict: 'Fail', severity: SEV.SERIOUS,
+          howToFix: 'Provide magic-link / email-link sign-in, WebAuthn, or an object-recognition CAPTCHA.'
+        }));
+      }
+    });
+
+    document.querySelectorAll('input[type="password"]').forEach(el => {
+      if (!isVis(el)) return;
+      const onpaste = el.getAttribute('onpaste')||'';
+      const ac = (el.getAttribute('autocomplete')||'').toLowerCase();
+      const blocksPaste = /false|return\s*false|preventdefault/i.test(onpaste);
+      const blocksAc = ac === 'off';
+      const labelText = (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent : '') || el.closest('label')?.textContent || '';
+      const memorable = MEMORABLE.test(labelText);
+      const base = {
+        id: generateId(), engine: 'Accessible Authentication', element: describeEl(el),
+        criterion: 'WCAG 2.2 SC 3.3.8 Accessible Authentication Minimum (Level AA)'
+      };
+      if (blocksPaste || blocksAc || memorable) {
+        findings.push(Object.assign({}, base, {
+          issue: 'Password field blocks password-manager assistance, forcing recall (cognitive function test).',
+          computed: `${blocksPaste?'paste blocked, ':''}${blocksAc?'autocomplete=off, ':''}${memorable?'memorable wording':''}`.replace(/,\s*$/,''),
+          required: 'Allow paste + autocomplete="current-password" / "new-password"',
+          verdict: 'Fail', severity: SEV.SERIOUS,
+          howToFix: 'Remove onpaste blockers, replace autocomplete="off" with the correct token, drop "memorable password" wording.'
+        }));
+      } else if (ac.includes('current-password') || ac.includes('new-password')) {
+        findings.push(Object.assign({}, base, {
+          issue: 'Password field allows password-manager assistance.',
+          computed: `autocomplete="${ac}", paste allowed`,
+          required: 'autocomplete + paste enabled',
+          verdict: 'Pass', severity: SEV.MINOR, howToFix: ''
+        }));
+      }
+    });
+
+    document.querySelectorAll('fieldset').forEach(el => {
+      if (!isVis(el)) return;
+      const legend = el.querySelector('legend');
+      if (!legend || !PUZZLE_TXT.test(legend.textContent||'')) return;
+      if (el.querySelectorAll('img').length < 2) return;
+      findings.push({
+        id: generateId(), engine: 'Accessible Authentication', element: describeEl(el),
+        criterion: 'WCAG 2.2 SC 3.3.8 Accessible Authentication Minimum (Level AA)',
+        issue: 'Image-selection puzzle pattern detected. May be CAPTCHA or legitimate UI.',
+        computed: 'fieldset with image grid + selection wording',
+        required: 'If CAPTCHA, provide alternative',
+        verdict: 'Warning', severity: SEV.MODERATE,
+        howToFix: 'If this is authentication, replace with object-recognition or provide a magic-link alternative.'
+      });
+    });
+
+    if (magicLink) {
+      const ml = Array.from(document.querySelectorAll('a, button'))
+        .find(l => MAGIC_LINK.test(name(l)));
+      if (ml) findings.push({
+        id: generateId(), engine: 'Accessible Authentication', element: describeEl(ml),
+        criterion: 'WCAG 2.2 SC 3.3.8 Accessible Authentication Minimum (Level AA)',
+        issue: 'Magic-link / passwordless sign-in alternative detected.',
+        computed: 'magic-link link present', required: 'Non-cognitive alternative',
+        verdict: 'Pass', severity: SEV.MINOR, howToFix: ''
+      });
+    }
+    return findings;
+  }
+
+  /* ================================================================
      MAIN RUNNER
   ================================================================ */
   try {
@@ -401,7 +1383,19 @@
       { name: 'Dark Mode', fn: auditDarkMode },
       { name: 'Text Spacing', fn: auditTextSpacing },
       { name: 'DOM Order', fn: auditDomOrder },
-      { name: 'ARIA Validation', fn: auditAriaValidation }
+      { name: 'ARIA Validation', fn: auditAriaValidation },
+      { name: 'Target Size', fn: auditTargetSize },
+      { name: 'Label in Name', fn: auditLabelInName },
+      { name: 'Resize Text', fn: auditResizeText },
+      { name: 'Dark Mode Contrast', fn: auditDarkModeContrast },
+      { name: 'Colour-Only Meaning', fn: auditColourOnlyMeaning },
+      { name: 'Target Size AAA', fn: auditTargetSizeAAA },
+      /* v4.0.0 additions: SCs 1.3.5, 2.5.7, 3.2.6, 3.3.7, 3.3.8. */
+      { name: 'Identify Input Purpose', fn: auditInputPurpose },
+      { name: 'Dragging Movements', fn: auditDraggingMovements },
+      { name: 'Consistent Help', fn: auditConsistentHelp },
+      { name: 'Redundant Entry', fn: auditRedundantEntry },
+      { name: 'Accessible Authentication', fn: auditAccessibleAuth }
     ];
 
     const findings = [];
@@ -421,7 +1415,7 @@
     });
 
     // Send results to service worker
-    browser.runtime.sendMessage({
+    chrome.runtime.sendMessage({
       type: 'audit-results',
       findings: findings,
       pageTitle: document.title,
@@ -429,7 +1423,7 @@
       timestamp: new Date().toISOString()
     });
   } catch (err) {
-    browser.runtime.sendMessage({
+    chrome.runtime.sendMessage({
       type: 'audit-error',
       error: err && err.message ? err.message : String(err)
     });
