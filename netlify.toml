@@ -96,6 +96,27 @@
   status = 200
   force = true
 
+# AMASAMYA apex domain web app platform routes
+[[redirects]]
+  from = "https://amasamya.com/app"
+  to = "/amasamya/index.html"
+  status = 200
+
+[[redirects]]
+  from = "https://www.amasamya.com/app"
+  to = "/amasamya/index.html"
+  status = 200
+
+[[redirects]]
+  from = "https://amasamya.com/app/*"
+  to = "/amasamya/:splat"
+  status = 200
+
+[[redirects]]
+  from = "https://www.amasamya.com/app/*"
+  to = "/amasamya/:splat"
+  status = 200
+
 # AMASAMYA subdomain rewrite - every other path serves /amasamya/ content
 [[redirects]]
   from = "https://amasamya.akhileshmalani.com/*"
