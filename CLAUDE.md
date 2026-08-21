@@ -90,9 +90,14 @@ this project, ever, going forward.
   v4.3.0, and v4.3.1 are all Published. v4.3.1 was a same-week
   ten-bug quality patch after v4.3.0. Version alignment policy with
   the AMASAMYA web platform is locked as Option B: MAJOR.MINOR must
-  match, PATCH may differ for hotfix agility. **v5.2.0 is built and
-  awaiting Chrome Web Store upload** (extension bumped from 4.3.1
-  to 5.2.0; platform PLATFORM_VERSION bumped from 5.1.0 to 5.2.0).
+  match, PATCH may differ for hotfix agility. **v5.2.0 is Published
+  on the Chrome Web Store, last updated 13 August 2026** (25 users,
+  no ratings yet), and also published on addons.mozilla.org as
+  `amasamya-accessibility-audit`, likewise at 5.2.0. The extension
+  bumped from 4.3.1 to 5.2.0; platform PLATFORM_VERSION bumped from
+  5.1.0 to 5.2.0. **The working tree manifest is already at 5.3.0,
+  which is NOT yet uploaded to either store**: do not describe 5.3
+  as available anywhere public until it ships.
   v5.2.0 adds Scheduled Crawls: per-user schedule config in Firestore
   via new platform Schedules tab, chrome.alarms in the extension,
   alarm-fire runs Site Crawl and diffs against history, run summary
