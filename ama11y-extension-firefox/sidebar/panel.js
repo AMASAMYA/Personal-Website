@@ -1055,24 +1055,38 @@
     announce('Text exported.');
   });
 
-  /* ── VPAT 2.4 / ACR Report Export ── */
+  /* ── VPAT 2.5 / ACR Report Export ── */
   if ($('export-vpat')) {
     $('export-vpat').addEventListener('click', () => {
       const vpatHtml = generateVpatReport();
       downloadFile(vpatHtml, 'AMASAMYA-VPAT-ACR-report.html', 'text/html');
-      announce('VPAT 2.4 ACR compliance report exported.');
+      announce('VPAT 2.5 ACR compliance report exported.');
     });
   }
 
   function generateVpatReport() {
     const fails = allFindings.filter(f => f.verdict === 'Fail');
-    const labelFails = fails.filter(f => (f.criterion && f.criterion.includes('1.1.1')) || f.engine.includes('Label'));
-    const targetFails = fails.filter(f => (f.criterion && (f.criterion.includes('2.5.5') || f.criterion.includes('2.5.8'))) || f.engine.includes('Target'));
-    const contrastFails = fails.filter(f => (f.criterion && f.criterion.includes('1.4.3')) || f.engine.includes('Contrast'));
-    const focusFails = fails.filter(f => (f.criterion && f.criterion.includes('2.4')) || f.engine.includes('Focus'));
+
+    /* One bucket per success criterion. The previous version grouped
+       2.5.5 with 2.5.8 and 2.4.7 with 2.4.11, which mixed conformance
+       levels inside a single row (2.5.5 is AAA, 2.5.8 is AA) and made it
+       impossible to state a correct standards reference for either. */
+    const bySc = (sc, engines) => fails.filter(f =>
+      (f.criterion && f.criterion.includes(sc)) ||
+      (engines || []).some(e => f.engine === e));
+
+    const nonTextFails  = bySc('1.1.1',  ['Images', 'Label in Name']);
+    const contrastFails = bySc('1.4.3',  ['Colour Contrast']);
+    const focusVisFails = bySc('2.4.7',  ['Focus Visibility']);
+    const focusObsFails = bySc('2.4.11', []);
+    const targetAaFails = bySc('2.5.8',  ['Target Size']);
+    const targetAaaFails = bySc('2.5.5', ['Target Size AAA']);
 
     const evalRow = (name, sc, level, gigw, is17802, failsList) => {
-      const status = failsList.length === 0 ? 'Supports' : 'Supports with Exceptions';
+      /* VPAT 2.5 retired 'Supports with Exceptions' in favour of
+         'Partially Supports'. Changing the heading without this would
+         claim 2.5 while emitting 2.4 terminology. */
+      const status = failsList.length === 0 ? 'Supports' : 'Partially Supports';
       const statusClass = failsList.length === 0 ? 'color:#30d158;' : 'color:#ffb300;';
       const remarks = failsList.length === 0 
         ? 'Fully satisfied across evaluated DOM nodes.' 
@@ -1091,7 +1105,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AMASAMYA VPAT 2.4 / ACR Report - ${escHtml(auditMeta.pageTitle || 'Audit')}</title>
+  <title>AMASAMYA VPAT 2.5 / ACR Report - ${escHtml(auditMeta.pageTitle || 'Audit')}</title>
   <style>
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0b0f19; color: #f8fafc; padding: 24px; line-height: 1.6; }
     h1 { color: #00e5ff; border-bottom: 2px solid #2c3246; padding-bottom: 8px; }
@@ -1102,11 +1116,11 @@
   </style>
 </head>
 <body>
-  <h1>AMASAMYA VPAT 2.4 / ACR Accessibility Conformance Report</h1>
+  <h1>AMASAMYA VPAT 2.5 / ACR Accessibility Conformance Report</h1>
   <p><strong>Page Title:</strong> ${escHtml(auditMeta.pageTitle || '')}</p>
   <p><strong>URL:</strong> <code>${escHtml(auditMeta.pageUrl || '')}</code></p>
   <p><strong>Date:</strong> ${escHtml(auditMeta.timestamp || '')}</p>
-  <p><strong>Standards Covered:</strong> WCAG 2.2 AA, GIGW 3.0 (India Government Guidelines), IS 17802 (BIS)</p>
+  <p><strong>Standards Covered:</strong> WCAG 2.2 (W3C), GIGW 3.0 (Guidelines for Indian Government Websites and Apps, NIC / MeitY), IS 17802 Part 1:2021 (Bureau of Indian Standards)</p>
   
   <h2>Compliance Matrix</h2>
   <table>
@@ -1119,12 +1133,27 @@
       </tr>
     </thead>
     <tbody>
-      ${evalRow('Non-text Content', '1.1.1', 'A', 'Rule 4.1', 'IS 17802 Sec 5.1', labelFails)}
-      ${evalRow('Target Size', '2.5.5 / 2.5.8', 'AA', 'Rule 6.3', 'IS 17802 Sec 7.2 (48dp)', targetFails)}
-      ${evalRow('Contrast (Minimum)', '1.4.3', 'AA', 'Rule 5.2', 'IS 17802 Sec 6.1 (4.5:1)', contrastFails)}
-      ${evalRow('Focus Order & Visuals', '2.4.7 / 2.4.11', 'AA', 'Rule 7.1', 'IS 17802 Sec 8.4', focusFails)}
+      ${evalRow('Non-text Content', '1.1.1', 'A', 'Covered by the WCAG 2.1 AA baseline', 'Part 1, clause 9.1.1.1', nonTextFails)}
+      ${evalRow('Contrast (Minimum)', '1.4.3', 'AA', 'Covered by the WCAG 2.1 AA baseline', 'Part 1, clause 9.1.4.3', contrastFails)}
+      ${evalRow('Focus Visible', '2.4.7', 'AA', 'Covered by the WCAG 2.1 AA baseline', 'Part 1, clause 9.2.4.7', focusVisFails)}
+      ${evalRow('Focus Not Obscured (Minimum)', '2.4.11', 'AA', 'Not covered: baseline is WCAG 2.1', 'Not covered: adopts EN 301 549 V3.2.1', focusObsFails)}
+      ${evalRow('Target Size (Minimum)', '2.5.8', 'AA', 'Not covered: baseline is WCAG 2.1', 'Not covered: adopts EN 301 549 V3.2.1', targetAaFails)}
+      ${evalRow('Target Size (Enhanced)', '2.5.5', 'AAA', 'Not covered: baseline is WCAG 2.1 Level AA', 'Not covered: clause 9 covers Levels A and AA only', targetAaaFails)}
     </tbody>
   </table>
+
+  <h2>Note on the Indian standards columns</h2>
+  <p>GIGW 3.0 sets its accessibility baseline at WCAG 2.1 Level AA as a whole
+  and does not restate individual success criteria under its own numbering, so
+  criteria present in WCAG 2.1 are shown as covered by that baseline rather
+  than by a clause number.</p>
+  <p>IS 17802 Part 1:2021 adopts the EN 301 549 V3.2.1 structure, in which
+  clauses 9.1 to 9.4 restate the WCAG 2.1 Level A and AA success criteria with
+  a &quot;9.&quot; prefix. Criteria introduced in WCAG 2.2, and criteria at
+  Level AAA, therefore have no counterpart clause.</p>
+  <p><strong>&quot;Not covered&quot; describes the standard, not this page.</strong>
+  It means the Indian instrument does not yet require that criterion. The
+  conformance status column still reports what was measured against WCAG 2.2.</p>
 </body>
 </html>`;
   }
