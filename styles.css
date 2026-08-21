@@ -384,7 +384,9 @@ a:hover {
 
 .btn-primary {
   background: var(--color-primary);
-  color: #fff;
+  /* --color-bg, not #fff: --color-primary flips to light blue in dark mode,
+     where white text drops to 2.14:1. --color-bg inverts with it. */
+  color: var(--color-bg);
   border-color: var(--color-primary);
   box-shadow: 0 1px 3px rgba(12, 74, 110, 0.2);
 }
@@ -1138,8 +1140,8 @@ a:hover {
 
 .blog-featured-badge {
   display: inline-block;
-  background: var(--color-primary); /* was --color-accent (#0891b2, white text = 3.68:1 FAIL) → #0c4a6e (9.05:1) SC 1.4.3 */
-  color: #fff;
+  background: var(--color-primary); /* was --color-accent (#0891b2, white text = 3.68:1 FAIL) -> #0c4a6e (9.05:1) SC 1.4.3 */
+  color: var(--color-bg);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -1490,7 +1492,7 @@ a:hover {
 }
 
 .filter-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
-.filter-btn.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.filter-btn.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }
 
 .library-grid {
   display: grid;
