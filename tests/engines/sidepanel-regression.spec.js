@@ -154,12 +154,12 @@ test.describe('Side panel: existing structure regression safety net', () => {
 
   test('export toolbar keeps the visible export buttons in their shipped order', async ({ page }) => {
     /* This test used to pin the first six positions, on the assumption that
-       new exports land at the end of the toolbar. VPAT 2.4 ACR shipped
+       new exports land at the end of the toolbar. The VPAT ACR export shipped
        between Text and SARIF instead, so the pin failed on a deliberate
        product change rather than on a regression, and stayed red.
 
        The shipped order is intentional and identical in the Chrome side
-       panel and the Firefox sidebar: VPAT 2.4 ACR is the enterprise
+       panel and the Firefox sidebar: the VPAT ACR export is the enterprise
        deliverable and sits ahead of SARIF and the screenshot so keyboard
        users reach it in fewer tab stops. Reordering the product to satisfy
        the test would be the wrong way round, so the assertion moved.
@@ -171,7 +171,7 @@ test.describe('Side panel: existing structure regression safety net', () => {
        list, which is the point of a pinned test. */
     const visible = await page.locator('#export-toolbar button:not([hidden])').allTextContents();
     expect(visible.map(t => t.trim())).toEqual([
-      'JSON', 'HTML', 'CSV', 'Text', 'VPAT 2.4 ACR', 'SARIF', 'Annotated screenshot'
+      'JSON', 'HTML', 'CSV', 'Text', 'VPAT 2.5 ACR', 'SARIF', 'Annotated screenshot'
     ]);
 
     /* Diff CSV exists but stays hidden until a diff view is active. */

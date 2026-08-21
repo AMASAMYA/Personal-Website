@@ -1055,12 +1055,12 @@
     announce('Text exported.');
   });
 
-  /* ── VPAT 2.4 / ACR Report Export ── */
+  /* ── VPAT 2.5 / ACR Report Export ── */
   if ($('export-vpat')) {
     $('export-vpat').addEventListener('click', () => {
       const vpatHtml = generateVpatReport();
       downloadFile(vpatHtml, 'AMASAMYA-VPAT-ACR-report.html', 'text/html');
-      announce('VPAT 2.4 ACR compliance report exported.');
+      announce('VPAT 2.5 ACR compliance report exported.');
     });
   }
 
@@ -1072,7 +1072,10 @@
     const focusFails = fails.filter(f => (f.criterion && f.criterion.includes('2.4')) || f.engine.includes('Focus'));
 
     const evalRow = (name, sc, level, gigw, is17802, failsList) => {
-      const status = failsList.length === 0 ? 'Supports' : 'Supports with Exceptions';
+      /* VPAT 2.5 retired 'Supports with Exceptions' in favour of
+         'Partially Supports'. Changing the heading without this would
+         claim 2.5 while emitting 2.4 terminology. */
+      const status = failsList.length === 0 ? 'Supports' : 'Partially Supports';
       const statusClass = failsList.length === 0 ? 'color:#30d158;' : 'color:#ffb300;';
       const remarks = failsList.length === 0 
         ? 'Fully satisfied across evaluated DOM nodes.' 
@@ -1091,7 +1094,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AMASAMYA VPAT 2.4 / ACR Report - ${escHtml(auditMeta.pageTitle || 'Audit')}</title>
+  <title>AMASAMYA VPAT 2.5 / ACR Report - ${escHtml(auditMeta.pageTitle || 'Audit')}</title>
   <style>
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0b0f19; color: #f8fafc; padding: 24px; line-height: 1.6; }
     h1 { color: #00e5ff; border-bottom: 2px solid #2c3246; padding-bottom: 8px; }
@@ -1102,7 +1105,7 @@
   </style>
 </head>
 <body>
-  <h1>AMASAMYA VPAT 2.4 / ACR Accessibility Conformance Report</h1>
+  <h1>AMASAMYA VPAT 2.5 / ACR Accessibility Conformance Report</h1>
   <p><strong>Page Title:</strong> ${escHtml(auditMeta.pageTitle || '')}</p>
   <p><strong>URL:</strong> <code>${escHtml(auditMeta.pageUrl || '')}</code></p>
   <p><strong>Date:</strong> ${escHtml(auditMeta.timestamp || '')}</p>
@@ -1120,7 +1123,7 @@
     </thead>
     <tbody>
       ${evalRow('Non-text Content', '1.1.1', 'A', 'Rule 4.1', 'IS 17802 Sec 5.1', labelFails)}
-      ${evalRow('Target Size', '2.5.5 / 2.5.8', 'AA', 'Rule 6.3', 'IS 17802 Sec 7.2 (48dp)', targetFails)}
+      ${evalRow('Target Size', '2.5.5 / 2.5.8', 'AA', 'Rule 6.3', 'IS 17802 Sec 7.2 (24x24 CSS px at AA)', targetFails)}
       ${evalRow('Contrast (Minimum)', '1.4.3', 'AA', 'Rule 5.2', 'IS 17802 Sec 6.1 (4.5:1)', contrastFails)}
       ${evalRow('Focus Order & Visuals', '2.4.7 / 2.4.11', 'AA', 'Rule 7.1', 'IS 17802 Sec 8.4', focusFails)}
     </tbody>
