@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Every article by Akhilesh Malani on digital accessibility, screen reader testing, WCAG 2.2, and Indian accessibility regulation, written from the perspective of a blind practitioner.">
+  <meta name="author" content="Akhilesh Malani">
+  <meta name="keywords" content="WCAG 2.2, accessibility standards, success criteria, focus appearance, target size, accessible authentication, dragging movements, web accessibility">
+  <link rel="canonical" href="https://akhileshmalani.com/blog/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="All Articles | Akhilesh Malani">
+  <meta property="og:description" content="Every article by Akhilesh Malani on digital accessibility, screen reader testing, WCAG 2.2, and Indian accessibility regulation, written from the perspective of a blind practitioner.">
+  <meta property="og:url" content="https://akhileshmalani.com/blog/">
+
+  <title>All Articles | Akhilesh Malani</title>
+  <link rel="icon" type="image/svg+xml" href="../images/logo-icon.svg">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .blog-post { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .blog-post-header { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--color-border); }
+    .blog-post-header h1 { font-size: 2rem; line-height: 1.3; color: var(--color-primary-dark); margin-bottom: 0.75rem; }
+    .blog-meta { color: var(--color-text-light); font-size: 0.95rem; }
+    .blog-meta time { font-weight: 600; }
+    .blog-post-content h2 { font-size: 1.4rem; color: var(--color-primary); margin-top: 2.5rem; margin-bottom: 1rem; }
+    .blog-post-content h3 { font-size: 1.15rem; margin-top: 2rem; margin-bottom: 0.75rem; }
+    .blog-post-content p { margin-bottom: 1.25rem; line-height: 1.8; }
+    .blog-post-content ul, .blog-post-content ol { margin-bottom: 1.25rem; padding-left: 1.5rem; }
+    .blog-post-content li { margin-bottom: 0.5rem; line-height: 1.7; }
+    .blog-post-content blockquote { border-left: 4px solid var(--color-primary); padding: 1rem 1.5rem; margin: 1.5rem 0; background: var(--color-bg-alt); border-radius: 0 var(--radius) var(--radius) 0; font-style: italic; }
+    .blog-post-content code { background: var(--color-bg-alt); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.9em; }
+    .blog-post-content .callout { background: #eaf2f8; border: 1px solid #aed6f1; padding: 1.25rem; border-radius: var(--radius); margin: 1.5rem 0; }
+    /* The callout kept its light background in dark mode while the body text
+       turned light, leaving 1.09:1. Flip the surface with the theme. */
+    [data-theme="dark"] .blog-post-content .callout { background: #16283d; border-color: #2c4c6b; }
+    .blog-post-content .callout strong { color: var(--color-primary); }
+    .blog-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 0; margin-top: 2rem; border-top: 2px solid var(--color-border); }
+    .blog-nav a { color: var(--color-primary); font-weight: 600; text-decoration: none; }
+    .blog-nav a:hover { text-decoration: underline; }
+    @media (max-width: 600px) { .blog-post-header h1 { font-size: 1.5rem; } }
+    .share-section { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border); }
+    .share-section h2 { font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--color-text); }
+    .share-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .share-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s ease; }
+    .share-btn:hover { transform: translateY(-2px); }
+    .share-btn:focus-visible { outline: 3px solid var(--color-focus, #2471a3); outline-offset: 3px; }
+    .share-btn--linkedin { background: #004471; color: #fff; } /* upgraded: was #0077b5 (4.87:1, AA pass / AAA fail) → #004471 (~9.5:1, AAA pass). */
+    .share-btn--linkedin:hover { background: #00355a; color: #fff; }
+    .share-btn--twitter { background: #000000; color: #fff; } /* fixed: WCAG 1.4.3 AA - white on #1da1f2 was 2.82:1 (FAIL). Black (X brand) is 21:1. */
+    .share-btn--twitter:hover { background: #2a2a2a; color: #fff; }
+    .share-btn--email { background: var(--color-bg-alt, #f4f6f9); color: var(--color-text, #1a1a2e); border: 1px solid var(--color-border, #d5dbe3); }
+    .share-btn--email:hover { background: var(--color-border, #d5dbe3); }
+    .share-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+  </style>
+  <script>
+    (function(){var h=document.documentElement;var t=localStorage.getItem('theme');if(t){h.setAttribute('data-theme',t)}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){h.setAttribute('data-theme','dark')}var s=localStorage.getItem('a11y-text-size');if(s&&s!=='normal')h.setAttribute('data-text-size',s);if(localStorage.getItem('a11y-high-contrast')==='true')h.setAttribute('data-high-contrast','true');if(localStorage.getItem('a11y-dyslexia-font')==='true')h.setAttribute('data-dyslexia-font','true');if(localStorage.getItem('a11y-reduce-motion')==='true')h.setAttribute('data-reduce-motion','true')})();
+  </script>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header class="site-header" role="banner">
+    <nav class="navbar" aria-label="Primary navigation">
+      <div class="nav-container">
+        <a href="../index.html" class="nav-brand"><img src="../images/logo-horizontal.svg" alt="" role="presentation" class="logo-img" width="280" height="62"><span class="sr-only">Akhilesh Malani - Accessibility Architect, Home</span></a>
+        <a href="../index.html" class="btn-text">&larr; Back to Home</a>
+        <div class="nav-actions">
+          <button class="a11y-toggle" id="a11y-toggle" aria-label="Accessibility settings" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v10"/><path d="M7 11l5-1.5 5 1.5"/><path d="M9 21l3-4 3 4"/></svg>
+          </button>
+          <button class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" type="button">
+            <svg id="theme-icon-sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg id="theme-icon-moon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Accessibility Preferences Panel -->
+  <div id="a11y-backdrop" class="a11y-backdrop"></div>
+  <div id="a11y-panel" class="a11y-panel" role="dialog" aria-labelledby="a11y-panel-title" aria-modal="true" hidden>
+    <div class="a11y-panel-header">
+      <h2 id="a11y-panel-title" tabindex="-1">Accessibility Settings</h2>
+      <button type="button" class="a11y-panel-close" id="a11y-panel-close" aria-label="Close accessibility settings">&times;</button>
+    </div>
+    <div class="a11y-panel-body">
+      <fieldset class="a11y-option">
+        <legend>Text Size</legend>
+        <div class="a11y-text-sizes" role="group" aria-label="Text size options">
+          <button type="button" class="a11y-size-btn" data-size="normal" aria-pressed="true"><span style="font-size:0.85em">A</span><span class="sr-only"> Normal</span></button>
+          <button type="button" class="a11y-size-btn" data-size="large" aria-pressed="false"><span style="font-size:1.1em">A</span><span class="sr-only"> Large</span></button>
+          <button type="button" class="a11y-size-btn" data-size="larger" aria-pressed="false"><span style="font-size:1.4em">A</span><span class="sr-only"> Larger</span></button>
+        </div>
+      </fieldset>
+      <div class="a11y-option">
+        <div class="a11y-switch-row">
+          <span class="a11y-switch-label" id="label-contrast">High Contrast</span>
+          <button type="button" role="switch" aria-checked="false" aria-labelledby="label-contrast" id="a11y-contrast" class="a11y-switch"></button>
+        </div>
+      </div>
+      <div class="a11y-option">
+        <div class="a11y-switch-row">
+          <span class="a11y-switch-label" id="label-dyslexia">Dyslexia-Friendly Font</span>
+          <button type="button" role="switch" aria-checked="false" aria-labelledby="label-dyslexia" id="a11y-dyslexia" class="a11y-switch"></button>
+        </div>
+      </div>
+      <div class="a11y-option">
+        <div class="a11y-switch-row">
+          <span class="a11y-switch-label" id="label-motion">Reduce Motion</span>
+          <button type="button" role="switch" aria-checked="false" aria-labelledby="label-motion" id="a11y-motion" class="a11y-switch"></button>
+        </div>
+      </div>
+      <button type="button" class="a11y-reset" id="a11y-reset">Reset All Preferences</button>
+    </div>
+  </div>
+
+  <main id="main-content" role="main">
+    <section class="section">
+      <div class="container">
+        <h1>All Articles</h1>
+        <p class="section-intro">Everything I have written on digital accessibility, screen reader testing, WCAG 2.2, and Indian accessibility regulation. 13 articles, newest first.</p>
+
+        <div class="blog-grid">
+
+        <article class="blog-card">
+          <time datetime="2026-07-29">July 29, 2026</time>
+          <h2>The audit-complete announcement should tell you what changed. So AMASAMYA does.</h2>
+          <p>Most audit tools announce "audit complete" and stop there. AMASAMYA v4.3.0 carries the diff summary into the same polite-region utterance, so NVDA and JAWS users do not have to hunt for what changed. Why one utterance and not two, and why the sighted seat cannot verify this class of bug exists.</p>
+          <a href="amasamya-audit-complete-diff-announcement.html" class="btn-text">Read more<span class="sr-only">: The audit-complete announcement should tell you what changed. So AMASAMYA does.</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-07-06">July 6, 2026</time>
+          <h2>I audited HDFC Bank's homepage as a blind user. Here is what I found.</h2>
+          <p>13 Critical WCAG 2.2 failures on hdfcbank.com, including a primary navigation link at 1.00 to 1 contrast and unlabelled Fixed Deposit inputs a screen reader user cannot submit.</p>
+          <a href="audit-hdfc-bank-2026-07-06.html" class="btn-text">Read more<span class="sr-only">: I audited HDFC Bank's homepage as a blind user. Here is what I found.</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-05-21">May 21, 2026</time>
+          <h2>Launching AMASAMYA on GAAD 2026</h2>
+          <p>Why I built AMASAMYA, what it does that other automated tools do not, and what shipped in the release now live on the Chrome Web Store.</p>
+          <a href="gaad-2026-launching-amasamya.html" class="btn-text">Read more<span class="sr-only">: Launching AMASAMYA on GAAD 2026</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-03-15">March 15, 2026</time>
+          <h2>How to Test Your Website with a Screen Reader</h2>
+          <p>Most developers have never used a screen reader. Here's a practical, step-by-step guide to getting started, from someone who uses one every day.</p>
+          <a href="screen-reader-testing-guide.html" class="btn-text">Read more<span class="sr-only">: How to Test Your Website with a Screen Reader</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-03-10">March 10, 2026</time>
+          <h2>Your Automated Tools Miss 70% of What I Find</h2>
+          <p>Everyone runs axe and thinks they're done. They're not. Here's what gets missed - and why it takes a real screen reader user to catch it.</p>
+          <a href="automated-tools-miss.html" class="btn-text">Read more<span class="sr-only">: Your Automated Tools Miss 70% of What I Find</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-03-05">March 5, 2026</time>
+          <h2>WCAG 2.2: What Changed and Why It Matters</h2>
+          <p>9 new success criteria, 1 removed. Here's what actually changed in WCAG 2.2 and which ones matter most - from someone who tests against them daily.</p>
+          <a href="wcag-22-changes.html" class="btn-text">Read more<span class="sr-only">: WCAG 2.2: What Changed and Why It Matters</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-02-28">February 28, 2026</time>
+          <h2>Accessibility Is Not a Checklist - It's a Culture</h2>
+          <p>I've watched organisations audit, fix, and forget - over and over. Here's why the checklist approach fails and what a real accessibility culture looks like.</p>
+          <a href="accessibility-not-checklist.html" class="btn-text">Read more<span class="sr-only">: Accessibility Is Not a Checklist - It's a Culture</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-02-22">February 22, 2026</time>
+          <h2>India's SEBI Mandate: Are You Ready?</h2>
+          <p>The deadline is approaching and most organisations aren't prepared. I break down what the circular actually requires - and what happens if you ignore it.</p>
+          <a href="sebi-accessibility-mandate.html" class="btn-text">Read more<span class="sr-only">: India's SEBI Mandate: Are You Ready?</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-02-20">February 20, 2026</time>
+          <h2>What Happens When a Blind User Tries Your Banking App</h2>
+          <p>I pick up my phone, turn on TalkBack, and try to check my bank balance. Here's what actually happens - and what banks keep getting wrong.</p>
+          <a href="banking-app-blind-user.html" class="btn-text">Read more<span class="sr-only">: What Happens When a Blind User Tries Your Banking App</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-02-12">February 12, 2026</time>
+          <h2>RPwD Act 2016: What Every Indian Business Must Know</h2>
+          <p>India's disability rights law has real implications for your digital products. Here's what the law says, who it applies to, and what you need to do.</p>
+          <a href="rpwd-act-digital-accessibility.html" class="btn-text">Read more<span class="sr-only">: RPwD Act 2016: What Every Indian Business Must Know</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-02-05">February 5, 2026</time>
+          <h2>ARIA: The Tool Most Developers Use Wrong</h2>
+          <p>I've seen more accessibility broken by ARIA than fixed by it. Here's what actually works - from someone who navigates these patterns every single day.</p>
+          <a href="aria-misuse.html" class="btn-text">Read more<span class="sr-only">: ARIA: The Tool Most Developers Use Wrong</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-02-01">February 1, 2026</time>
+          <h2>Why Indian Government Websites Fail Their Own Guidelines</h2>
+          <p>India published GIGW 3.0 mandating accessibility. The irony: most government websites don't follow their own guidelines. Here's what I find.</p>
+          <a href="indian-govt-websites-accessibility.html" class="btn-text">Read more<span class="sr-only">: Why Indian Government Websites Fail Their Own Guidelines</span></a>
+        </article>
+
+        <article class="blog-card">
+          <time datetime="2026-01-18">January 18, 2026</time>
+          <h2>You're Spending 30x More Than You Need To</h2>
+          <p>Every accessibility defect fixed in production could have been caught in design for a fraction of the cost. I've seen the numbers - and helped organisations change them.</p>
+          <a href="shift-left-accessibility.html" class="btn-text">Read more<span class="sr-only">: You're Spending 30x More Than You Need To</span></a>
+        </article>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <p>&copy; 2026 Akhilesh Malani. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "WCAG 2.2: What Changed and Why It Matters",
+    "description": "WCAG 2.2 introduced 9 new success criteria. Here's what actually changed, what it means for your products, and which ones matter most - from someone who tests against them daily.",
+    "datePublished": "2026-03-05",
+    "dateModified": "2026-03-05",
+    "author": {
+      "@type": "Person",
+      "name": "Akhilesh Malani",
+      "url": "https://akhileshmalani.com",
+      "jobTitle": "Senior Accessibility Architect"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Akhilesh Malani",
+      "url": "https://akhileshmalani.com"
+    },
+    "mainEntityOfPage": "https://akhileshmalani.com/blog/wcag-22-changes.html",
+    "articleSection": "Accessibility",
+    "keywords": ["WCAG 2.2", "accessibility standards", "success criteria", "focus appearance", "target size", "accessible authentication", "dragging movements", "web accessibility"],
+    "wordCount": 2800,
+    "timeRequired": "PT10M"
+  }
+  </script>
+  <script src="../script.js"></script>
+</body>
+</html>
