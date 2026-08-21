@@ -152,14 +152,30 @@ test.describe('Side panel: existing structure regression safety net', () => {
     await expect(assertive).toHaveClass(/sr-only/);
   });
 
-  test('export toolbar leads with the six baseline export buttons in order', async ({ page }) => {
-    /* v4.3.0: the toolbar can now contain additional buttons (Diff
-       CSV) that are hidden by default until a diff view is active.
-       Assert the first six positions to keep the regression signal
-       without freezing the toolbar size. */
-    const buttons = await page.locator('#export-toolbar button').allTextContents();
-    const firstSix = buttons.slice(0, 6);
-    expect(firstSix).toEqual(['JSON', 'HTML', 'CSV', 'Text', 'SARIF', 'Annotated screenshot']);
+  test('export toolbar keeps the visible export buttons in their shipped order', async ({ page }) => {
+    /* This test used to pin the first six positions, on the assumption that
+       new exports land at the end of the toolbar. VPAT 2.4 ACR shipped
+       between Text and SARIF instead, so the pin failed on a deliberate
+       product change rather than on a regression, and stayed red.
+
+       The shipped order is intentional and identical in the Chrome side
+       panel and the Firefox sidebar: VPAT 2.4 ACR is the enterprise
+       deliverable and sits ahead of SARIF and the screenshot so keyboard
+       users reach it in fewer tab stops. Reordering the product to satisfy
+       the test would be the wrong way round, so the assertion moved.
+
+       Asserting every button that is not `hidden` keeps the full regression
+       signal, both order and membership, while still allowing conditionally
+       hidden buttons like Diff CSV to be added without churn. Adding a new
+       visible export is a deliberate act and should require editing this
+       list, which is the point of a pinned test. */
+    const visible = await page.locator('#export-toolbar button:not([hidden])').allTextContents();
+    expect(visible.map(t => t.trim())).toEqual([
+      'JSON', 'HTML', 'CSV', 'Text', 'VPAT 2.4 ACR', 'SARIF', 'Annotated screenshot'
+    ]);
+
+    /* Diff CSV exists but stays hidden until a diff view is active. */
+    await expect(page.locator('#export-diff-csv')).toBeHidden();
   });
 
   test('no remaining emoji or unicode glyph noise in user-visible labels', async ({ page }) => {
