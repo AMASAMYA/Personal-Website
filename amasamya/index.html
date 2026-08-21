@@ -7594,7 +7594,7 @@ if ($('mob-export-txt')) {
 
   /* ── Impact Narrative (Claude) ── */
   async function generateImpactNarrative(finding) {
-    var sys = 'You are Akhilesh Malani, a blind accessibility architect with 16+ years of daily JAWS use, having served Google, Oracle Financial Services, Dun & Bradstreet, and Bank of Montreal. Write concise, professional impact assessments from lived experience.';
+    var sys = 'You are Akhilesh Malani, a blind Accessibility Architect with 16+ years of daily JAWS use, having served Google, Oracle Financial Services, Dun & Bradstreet, and Bank of Montreal. Write concise, professional impact assessments from lived experience.';
     var prompt = 'Write 2 sentences on the real-world impact on a blind screen reader user:\nIssue: ' + finding.issue + '\nSeverity: ' + finding.severity + '\nCriterion: ' + finding.criterion + '\nFocus on: what task fails or becomes difficult, and the consequence.';
     return await callClaude(sys, prompt);
   }
@@ -7778,7 +7778,7 @@ if ($('mob-export-txt')) {
     var findingsSummary = fails.slice(0, 20).map(function (f) {
       return '[' + f.severity + '] ' + f.engine + ': ' + f.issue.slice(0, 100) + ' (Element: ' + f.element.slice(0, 60) + ')';
     }).join('\n');
-    var sys = 'You are Akhilesh Malani, a senior blind accessibility architect with 16+ years of experience serving Google, Oracle Financial Services, Dun & Bradstreet, and Bank of Montreal. You write authoritative, professional accessibility audit reports - clear, actionable, focused on real blind user impact.';
+    var sys = 'You are Akhilesh Malani, a blind Accessibility Architect with 16+ years of client work serving Google, Oracle Financial Services, Dun & Bradstreet, and Bank of Montreal. You write authoritative, professional accessibility audit reports - clear, actionable, focused on real blind user impact.';
     var prompt = 'Write a professional accessibility audit report.\nPage: ' + pageTitle + '\nFailures: ' + fails.length + ' (' + critical.length + ' critical, ' + serious.length + ' serious)\nWarnings: ' + warnings.length + '\n\nTop findings:\n' + findingsSummary + '\n\nStructure with these headings:\n## Executive Summary\n## Critical Issues Requiring Immediate Action\n## Remediation Priority Roadmap\n## Positive Findings\n## Recommended Next Steps\n\nWrite as if presenting to a senior technology leader. Professional, authoritative, focused on business risk and blind user experience. Each section minimum 2 paragraphs.';
     aiAnnounce('Generating professional audit report with Claude. This may take 20 seconds…');
     var reportBtn = document.getElementById('btn-ai-report');
@@ -7968,7 +7968,7 @@ if ($('mob-export-txt')) {
 })();
 
 /* ═══════════════════════════════════════════════════════════
-   v5.2 Scheduled Crawls — panel wiring
+   v5.2 Scheduled Crawls - panel wiring
    Firestore CRUD for schedules + scheduledRuns collections.
    The Chrome extension picks up schedules on chrome.alarms in
    a separate commit (extension side). This module is only
@@ -8005,16 +8005,16 @@ if ($('mob-export-txt')) {
   }
 
   function fmtDate(d) {
-    if (!d) return '—';
+    if (!d) return 'Not set';
     var t = d && d.toDate ? d.toDate() : new Date(d);
-    if (!t || isNaN(t.getTime())) return '—';
+    if (!t || isNaN(t.getTime())) return 'Not set';
     var pad = function (n) { return String(n).padStart(2, '0'); };
     return t.getFullYear() + '-' + pad(t.getMonth()+1) + '-' + pad(t.getDate()) +
            ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes());
   }
 
   function fmtFreq(f) {
-    return { 'daily':'Every day', 'weekly-monday':'Every Monday', 'weekly-friday':'Every Friday' }[f] || f || '—';
+    return { 'daily':'Every day', 'weekly-monday':'Every Monday', 'weekly-friday':'Every Friday' }[f] || f || 'Not set';
   }
 
   /* ── Extension presence ──
@@ -8129,7 +8129,7 @@ if ($('mob-export-txt')) {
      written to Firestore scheduledRuns using runId as the doc ID
      for idempotency (Firestore rules deny update/delete on this
      collection, so a duplicate .set() with the same ID silently
-     fails on the second try — that is the desired behaviour). */
+     fails on the second try, which is the desired behaviour). */
   window.addEventListener('message', function (event) {
     if (event.source !== window) return;
     if (event.origin !== location.origin) return;
@@ -8196,11 +8196,11 @@ if ($('mob-export-txt')) {
     tbody.innerHTML = schedulesCache.map(function (s) {
       var source = (s.urls && s.urls.length)
         ? s.urls.length + ' URL' + (s.urls.length === 1 ? '' : 's')
-        : (s.sitemap ? 'sitemap' : '—');
+        : (s.sitemap ? 'sitemap' : 'Not set');
       return '<tr>' +
         '<td>' + esc(s.label) + '<br><small>' + esc(source) + '</small></td>' +
         '<td>' + esc(fmtFreq(s.frequency)) + '</td>' +
-        '<td>' + esc(s.timeOfDayHHMM || '—') + '</td>' +
+        '<td>' + esc(s.timeOfDayHHMM || 'Not set') + '</td>' +
         '<td>' + esc(fmtDate(s.lastRunAt)) + '</td>' +
         '<td>' +
           '<button type="button" role="switch" aria-checked="' + (s.enabled ? 'true' : 'false') +
@@ -8476,7 +8476,7 @@ if ($('mob-export-txt')) {
             '<td>' + esc(r.regressedFindings || 0) + '</td>' +
             '<td>' + esc(r.unchangedFindings || 0) + '</td>' +
             '<td>' + esc(r.resolvedFindings || 0) + '</td>' +
-            '<td>' + (r.webhookDelivered ? 'Sent' : (r.webhookError ? esc('Failed: ' + r.webhookError) : '—')) + '</td>' +
+            '<td>' + (r.webhookDelivered ? 'Sent' : (r.webhookError ? esc('Failed: ' + r.webhookError) : 'Not sent')) + '</td>' +
           '</tr>');
         });
         document.getElementById('sched-runs-body').innerHTML = rows.join('');

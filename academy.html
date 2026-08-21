@@ -40,6 +40,27 @@
 
   <style>
     /* Academy Master Styles - Screen Reader Optimized & High Contrast */
+
+    /* Feedback and byline colours.
+       Light values are measured against the white workspace panel (#ffffff)
+       and the light drill box (#f0fdf4); dark values against #0f172a and
+       #064e3b. Every pair clears WCAG 2.2 SC 1.4.3 Level AA, and the light
+       set also clears SC 1.4.6 Level AAA. Do not hardcode these anywhere:
+       both the inline styles and the JS feedback handlers read these tokens,
+       so a single change here keeps light and dark in step. */
+    :root {
+      --fb-success: #065f46;   /* 7.81:1 on white */
+      --fb-warning: #92400e;   /* 7.09:1 on white */
+      --fb-error:   #991b1b;   /* 8.31:1 on white */
+      --instructor-text: #065f46;
+    }
+    [data-theme="dark"] {
+      --fb-success: #6ee7b7;   /* 11.70:1 on #0f172a, 6.37:1 on #064e3b */
+      --fb-warning: #fcd34d;   /* 12.38:1 on #0f172a */
+      --fb-error:   #fca5a5;   /*  9.41:1 on #0f172a */
+      --instructor-text: #6ee7b7;
+    }
+
     .academy-hero {
       background: linear-gradient(135deg, #0b192c 0%, #1a365d 100%);
       color: #ffffff;
@@ -178,7 +199,7 @@
     }
     [data-theme="dark"] .lesson-item-btn[aria-current="true"] {
       background: #1e3a8a;
-      color: #60a5fa;
+      color: #93c5fd;   /* was #60a5fa at 4.07:1 on #1e3a8a; #93c5fd is 5.75:1 */
     }
 
     /* Workspace / Main Content */
@@ -302,7 +323,7 @@
     }
     [data-theme="dark"] .drill-box {
       background: #064e3b;
-      border-color: #059669;
+      border-color: #34d399;
       color: #f0fdf4;
     }
 
@@ -427,7 +448,7 @@
             <h2>School of English & Professional Communication</h2>
             <p class="leader-role">Led by L. Subramani | Founding Academic Director & Author</p>
             <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5; margin: 0;">
-              Professional English foundations, business and corporate writing, executive verbal fluency, and journalism craft curated by veteran Chief Copy Editor at Deccan Herald.
+              Professional English foundations, business and corporate writing, executive verbal fluency, and journalism craft curated by L. Subramani, a working journalist and author of <em>Lights Out</em>.
             </p>
           </article>
         </div>
@@ -530,8 +551,8 @@
         <!-- Active Lesson Header -->
         <header style="margin-bottom: 20px;">
           <span id="lesson-track-badge" style="display: inline-block; background: #e0f2fe; color: #0369a1; padding: 3px 10px; border-radius: 4px; font-size: 0.82rem; font-weight: 700; margin-bottom: 8px;">TRACK A: ENGLISH FOUNDATIONS</span>
-          <h2 id="current-lesson-title" style="margin: 0 0 6px; font-size: 1.6rem; color: #0c4a6e;">1.1 Parts of Speech for Non-Visual Learners</h2>
-          <p id="lesson-instructor" style="margin: 0; font-size: 0.95rem; color: #059669; font-weight: 700;">Curated by L. Subramani (Journalist & Chief Copy Editor)</p>
+          <h2 id="current-lesson-title" style="margin: 0 0 6px; font-size: 1.6rem; color: var(--color-primary);">1.1 Parts of Speech for Non-Visual Learners</h2>
+          <p id="lesson-instructor" style="margin: 0; font-size: 0.95rem; color: var(--instructor-text); font-weight: 700;">Curated by L. Subramani (Journalist and Author)</p>
         </header>
 
         <!-- Accessible Audio Player -->
@@ -561,8 +582,8 @@
 
         <!-- Lesson Transcript & Core Principles -->
         <article aria-labelledby="transcript-heading">
-          <h3 id="transcript-heading" style="font-size: 1.25rem; margin-top: 0; color: #0f172a;">Core Lesson Principles</h3>
-          <div id="lesson-notes-content" style="line-height: 1.7; font-size: 1.02rem; color: #334155;">
+          <h3 id="transcript-heading" style="font-size: 1.25rem; margin-top: 0; color: var(--color-text);">Core Lesson Principles</h3>
+          <div id="lesson-notes-content" style="line-height: 1.7; font-size: 1.02rem; color: var(--color-text);">
             <p>
               When navigating content with a screen reader, every extra word creates cognitive load. To achieve clarity in executive and corporate English:
             </p>
@@ -576,8 +597,8 @@
 
         <!-- Audio-to-Text Writing & Practice Studio -->
         <section class="studio-section" aria-labelledby="studio-heading">
-          <h3 id="studio-heading" style="font-size: 1.25rem; margin-top: 0; color: #0c4a6e;">Audio-to-Text Writing Studio</h3>
-          <p id="prompt-desc" style="font-size: 0.95rem; color: #475569; line-height: 1.5;">
+          <h3 id="studio-heading" style="font-size: 1.25rem; margin-top: 0; color: var(--color-primary);">Audio-to-Text Writing Studio</h3>
+          <p id="prompt-desc" style="font-size: 0.95rem; color: var(--color-text-light); line-height: 1.5;">
             <strong>Writing Challenge:</strong> Read the reference sample below. Rewrite it in the editing box to eliminate ambiguity, strengthen verb choices, and follow the Subramani copyediting checklist.
           </p>
 
@@ -590,7 +611,7 @@
           </div>
 
           <!-- Drafting Area -->
-          <label for="student-draft" style="font-weight: 700; font-size: 0.95rem; color: #0f172a; display: block;">Your Rewritten Draft:</label>
+          <label for="student-draft" style="font-weight: 700; font-size: 0.95rem; color: var(--color-text); display: block;">Your Rewritten Draft:</label>
           <textarea id="student-draft" class="writing-editor" placeholder="Type or paste your rewritten sentence or paragraph here..." oninput="updateWritingStats()"></textarea>
 
           <!-- Live Text Statistics Bar -->
@@ -603,7 +624,7 @@
 
           <!-- Subramani Copyediting Checklist -->
           <div class="checklist-box" role="group" aria-labelledby="checklist-title">
-            <h4 id="checklist-title" style="margin: 0 0 10px; font-size: 1rem; color: #0c4a6e;">Subramani Copyediting Self-Check Checklist:</h4>
+            <h4 id="checklist-title" style="margin: 0 0 10px; font-size: 1rem; color: var(--color-primary);">Subramani Copyediting Self-Check Checklist:</h4>
             <div class="checklist-item">
               <input type="checkbox" id="chk-1" onchange="checkCompletion()">
               <label for="chk-1">Subject and verb appear within the first 7 words of the sentence.</label>
@@ -626,12 +647,12 @@
             <button type="button" class="btn-player" onclick="evaluateDraft()">Evaluate Draft Against Rubric</button>
             <button type="button" class="btn-player-sec" onclick="markLessonComplete()">Mark Lesson Complete</button>
           </div>
-          <div id="rubric-feedback" style="margin-top: 12px; font-size: 0.95rem; font-weight: 700; color: #059669;" aria-live="polite"></div>
+          <div id="rubric-feedback" style="margin-top: 12px; font-size: 0.95rem; font-weight: 700; color: var(--fb-success);" aria-live="polite"></div>
         </section>
 
         <!-- Interactive Knowledge Drill -->
         <section class="studio-section" aria-labelledby="drill-heading">
-          <h3 id="drill-heading" style="font-size: 1.25rem; margin-top: 0; color: #0c4a6e;">Interactive Knowledge Drill</h3>
+          <h3 id="drill-heading" style="font-size: 1.25rem; margin-top: 0; color: var(--color-primary);">Interactive Knowledge Drill</h3>
           
           <div class="drill-box" role="region" aria-label="Lesson Quiz Question">
             <p id="drill-question" style="font-weight: 700; margin: 0 0 12px; font-size: 1rem;">
@@ -681,7 +702,7 @@
       'track-a': [
         {
           title: "1.1 Parts of Speech for Non-Visual Learners",
-          instructor: "Curated by L. Subramani (Journalist & Chief Copy Editor)",
+          instructor: "Curated by L. Subramani (Journalist and Author)",
           trackBadge: "TRACK A: ENGLISH FOUNDATIONS",
           duration: "04:30",
           notes: "<p>When navigating content with a screen reader, every extra word creates cognitive load. To achieve clarity in executive and corporate English:</p><ul><li><strong>Prioritize Subject and Verb Proximity:</strong> Place the grammatical subject and main action verb within the first seven words of a sentence.</li><li><strong>Eliminate Nominalization:</strong> Do not turn strong verbs into clunky nouns (e.g. use <em>'we decided'</em> instead of <em>'we made a decision regarding'</em>).</li><li><strong>Avoid Stacking Prepositional Phrases:</strong> Limit long chains of qualifying clauses.</li></ul>",
@@ -695,7 +716,7 @@
         },
         {
           title: "1.2 Tense Consistency & Action Verbs",
-          instructor: "Curated by L. Subramani (Journalist & Chief Copy Editor)",
+          instructor: "Curated by L. Subramani (Journalist and Author)",
           trackBadge: "TRACK A: ENGLISH FOUNDATIONS",
           duration: "05:15",
           notes: "<p>Shifting between past, present, and future tenses within a single paragraph confuses readers and screen reader users alike. Master the golden rule of past-tense reporting for completed work and present-tense for persistent states.</p>",
@@ -709,7 +730,7 @@
         },
         {
           title: "1.3 Sentence Construction & Speech Fatigue",
-          instructor: "Curated by L. Subramani (Journalist & Chief Copy Editor)",
+          instructor: "Curated by L. Subramani (Journalist and Author)",
           trackBadge: "TRACK A: ENGLISH FOUNDATIONS",
           duration: "06:00",
           notes: "<p>Screen-reader speech synthesis users experience speech fatigue when sentences exceed 25 words. Keep average sentence length between 14 and 18 words.</p>",
@@ -725,7 +746,7 @@
       'track-b': [
         {
           title: "2.1 High-Impact Executive Business Emails",
-          instructor: "Curated by L. Subramani (Journalist & Chief Copy Editor)",
+          instructor: "Curated by L. Subramani (Journalist and Author)",
           trackBadge: "TRACK B: CORPORATE WRITING",
           duration: "07:20",
           notes: "<p>Executive emails must open with the conclusion or requested action (the BLUF method: Bottom Line Up Front). Never bury your request in paragraph four.</p>",
@@ -739,7 +760,7 @@
         },
         {
           title: "2.2 Status Reports & Project Summaries",
-          instructor: "Curated by L. Subramani (Journalist & Chief Copy Editor)",
+          instructor: "Curated by L. Subramani (Journalist and Author)",
           trackBadge: "TRACK B: CORPORATE WRITING",
           duration: "06:45",
           notes: "<p>Status reports should follow the Three-Block Structure: Completed Work, In Progress, Blockers/Risks. Each item must start with an active verb.</p>",
@@ -870,7 +891,7 @@
       var fb = document.getElementById('rubric-feedback');
       if (text.length < 15) {
         fb.textContent = "Please enter a complete rewritten sentence or paragraph before evaluating.";
-        fb.style.color = "#dc2626";
+        fb.style.color = "var(--fb-error)";
         announce(fb.textContent);
         return;
       }
@@ -878,10 +899,10 @@
       var words = text.split(/\s+/).length;
       if (words <= 18) {
         fb.textContent = "Excellent work! Concise sentence structure (under 18 words) reduces screen reader cognitive fatigue.";
-        fb.style.color = "#059669";
+        fb.style.color = "var(--fb-success)";
       } else {
         fb.textContent = "Good attempt (" + words + " words). Consider trimming filler words to bring it under 18 words.";
-        fb.style.color = "#d97706";
+        fb.style.color = "var(--fb-warning)";
       }
       announce(fb.textContent);
     }
@@ -890,7 +911,7 @@
       announce("Lesson marked as completed! Progress saved to your local profile.");
       var fb = document.getElementById('rubric-feedback');
       fb.textContent = "Lesson successfully completed and logged in your learner profile.";
-      fb.style.color = "#059669";
+      fb.style.color = "var(--fb-success)";
     }
 
     function checkDrillAnswer(correct) {
@@ -898,16 +919,16 @@
       var fb = document.getElementById('drill-feedback');
       if (!selected) {
         fb.textContent = "Please select an answer choice before submitting.";
-        fb.style.color = "#dc2626";
+        fb.style.color = "var(--fb-error)";
         announce(fb.textContent);
         return;
       }
       if (selected.value === correct) {
         fb.textContent = "Correct! " + (LESSON_DATA[currentTrack] && LESSON_DATA[currentTrack][currentIndex] ? LESSON_DATA[currentTrack][currentIndex].explanation : "Great job!");
-        fb.style.color = "#059669";
+        fb.style.color = "var(--fb-success)";
       } else {
         fb.textContent = "Incorrect. Try again by reviewing the core lesson principles.";
-        fb.style.color = "#dc2626";
+        fb.style.color = "var(--fb-error)";
       }
       announce(fb.textContent);
     }

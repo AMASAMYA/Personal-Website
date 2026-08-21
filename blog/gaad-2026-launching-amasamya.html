@@ -31,6 +31,9 @@
     .blog-post-content blockquote { border-left: 4px solid var(--color-primary); padding: 1rem 1.5rem; margin: 1.5rem 0; background: var(--color-bg-alt); border-radius: 0 var(--radius) var(--radius) 0; font-style: italic; }
     .blog-post-content code { background: var(--color-bg-alt); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.9em; }
     .blog-post-content .callout { background: #eaf2f8; border: 1px solid #aed6f1; padding: 1.25rem; border-radius: var(--radius); margin: 1.5rem 0; }
+    /* The callout kept its light background in dark mode while the body text
+       turned light, leaving 1.09:1. Flip the surface with the theme. */
+    [data-theme="dark"] .blog-post-content .callout { background: #16283d; border-color: #2c4c6b; }
     .blog-post-content .callout strong { color: var(--color-primary); }
     .blog-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 0; margin-top: 2rem; border-top: 2px solid var(--color-border); }
     .blog-nav a { color: var(--color-primary); font-weight: 600; text-decoration: none; }
@@ -51,13 +54,15 @@
     .share-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
     .launch-banner {
       background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
-      color: #fff;
+      /* Both gradient stops flip to light blue in dark mode, where white text
+         drops to 1.67:1. --color-bg inverts with the theme, so it stays legible. */
+      color: var(--color-bg);
       padding: 1.25rem 1.5rem;
       border-radius: var(--radius);
       margin-bottom: 2rem;
     }
-    .launch-banner p { color: #e2eaf4; margin: 0; }
-    .launch-banner strong { color: #fff; }
+    .launch-banner p { color: var(--color-bg); margin: 0; }
+    .launch-banner strong { color: var(--color-bg); }
   </style>
   <script>
     (function(){var h=document.documentElement;var t=localStorage.getItem('theme');if(t){h.setAttribute('data-theme',t)}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){h.setAttribute('data-theme','dark')}var s=localStorage.getItem('a11y-text-size');if(s&&s!=='normal')h.setAttribute('data-text-size',s);if(localStorage.getItem('a11y-high-contrast')==='true')h.setAttribute('data-high-contrast','true');if(localStorage.getItem('a11y-dyslexia-font')==='true')h.setAttribute('data-dyslexia-font','true');if(localStorage.getItem('a11y-reduce-motion')==='true')h.setAttribute('data-reduce-motion','true')})();

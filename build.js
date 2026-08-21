@@ -477,7 +477,12 @@ function generateSitemap(posts) {
       url = SITEMAP_BASE + '/';
       entry = SITEMAP_PRIORITIES[''];
     } else {
-      url = SITEMAP_BASE + '/' + rel;
+      /* Directory indexes are listed by their directory URL, not the file.
+         blog/index.html declares rel=canonical as /blog/, so emitting
+         /blog/index.html here would put the sitemap at odds with the page
+         it points at. The root index.html case above is the same rule. */
+      var isDirIndex = rel.slice(-11) === '/index.html';
+      url = SITEMAP_BASE + '/' + (isDirIndex ? rel.slice(0, -10) : rel);
       if (rel.indexOf('blog/') === 0) {
         entry = SITEMAP_PRIORITIES['__blog_default__'];
       } else {

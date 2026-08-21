@@ -123,17 +123,59 @@ test.describe('AMASAMYA Academy Accessibility Audits (WCAG 2.2 AA / AAA)', () =>
     await expect(page.locator('#author-announcer')).toHaveText(/Lesson package exported successfully/);
   });
 
-  test('Zero em-dashes validation across academy surfaces', async () => {
-    const files = [
-      path.join(__dirname, '../../academy.html'),
-      path.join(__dirname, '../../academy-author.html')
+  test('Zero em-dashes across every published surface', async () => {
+    // The previous version of this test checked two files for two spellings.
+    // Three em-dashes still shipped, percent-encoded inside share links on
+    // blog posts, because neither the file list nor the spelling list reached
+    // them. This walks every published source file and checks every encoding.
+    const ROOT = path.join(__dirname, '../..');
+    const SKIP_DIRS = new Set([
+      'node_modules', '_archived', 'test-results', 'coverage', 'dist', '.git',
+      'amasamya-public-repo', 'amasamya-extension', 'ama11y-extension-firefox',
+      'beta', 'voiceover_audio_guide', 'store-assets', 'Screenshots'
+    ]);
+    const EXTS = new Set(['.html', '.js', '.css', '.xml', '.json', '.md']);
+
+    // Built from char codes so this file never trips its own assertion.
+    const EM = String.fromCharCode(0x2014);
+    const SPELLINGS = [
+      EM,                                    // literal U+2014
+      '&' + 'mdash;',                        // named entity
+      '&#' + '8212;',                        // decimal entity
+      '&#x' + '2014;',                       // hex entity
+      '%E2%80' + '%94'                       // percent-encoded UTF-8
     ];
 
-    for (const f of files) {
+    /** @param {string} dir @param {string[]} acc */
+    const walk = (dir, acc) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name.startsWith('.')) continue;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (!SKIP_DIRS.has(entry.name)) walk(full, acc);
+        } else if (EXTS.has(path.extname(entry.name).toLowerCase())) {
+          if (full === __filename) continue;
+          acc.push(full);
+        }
+      }
+      return acc;
+    };
+
+    const offenders = [];
+    for (const f of walk(ROOT, [])) {
       const content = fs.readFileSync(f, 'utf-8');
-      expect(content).not.toContain('\u2014');
-      expect(content).not.toContain('&mdash;');
+      for (const spelling of SPELLINGS) {
+        let i = content.indexOf(spelling);
+        if (i !== -1) {
+          const line = content.slice(0, i).split('\n').length;
+          offenders.push(
+            `${path.relative(ROOT, f)}:${line} contains ${JSON.stringify(spelling)}`
+          );
+        }
+      }
     }
+
+    expect(offenders, `Em-dashes found:\n  ${offenders.join('\n  ')}`).toEqual([]);
   });
 
 });

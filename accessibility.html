@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Accessibility Statement for akhileshmalani.com - our commitment to digital inclusion and WCAG 2.2 Level AA conformance.">
+  <meta name="description" content="Accessibility Statement for akhileshmalani.com - our commitment to digital inclusion and WCAG 2.2 Level A and Level AA conformance.">
   <meta name="theme-color" content="#1a5276">
   <link rel="canonical" href="https://akhileshmalani.com/accessibility.html">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Accessibility Statement | Akhilesh Malani">
-  <meta property="og:description" content="Our commitment to digital inclusion and WCAG 2.2 Level AA conformance.">
+  <meta property="og:description" content="Our commitment to digital inclusion and WCAG 2.2 Level A and Level AA conformance.">
   <meta property="og:url" content="https://akhileshmalani.com/accessibility.html">
   <meta property="og:site_name" content="Akhilesh Malani">
   <meta property="og:image" content="https://akhileshmalani.com/images/og-banner.png">
@@ -20,7 +20,7 @@
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Accessibility Statement | Akhilesh Malani">
-  <meta name="twitter:description" content="Our commitment to digital inclusion and WCAG 2.2 Level AA conformance.">
+  <meta name="twitter:description" content="Our commitment to digital inclusion and WCAG 2.2 Level A and Level AA conformance.">
   <meta name="twitter:image" content="https://akhileshmalani.com/images/og-banner.png">
 
   <title>Accessibility Statement | Akhilesh Malani</title>
@@ -106,17 +106,27 @@
         <h1 id="a11y-heading" style="font-size:clamp(1.75rem,3.5vw,2.25rem);color:var(--color-primary-dark);font-family:var(--font-heading);margin-bottom:var(--spacing-md);">Accessibility Statement</h1>
 
         <h2>Our Commitment</h2>
-        <p>I am committed to ensuring that <strong>akhileshmalani.com</strong> is accessible to all people, including those with disabilities. As a blind professional who relies on assistive technology daily, I understand first-hand the importance of digital accessibility. This website has been built with accessibility as a core design principle.</p>
+        <p>I am committed to ensuring that <strong>akhileshmalani.com</strong> and <strong>amasamya.com</strong>, which serve the portfolio, the AMASAMYA audit platform, and AMASAMYA Academy, are accessible to all people, including those with disabilities. As a blind professional who relies on assistive technology daily, I understand first-hand the importance of digital accessibility. This website has been built with accessibility as a core design principle.</p>
 
         <h2>Conformance Status</h2>
-        <p>This website aims to conform to the <strong>Web Content Accessibility Guidelines (WCAG) 2.2 Level AA</strong>. These guidelines explain how to make web content more accessible to people with a wide range of disabilities.</p>
+        <p>The target for this website is the <strong>Web Content Accessibility Guidelines (WCAG) 2.2 at Level A and Level AA</strong>. These guidelines explain how to make web content more accessible to people with a wide range of disabilities. Level AA includes every Level A success criterion, so meeting Level AA means both levels are covered.</p>
+        <p><strong>akhileshmalani.com and amasamya.com partially conform with WCAG 2.2 Level A and Level AA.</strong> Partially conforms means that most of the site meets the standard, but some parts do not. The exceptions are the two third-party components listed under Known Limitations below. Everything built and controlled directly meets Level A and Level AA.</p>
+        <p><strong>Level AAA is not claimed.</strong> WCAG states that AAA conformance is not achievable for all content, and some AAA criteria cannot be met without changing this site's brand colours. Individual AAA criteria are met where practical, but no Level AAA claim is made for the site or for any page on it.</p>
+
+        <h2>Assessment Approach</h2>
+        <p>Conformance was assessed by self-evaluation, combining three methods:</p>
+        <ul>
+          <li><strong>Manual screen reader testing</strong> - Every page is operated with JAWS and NVDA by the site's author, who is blind and uses a screen reader for all daily computing. Testing is by real task completion, not by simulation.</li>
+          <li><strong>Keyboard-only testing</strong> - Every interactive element is reached and operated without a pointing device.</li>
+          <li><strong>Automated regression testing</strong> - A Playwright test suite covering every page is run before changes are published. It checks structure, landmarks, heading order, form labelling, and colour contrast ratios against the Level AA thresholds in both light and dark themes.</li>
+        </ul>
 
         <h2>Accessibility Features</h2>
         <ul>
           <li><strong>Semantic HTML</strong> - Proper use of headings, landmarks, lists, and ARIA attributes for assistive technology compatibility.</li>
           <li><strong>Keyboard Navigation</strong> - All interactive elements are fully operable via keyboard. A skip navigation link is provided.</li>
           <li><strong>Focus Indicators</strong> - Visible focus outlines on all interactive elements for keyboard users.</li>
-          <li><strong>Colour Contrast</strong> - Text and interactive elements meet WCAG 2.2 Level AA contrast ratios.</li>
+          <li><strong>Colour Contrast</strong> - Text and interactive elements meet WCAG 2.2 Level AA contrast ratios (4.5:1 for normal text, 3:1 for large text and interface components), verified in both light and dark themes.</li>
           <li><strong>Responsive Design</strong> - The site adapts to different screen sizes and orientations.</li>
           <li><strong>Reduced Motion</strong> - Animations are disabled when users have enabled reduced motion preferences.</li>
           <li><strong>High Contrast Mode</strong> - The site supports Windows High Contrast Mode through forced-colors media queries.</li>
@@ -161,7 +171,7 @@
         <p>I aim to respond to accessibility feedback within 2 business days.</p>
 
         <h2>Last Reviewed</h2>
-        <p>This accessibility statement was last reviewed on <time datetime="2026-07-01">July 1, 2026</time>.</p>
+        <p>This accessibility statement was last reviewed on <time datetime="2026-08-21">August 21, 2026</time>.</p>
       </div>
     </section>
   </main>
@@ -169,7 +179,7 @@
   <footer role="contentinfo" class="footer">
     <div class="container">
       <p>&copy; 2026 Akhilesh Malani. All rights reserved.</p>
-      <p class="footer-note">This website was built with accessibility as a core principle, following WCAG 2.2 Level AA guidelines.</p>
+      <p class="footer-note">This website was built with accessibility as a core principle, targeting WCAG 2.2 Level A and Level AA. Level AAA is not claimed.</p>
     </div>
   </footer>
   <script src="script.js"></script>
