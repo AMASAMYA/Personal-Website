@@ -1,5 +1,5 @@
 /**
- * AMASAMYA v5.2.0 — Scheduled Crawls E2E harness.
+ * AMASAMYA v5.2.0 - Scheduled Crawls E2E harness.
  *
  * Loads the actual unpacked extension into a Playwright persistent
  * context, waits for the service worker to boot, and probes the

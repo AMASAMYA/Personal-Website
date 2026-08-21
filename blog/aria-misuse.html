@@ -33,6 +33,9 @@
     .blog-post-content pre { background: #2c3e50; color: #ecf0f1; padding: 1.25rem; border-radius: var(--radius); overflow-x: auto; margin: 1.5rem 0; line-height: 1.6; }
     .blog-post-content pre code { background: none; padding: 0; color: inherit; }
     .blog-post-content .callout { background: #eaf2f8; border: 1px solid #aed6f1; padding: 1.25rem; border-radius: var(--radius); margin: 1.5rem 0; }
+    /* The callout kept its light background in dark mode while the body text
+       turned light, leaving 1.09:1. Flip the surface with the theme. */
+    [data-theme="dark"] .blog-post-content .callout { background: #16283d; border-color: #2c4c6b; }
     .blog-post-content .callout strong { color: var(--color-primary); }
     .blog-post-content .bad-example { background: #fdf2f2; border: 1px solid #e6a0a0; padding: 1.25rem; border-radius: var(--radius); margin: 1.5rem 0; }
     .blog-post-content .good-example { background: #f0faf0; border: 1px solid #a0d6a0; padding: 1.25rem; border-radius: var(--radius); margin: 1.5rem 0; }
