@@ -409,7 +409,7 @@ var SITEMAP_SKIP_DIRS = new Set([
   'amasamya',                  /* subdomain, has its own sitemap */
   'amasamya-extension',        /* extension source, not user-facing */
   'amasamya-public-repo',      /* mirror scratch, not user-facing */
-  'ama11y-extension-firefox',  /* experimental, not deployed */
+  'amasamya-extension-firefox',  /* Firefox add-on, Published on addons.mozilla.org */
   'store-assets',              /* CWS/Play store templates */
   'voiceover_audio_guide',     /* internal reference */
   'test-fixtures',             /* extension test fixtures */

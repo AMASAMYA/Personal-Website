@@ -1,14 +1,29 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-08-11 (v5.2.0 built; awaiting CWS upload).
+Last reviewed: 2026-08-26 (v5.2.0 Published across CWS + Edge + Firefox; v5.3.0 built and packaged, awaiting upload to all three stores).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
 
-## Published: v4.0.0, v4.0.1, v4.2.0, v4.3.0, v4.3.1
+## Published across all three stores: v5.2.0 (2026-08 onwards)
 
-## Built, awaiting upload: v5.2.0 "Scheduled Crawls"
+v5.2.0 is now live on Chrome Web Store (extension ID `blnfmiipkccpggpinjofhhglfcgglbif`), Microsoft Edge Add-ons (same Chromium package), and addons.mozilla.org as `amasamya-accessibility-audit` (Firefox port with `sidebar/` instead of `sidepanel/`, no `debugger` permission). Previously published versions v4.0.0 through v4.3.1 remain in the CWS version history.
+
+## Built, awaiting upload to all three stores: v5.3.0
+
+Packages sitting in `dist/`:
+- `AMASAMYA-Chrome-Edge-Extension-v5.3.0.zip` (same file works for both CWS and Edge Add-ons)
+- `AMASAMYA-Firefox-Addon-v5.3.0.zip`
+
+What v5.3.0 adds over v5.2.0 (per the manifests' current descriptions):
+- GIGW 3.0 and IS 17802 India-national audit engines
+- VPAT 2.4 ACR exporter (one-click compliance-document generation)
+- Visual diffs on audit history
+
+Upload guides for all three stores are in the session transcript; permissions unchanged from v5.2.0 so no new justifications required.
+
+## Previously shipped: v5.2.0 "Scheduled Crawls"
 
 Joint MAJOR.MINOR release with the AMASAMYA web platform (also v5.2.0).
 Users of v4.3.1 who never create a schedule see no behaviour change; the

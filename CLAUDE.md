@@ -81,68 +81,30 @@ this project, ever, going forward.
 |---|---|
 | `/silent` | No preamble, no commentary - give the answer directly. |
 
-## Project context (as of this writing)
+## Project context (as of 2026-08-26)
 
-- **Personal-Website** (this repo) - akhileshmalani.com portfolio + AMASAMYA
-  web platform at amasamya.akhileshmalani.com subdomain.
-- **AMASAMYA Chrome extension** - published on Chrome Web Store at extension
-  ID `blnfmiipkccpggpinjofhhglfcgglbif`. v4.0.0, v4.0.1, v4.2.0,
-  v4.3.0, and v4.3.1 are all Published. v4.3.1 was a same-week
-  ten-bug quality patch after v4.3.0. Version alignment policy with
-  the AMASAMYA web platform is locked as Option B: MAJOR.MINOR must
-  match, PATCH may differ for hotfix agility. **v5.2.0 is Published
-  on the Chrome Web Store, last updated 13 August 2026** (25 users,
-  no ratings yet), and also published on addons.mozilla.org as
-  `amasamya-accessibility-audit`, likewise at 5.2.0. The extension
-  bumped from 4.3.1 to 5.2.0; platform PLATFORM_VERSION bumped from
-  5.1.0 to 5.2.0. **The working tree manifest is already at 5.3.0,
-  which is NOT yet uploaded to either store**: do not describe 5.3
-  as available anywhere public until it ships.
-  v5.2.0 adds Scheduled Crawls: per-user schedule config in Firestore
-  via new platform Schedules tab, chrome.alarms in the extension,
-  alarm-fire runs Site Crawl and diffs against history, run summary
-  posted to Slack / Teams / generic-JSON webhook, run records
-  flushed to Firestore scheduledRuns collection when platform tab
-  is open, missed-run replay on service worker startup. 23 unit
-  tests cover the summary accumulation, webhook payload shapes,
-  and missed-run detection. See amasamya-extension/ROADMAP.md
-  "Built, awaiting upload: v5.2.0" section for the full rundown. v4.3.0 adds
-  on-device history storage (10 audits per URL in
-  chrome.storage.local, 8 MB total soft cap with automatic eviction),
-  a diff engine with identity tuple {engine, criterion, selector} and
-  four verdicts (New / Regressed / Unchanged / Resolved), auto-diff
-  when 2+ audits exist for a URL, a Change column and diff summary
-  sentence in the findings table, Diff CSV export (new + regressed
-  only) as an actionable ticket-import file, a History section with
-  Load buttons per past audit and clear-URL / clear-all controls,
-  and screen-reader announcements that trail the diff summary onto
-  the audit-complete polite announcement. v4.2.0 "Site Crawl" went
-  live on 2026-07-01 (uploaded and approved same day). It shipped
-  the crawl queue + sitemap.xml parser + side-panel Site Crawl tab +
-  platform Aggregated Reports + four export shapes (HTML, two CSV
-  flavours, JSON) + crawl session metadata header + platform import
-  of the crawl JSON shape, plus a post-upload polish pass folded in
-  pre-approval: crawler correctness sweep (10 s fetch timeout, empty
-  sitemap rejection, NO_RESPONSE status, waiter race fix, findings
-  shape validation, deeper sitemap-index recursion), 3-page
-  concurrent runner (roughly 10x faster wall time), side-panel
-  keyboard/SR sweep, Site Crawl URL fields wrapped in
-  role="application" so JAWS arrow keys work inside them, focus trap
-  and auto-focus-into on panel open, and a role="dialog"
-  close-confirmation on both header Close button and Escape. Default
-  keyboard shortcut is Alt+Shift+1 after Akhilesh reported JAWS
-  table-cell command conflicts on Alt+Shift+Period and
-  Alt+Shift+Comma. Side panel queries chrome.commands.getAll() at
-  load and renders the actual bound chord. Framework selector,
-  baseline promotion from history, and selector normalisation are
-  deferred to v4.4.0; offline-only Vision AI is v5.0. See
-  amasamya-extension/ROADMAP.md.
-- **Public source** - github.com/AMASAMYA/AMASAMYA (mirror of the
-  extension code; MIT licence). The full Personal-Website source remains
-  private at github.com/AMASAMYA/Personal-Website.
-- **Hosting** - Netlify. Auto-deploys on push to `main`.
-- **Domains** - akhileshmalani.com (root portfolio), amasamya.akhileshmalani.com
-  (audit platform).
+- **Personal-Website** (this repo) hosts three product surfaces plus the founder portfolio:
+  1. akhileshmalani.com - personal portfolio + blog.
+  2. amasamya.akhileshmalani.com - the AMASAMYA audit platform (single-file SPA in `amasamya/index.html`, Firebase Auth + Firestore).
+  3. amasamya.com - **mega-platform brand home** (live), currently serves `amasamya-home.html` with the two-pillars framing (Accessibility Audit Suite + AMASAMYA Academy).
+
+- **Domains owned:** akhileshmalani.com (root portfolio, live), amasamya.com (mega-platform home, live), amasamya.org and amasamya.in (reserved, not yet pointed anywhere). Netlify auto-deploys on push to `main`.
+
+- **AMASAMYA Chrome extension** - Published on Chrome Web Store at extension ID `blnfmiipkccpggpinjofhhglfcgglbif`. Current live version **v5.2.0** (25 users, updated 13 August 2026). Version history v4.0.0 through v4.3.1 all Published; v4.3.1 was a same-week ten-bug quality patch after v4.3.0. Version alignment policy with the web platform is Option B (MAJOR.MINOR match, PATCH may differ). **v5.3.0 is built in the working tree and packaged in `dist/AMASAMYA-Chrome-Edge-Extension-v5.3.0.zip` but NOT yet uploaded to any store.** v5.3.0 adds GIGW 3.0 and IS 17802 India-national audit engines, a VPAT 2.4 ACR exporter, and visual diffs on audit history.
+
+- **AMASAMYA Microsoft Edge extension** - Published on Microsoft Edge Add-ons store, same Chromium codebase as Chrome, currently at v5.2.0. v5.3.0 built, awaiting upload.
+
+- **AMASAMYA Firefox add-on** - Published on addons.mozilla.org as `amasamya-accessibility-audit`, currently at v5.2.0. Source lives in `amasamya-extension-firefox/` (folder renamed from `ama11y-extension-firefox` on 2026-08-26). Firefox port uses `sidebar/` instead of `sidepanel/` and omits the `debugger` permission (no Visual Layout Auditor on Firefox). v5.3.0 packaged in `dist/AMASAMYA-Firefox-Addon-v5.3.0.zip`, awaiting upload.
+
+- **AMASAMYA Android auditor app** - Kotlin 2.0 + Jetpack Compose, min API 24, Apache 2.0 licensed. Real-time audits against native Android apps via the AccessibilityService API. Six feature clusters shipped (see the app's own README): live TalkBack captions and focus-trail visualiser, colour-coded touch-target boundary mapper, focus-trap detector, real-time contrast drift scanner, multi-standard rules engine (WCAG 2.2 / Section 508 / EN 301 549), one-click fix generator, offline report exporter, hands-free voice commands, TalkBack simulator mode for sighted testers. Currently **closed beta on Google Play**; public release ASO description drafted. Source and workspace at `C:\Users\akhi_\antigravity\focused-fermi` (separate from this repo). See memory: `reference-android-app-path`.
+
+- **v5.2.0 feature summary (across Chrome/Edge/Firefox)**: Scheduled Crawls (chrome.alarms per user-configured schedule; alarm-fire runs Site Crawl and diffs against history; run summary posted to Slack / Teams / generic-JSON webhook; run records flushed to Firestore scheduledRuns collection when platform tab is open; missed-run replay on service worker startup; 23 unit tests). v4.3.0 shipped Audit Diff and History (10 audits per URL in chrome.storage.local, 8 MB soft cap with eviction, four-verdict diff engine, diff CSV export, History section with per-URL Load and clear controls, polite-region diff summary announcement). v4.2.0 "Site Crawl" (queue + sitemap parser + side-panel tab + platform Aggregated Reports + four export shapes + concurrent runner + JAWS-arrow-key `role="application"` URL fields + focus trap + confirmation dialog on Close/Escape). Default keyboard shortcut Alt+Shift+1 after JAWS conflicts on Alt+Shift+Period. See `amasamya-extension/ROADMAP.md`.
+
+- **AMASAMYA Academy (mega-platform)** - Scaffolding built (`academy.html`, `academy-admin.html`, `academy-author.html`, `apply.html`, `amasamya-home.html`, `accessibility.html`, `amasamya-linter.js`, `library-admin.html`). Firestore rules for `academy_applications` deployed 2026-08-26 with founder-only read/update via Google Sign-In. Learner surface, educator studio wiring, and content production paused because L. Subramani (Academy co-lead) is unavailable until roughly mid-September 2026. See memories: `project-subramani-hold`, `project-amasamya-strategic-proposal`.
+
+- **Strategic proposal source-of-truth** for the mega-platform: `C:\Users\akhi_\antigravity\focused-fermi\AMASAMYA_Strategic_Proposal_v2.1.md` (Aug 2026). Key facts settled in v2.1: Akhilesh is sole owner of the master entity and all software IP; Subramani is Founding Academic Director with an equitable revenue-share on Academy revenue after infrastructure costs; certificates co-signed; four pillars with Year-1 = Pillar 1 + Pillar 4a, Year-2 = CopyAudit + CodeLab, v3+ = Indic regional languages; three-phase 12-month roadmap with numeric gates.
+
+- **Public source** - github.com/AMASAMYA/AMASAMYA (mirror of the Chrome extension code; MIT licence). The full Personal-Website source remains private at github.com/AMASAMYA/Personal-Website.
 
 ## Things to avoid
 
