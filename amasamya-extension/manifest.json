@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AMASAMYA - Accessibility Audit Tool",
   "version": "5.3.0",
-  "description": "Blind-first WCAG 2.2, GIGW 3.0 & IS 17802 audit tool. VPAT 2.4 ACR exporter, site crawler, visual diffs, and accessible side panel results.",
+  "description": "Blind-first WCAG 2.2, GIGW 3.0 & IS 17802 audit tool. VPAT 2.4 ACR exporter, site crawler, and visual audit diffs.",
   "author": "Akhilesh Malani",
   "homepage_url": "https://amasamya.com",
   "minimum_chrome_version": "114",
