@@ -222,21 +222,20 @@
 
   <main id="main-content" class="admin-container" tabindex="-1">
 
-    <!-- Auth Passkey Gate -->
+    <!-- Auth Gate: Firebase Auth (Google) restricted to the founder account.
+         Replaces the earlier client-side passkey which was cosmetic; only a
+         real auth token gets past Firestore rules on academy_applications. -->
     <section id="auth-gate" class="auth-card" aria-labelledby="auth-heading">
       <h2 id="auth-heading">Director & Founder Access</h2>
       <p style="font-size: 0.95rem; color: #64748b; margin-bottom: 20px;">
-        Restricted to Akhilesh Malani and L. Subramani for Cohort 1 admissions review.
+        Restricted to the AMASAMYA founder account. Sign in with the Google
+        account authorised on Firestore.
       </p>
-      
-      <form onsubmit="handleAuthSubmit(event)">
-        <div style="margin-bottom: 16px;">
-          <label for="admin-passkey" style="display: block; font-weight: 700; margin-bottom: 6px;">Passkey:</label>
-          <input type="password" id="admin-passkey" required style="width: 100%; padding: 10px; border: 1px solid #64748b; border-radius: 6px; font-size: 1rem;" placeholder="Enter passkey">
-        </div>
-        <p id="auth-error" style="color: #dc2626; font-size: 0.9rem; display: none; font-weight: 700;">Incorrect passkey. Please try again.</p>
-        <button type="submit" class="btn-action" style="width: 100%; padding: 10px; font-size: 1rem;">Unlock Dashboard</button>
-      </form>
+
+      <button type="button" id="btn-google-signin" class="btn-action"
+              style="width: 100%; padding: 12px; font-size: 1rem;"
+              onclick="handleGoogleSignIn()">Sign in with Google</button>
+      <p id="auth-error" style="color: #dc2626; font-size: 0.9rem; display: none; font-weight: 700; margin-top: 12px;" role="alert" aria-live="assertive"></p>
     </section>
 
     <!-- Dashboard Main Surface (Initially Hidden) -->
@@ -313,36 +312,71 @@
   </main>
 
   <script>
-    var PASSKEY = "Amasamya2026";
+    /* Founder-only Firebase Auth. Firestore rules require
+       request.auth.token.email == FOUNDER_EMAIL for every read
+       and every update against academy_applications; the front-end
+       gate below enforces the same for UI purposes so an
+       unauthorised sign-in never sees the dashboard shell. */
+    var FOUNDER_EMAIL = 'akhilesh.malani@gmail.com';
     var allApplicants = [];
 
     function announce(msg) {
       document.getElementById('admin-announcer').textContent = msg;
     }
 
-    function handleAuthSubmit(e) {
-      e.preventDefault();
-      var entered = document.getElementById('admin-passkey').value.trim();
+    function showAuthError(msg) {
       var err = document.getElementById('auth-error');
+      err.textContent = msg;
+      err.style.display = 'block';
+      announce(msg);
+    }
 
-      if (entered === PASSKEY || entered === "Akh!l123$") {
-        document.getElementById('auth-gate').style.display = 'none';
-        document.getElementById('dashboard-surface').style.display = 'block';
-        document.getElementById('btn-signout').style.display = 'inline-block';
-        announce("Authentication successful. Loading live applicant records.");
-        listenForApplicants();
-      } else {
-        err.style.display = 'block';
-        announce("Incorrect passkey.");
+    function handleGoogleSignIn() {
+      if (typeof auth === 'undefined' || auth === null) {
+        showAuthError('Firebase auth is not initialised. Reload the page and try again.');
+        return;
       }
+      var provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).then(function (result) {
+        var user = result.user;
+        if (!user || user.email !== FOUNDER_EMAIL) {
+          auth.signOut();
+          showAuthError('This account is not authorised for the admin portal.');
+        }
+        /* If email matches, onAuthStateChanged will show the dashboard. */
+      }).catch(function (err) {
+        showAuthError('Sign-in failed: ' + err.message);
+      });
     }
 
     function handleSignOut() {
-      document.getElementById('auth-gate').style.display = 'block';
-      document.getElementById('dashboard-surface').style.display = 'none';
-      document.getElementById('btn-signout').style.display = 'none';
-      document.getElementById('admin-passkey').value = '';
-      announce("Signed out of admin portal.");
+      if (typeof auth !== 'undefined' && auth !== null) {
+        auth.signOut().catch(function () { /* ignore */ });
+      }
+    }
+
+    /* Single source of truth for gate + dashboard visibility. */
+    if (typeof auth !== 'undefined' && auth !== null) {
+      auth.onAuthStateChanged(function (user) {
+        var gate = document.getElementById('auth-gate');
+        var dash = document.getElementById('dashboard-surface');
+        var signout = document.getElementById('btn-signout');
+        if (user && user.email === FOUNDER_EMAIL) {
+          gate.style.display = 'none';
+          dash.style.display = 'block';
+          if (signout) signout.style.display = 'inline-block';
+          announce('Authentication successful. Loading live applicant records.');
+          listenForApplicants();
+        } else {
+          gate.style.display = 'block';
+          dash.style.display = 'none';
+          if (signout) signout.style.display = 'none';
+          if (user) {
+            /* Signed in as the wrong account; sign them out. */
+            auth.signOut();
+          }
+        }
+      });
     }
 
     function listenForApplicants() {

@@ -161,6 +161,83 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // AMASAMYA Academy (August 2026)
+    // Public application form + admin-only registry. Learner
+    // surface and educator studio collections stubbed as
+    // deny-all until their write patterns are designed.
+    // ═══════════════════════════════════════════════════════════
+
+    // academy_applications: written from the unauthenticated
+    // application form (apply.html). Read + update restricted to
+    // the founder account. Create rules validate shape strictly
+    // because unauthenticated writes are inherently spam-prone.
+    match /academy_applications/{docId} {
+      // Anyone can submit an application; server-side shape
+      // validation is the defence against garbage / abuse.
+      allow create: if request.resource.data.keys().hasOnly([
+             'name', 'email', 'phone', 'location',
+             'assistiveTech', 'learningGoal',
+             'screeningAnswers', 'placementScore',
+             'assignedTrack', 'cohort', 'status',
+             'timestamp', 'submittedAt'
+           ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.email is string
+        && request.resource.data.email.size() >= 3
+        && request.resource.data.email.size() <= 200
+        && request.resource.data.email.matches('.+@.+\\..+')
+        && (!('phone' in request.resource.data.keys())
+            || (request.resource.data.phone is string
+                && request.resource.data.phone.size() <= 40))
+        && (!('location' in request.resource.data.keys())
+            || (request.resource.data.location is string
+                && request.resource.data.location.size() <= 200))
+        && request.resource.data.assistiveTech is list
+        && request.resource.data.assistiveTech.size() <= 20
+        && (!('learningGoal' in request.resource.data.keys())
+            || (request.resource.data.learningGoal is string
+                && request.resource.data.learningGoal.size() <= 2000))
+        && request.resource.data.screeningAnswers is list
+        && request.resource.data.screeningAnswers.size() <= 20
+        && request.resource.data.placementScore is int
+        && request.resource.data.placementScore >= 0
+        && request.resource.data.placementScore <= 20
+        && request.resource.data.assignedTrack is string
+        && request.resource.data.assignedTrack.size() <= 200
+        && request.resource.data.cohort is string
+        && request.resource.data.cohort.size() <= 40
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.timestamp is string
+        && request.resource.data.timestamp.size() <= 40;
+
+      // Only the founder account can read the applicant registry.
+      allow read: if request.auth != null
+        && request.auth.token.email == 'akhilesh.malani@gmail.com';
+
+      // Admin update flow (mark admitted, note-taking). Restricts
+      // fields to the admin-editable subset so a compromised admin
+      // session cannot rewrite the original submission content.
+      allow update: if request.auth != null
+        && request.auth.token.email == 'akhilesh.malani@gmail.com'
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'admittedAt', 'adminNote', 'cohort']);
+
+      // Applications are an audit trail; no client-side delete.
+      allow delete: if false;
+    }
+
+    // Stub rules for academy collections not yet in use. Deny-all
+    // until write patterns are designed in the learner-surface and
+    // educator-studio commits (Priority 2 and 3).
+    match /academy_users/{userId}      { allow read, write: if false; }
+    match /academy_courses/{courseId}  { allow read, write: if false; }
+    match /academy_lessons/{lessonId}  { allow read, write: if false; }
+    match /academy_progress/{docId}    { allow read, write: if false; }
+    match /academy_recordings/{recId}  { allow read, write: if false; }
+
     // Deny everything else
     match /{document=**} {
       allow read, write: if false;
