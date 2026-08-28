@@ -1,27 +1,21 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-08-26 (v5.2.0 Published across CWS + Edge + Firefox; v5.3.0 built and packaged, awaiting upload to all three stores).
+Last reviewed: 2026-08-28 (v5.3.0 Published across CWS + Edge + Firefox).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
 
-## Published across all three stores: v5.2.0 (2026-08 onwards)
+## Published across all three stores: v5.3.0 (2026-08-28)
 
-v5.2.0 is now live on Chrome Web Store (extension ID `blnfmiipkccpggpinjofhhglfcgglbif`), Microsoft Edge Add-ons (same Chromium package), and addons.mozilla.org as `amasamya-accessibility-audit` (Firefox port with `sidebar/` instead of `sidepanel/`, no `debugger` permission). Previously published versions v4.0.0 through v4.3.1 remain in the CWS version history.
+v5.3.0 is live on Chrome Web Store (extension ID `blnfmiipkccpggpinjofhhglfcgglbif`), Microsoft Edge Add-ons (same Chromium package), and addons.mozilla.org as `amasamya-accessibility-audit` (Firefox port with `sidebar/` instead of `sidepanel/`, no `debugger` permission). Previously published versions v4.0.0 through v5.2.0 remain in each store's version history.
 
-## Built, awaiting upload to all three stores: v5.3.0
-
-Packages sitting in `dist/`:
-- `AMASAMYA-Chrome-Edge-Extension-v5.3.0.zip` (same file works for both CWS and Edge Add-ons)
-- `AMASAMYA-Firefox-Addon-v5.3.0.zip`
-
-What v5.3.0 adds over v5.2.0 (per the manifests' current descriptions):
+What v5.3.0 added over v5.2.0:
 - GIGW 3.0 and IS 17802 India-national audit engines
 - VPAT 2.4 ACR exporter (one-click compliance-document generation)
 - Visual diffs on audit history
 
-Upload guides for all three stores are in the session transcript; permissions unchanged from v5.2.0 so no new justifications required.
+Permissions unchanged from v5.2.0; no new justifications were required at review time.
 
 ## Previously shipped: v5.2.0 "Scheduled Crawls"
 
