@@ -917,13 +917,18 @@
       const tdSev = document.createElement('td'); tdSev.textContent = f.severity; tdSev.className = `severity-${(f.severity||'').toLowerCase()}`;
 
       const tdIss   = document.createElement('td');
+      /* v5.3.1 a11y: id is derived from f.id (stable across filter
+         changes), not the filter-loop index. role changed from
+         'region' to 'group' so JAWS/NVDA landmark rotor no longer
+         gains one landmark per expanded finding row. */
+      const detailId = `detail-${f.id}`;
       const toggle  = document.createElement('button');
       toggle.className = 'finding-toggle';
       toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-controls', `detail-${idx}`);
+      toggle.setAttribute('aria-controls', detailId);
       toggle.textContent = f.issue;
       toggle.addEventListener('click', () => {
-        const d = $(`detail-${idx}`);
+        const d = document.getElementById(detailId);
         const expanded = toggle.getAttribute('aria-expanded') === 'true';
         const nowExpanded = !expanded;
         toggle.setAttribute('aria-expanded', String(nowExpanded));
@@ -936,8 +941,8 @@
       });
 
       const detail = document.createElement('div');
-      detail.id = `detail-${idx}`; detail.className = 'finding-detail';
-      detail.setAttribute('role', 'region');
+      detail.id = detailId; detail.className = 'finding-detail';
+      detail.setAttribute('role', 'group');
       detail.setAttribute('aria-label', `Detail for ${f.id}`);
       safeSetHtml(detail, `<dl>
         <dt>Element</dt><dd><code>${escHtml(f.element)}</code></dd>

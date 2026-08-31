@@ -1,10 +1,31 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-08-28 (v5.3.0 Published across CWS + Edge + Firefox).
+Last reviewed: 2026-08-31 (v5.3.0 Published across CWS + Edge + Firefox; v5.3.1 built and packaged, awaiting upload to all three stores).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
+
+## Built, awaiting upload to all three stores: v5.3.1 (2026-08-31)
+
+Patch release. No new features, no new permissions. Screen-reader-only
+accessibility fixes on the findings-table row disclosure:
+
+- **Stable detail id.** `<div id="detail-{f.id}">` (was `detail-{loop-index}`),
+  so the aria-controls target no longer changes when the user filters or
+  sorts the table.
+- **Region role removed from per-row detail.** `role="region"` replaced with
+  `role="group"`. Previously, expanding several finding rows added one
+  landmark per row to the JAWS/NVDA landmark rotor, which made rotor
+  navigation unusable. Row semantics now stay clean regardless of how many
+  rows are expanded.
+
+Packages sitting in `dist/`:
+- `amasamya-extension-v5.3.1.zip` (same file works for both CWS and Edge Add-ons)
+- `amasamya-firefox-v5.3.1.zip`
+
+Version alignment (Option B): extension MAJOR.MINOR still matches platform
+v5.3; PATCH may differ, and does here.
 
 ## Published across all three stores: v5.3.0 (2026-08-28)
 

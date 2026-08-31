@@ -81,7 +81,7 @@ this project, ever, going forward.
 |---|---|
 | `/silent` | No preamble, no commentary - give the answer directly. |
 
-## Project context (as of 2026-08-28)
+## Project context (as of 2026-08-31)
 
 - **Personal-Website** (this repo) hosts three product surfaces plus the founder portfolio:
   1. akhileshmalani.com - personal portfolio + blog.
@@ -90,11 +90,11 @@ this project, ever, going forward.
 
 - **Domains owned:** akhileshmalani.com (root portfolio, live), amasamya.com (mega-platform home, live), amasamya.org and amasamya.in (reserved, not yet pointed anywhere). Netlify auto-deploys on push to `main`.
 
-- **AMASAMYA Chrome extension** - Published on Chrome Web Store at extension ID `blnfmiipkccpggpinjofhhglfcgglbif`. Current live version **v5.3.0** (approved 2026-08-28). Version history v4.0.0 through v5.2.0 all Published. Version alignment policy with the web platform is Option B (MAJOR.MINOR match, PATCH may differ). v5.3.0 adds GIGW 3.0 and IS 17802 India-national audit engines, a VPAT 2.4 ACR exporter, and visual diffs on audit history.
+- **AMASAMYA Chrome extension** - Published on Chrome Web Store at extension ID `blnfmiipkccpggpinjofhhglfcgglbif`. Current live version **v5.3.0** (approved 2026-08-28); **v5.3.1** built and packaged 2026-08-31, awaiting upload (screen-reader-only patch on the findings-table row disclosure). Version history v4.0.0 through v5.2.0 all Published. Version alignment policy with the web platform is Option B (MAJOR.MINOR match, PATCH may differ). v5.3.0 added GIGW 3.0 and IS 17802 India-national audit engines, a VPAT 2.4 ACR exporter, and visual diffs on audit history.
 
-- **AMASAMYA Microsoft Edge extension** - Published on Microsoft Edge Add-ons store, same Chromium codebase as Chrome, currently at **v5.3.0** (approved 2026-08-28).
+- **AMASAMYA Microsoft Edge extension** - Published on Microsoft Edge Add-ons store, same Chromium codebase as Chrome, currently at **v5.3.0** live (approved 2026-08-28); **v5.3.1** built and packaged 2026-08-31, awaiting upload (screen-reader-only patch on the findings-table row disclosure).
 
-- **AMASAMYA Firefox add-on** - Published on addons.mozilla.org as `amasamya-accessibility-audit`, currently at **v5.3.0** (approved 2026-08-28). Source lives in `amasamya-extension-firefox/` (folder renamed from `ama11y-extension-firefox` on 2026-08-26). Firefox port uses `sidebar/` instead of `sidepanel/` and omits the `debugger` permission (no Visual Layout Auditor on Firefox).
+- **AMASAMYA Firefox add-on** - Published on addons.mozilla.org as `amasamya-accessibility-audit`, currently at **v5.3.0** live (approved 2026-08-28); **v5.3.1** built and packaged 2026-08-31, awaiting upload (screen-reader-only patch on the findings-table row disclosure). Source lives in `amasamya-extension-firefox/` (folder renamed from `ama11y-extension-firefox` on 2026-08-26). Firefox port uses `sidebar/` instead of `sidepanel/` and omits the `debugger` permission (no Visual Layout Auditor on Firefox).
 
 - **AMASAMYA Android auditor app** - Kotlin 2.0 + Jetpack Compose, min API 24, Apache 2.0 licensed. Real-time audits against native Android apps via the AccessibilityService API. Six feature clusters shipped (see the app's own README): live TalkBack captions and focus-trail visualiser, colour-coded touch-target boundary mapper, focus-trap detector, real-time contrast drift scanner, multi-standard rules engine (WCAG 2.2 / Section 508 / EN 301 549), one-click fix generator, offline report exporter, hands-free voice commands, TalkBack simulator mode for sighted testers. Approved for the Google Play production track; the v1 release build was **submitted for Play production review on 2026-08-28** and is not yet publicly available. Source and workspace at `C:\Users\akhi_\antigravity\focused-fermi` (separate from this repo). See memory: `reference-android-app-path`.
 
