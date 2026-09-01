@@ -1,10 +1,32 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-08-31 (v5.3.0 Published across CWS + Edge + Firefox; v5.3.1 built and packaged, awaiting upload to all three stores).
+Last reviewed: 2026-09-01 (v5.3.0 Published across CWS + Edge + Firefox; v5.3.1 and v5.3.2 built and packaged, awaiting upload to all three stores).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
+
+## Built, awaiting upload to all three stores: v5.3.2 (2026-09-01)
+
+Two additions on the findings-table results view, both driven by real
+usage feedback from a blind NVDA/JAWS user:
+
+- **Affected element surfaced in the row itself.** The finding row's
+  aria-label now includes `Element: <selector>` so screen-reader row
+  navigation announces the affected component in one breath. The
+  disclosure button's visible text is prefixed `[selector]` so sighted
+  users see it without expanding. Applies to Web Audit and Import on
+  the platform, and to the findings table in both extensions.
+- **Accessible PDF export.** New "Accessible PDF" button in the export
+  toolbar. Opens the semantic HTML report in a new tab with an
+  auto-triggered print dialog; the user picks "Save as PDF" as the
+  destination. Chrome and Edge emit a tagged PDF with reading order
+  and heading structure preserved. No third-party PDF library, no
+  new permissions.
+
+Packages sitting in `dist/`:
+- `amasamya-extension-v5.3.2.zip` (CWS + Edge)
+- `amasamya-firefox-v5.3.2.zip`
 
 ## Built, awaiting upload to all three stores: v5.3.1 (2026-08-31)
 

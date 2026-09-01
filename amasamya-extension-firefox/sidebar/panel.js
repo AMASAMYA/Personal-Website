@@ -619,6 +619,7 @@
 
     $('export-json').disabled      = false;
     $('export-html').disabled      = false;
+    if ($('export-pdf')) $('export-pdf').disabled = false;
     $('export-csv').disabled       = false;
     $('export-text').disabled      = false;
     if ($('export-vpat')) $('export-vpat').disabled = false;
@@ -906,8 +907,12 @@
           tr.appendChild(tdChange);
           if (diffVerdict === 'resolved') tr.classList.add('diff-resolved');
           /* SR: prepend the diff verdict word to the row's aria-label
-             so it lands before the ID/engine/etc columns are read. */
-          tr.setAttribute('aria-label', `${badge.textContent}. ${f.id}. ${f.engine}. ${f.verdict}. ${f.severity}. ${f.issue}.`);
+             so it lands before the ID/engine/etc columns are read.
+             v5.3.2: also include the affected element. */
+          const _elem = (f.element || '').trim();
+          tr.setAttribute('aria-label',
+            `${badge.textContent}. ${f.id}. ${f.engine}. ${f.verdict}. ${f.severity}. ${f.issue}.` +
+            (_elem ? ` Element: ${_elem.slice(0, 120)}.` : ''));
         }
       }
 
@@ -915,6 +920,16 @@
       const tdEng = document.createElement('td'); tdEng.textContent = f.engine;
       const tdVer = document.createElement('td'); tdVer.textContent = f.verdict; tdVer.className = `verdict-${(f.verdict||'').toLowerCase()}`;
       const tdSev = document.createElement('td'); tdSev.textContent = f.severity; tdSev.className = `severity-${(f.severity||'').toLowerCase()}`;
+
+      /* v5.3.2 a11y: always set a row-level aria-label including the
+         affected element, so browsing rows tells the SR user which
+         component failed without having to expand every disclosure. */
+      const elemStr = (f.element || '').trim();
+      if (!tr.hasAttribute('aria-label')) {
+        tr.setAttribute('aria-label',
+          `${f.id}. ${f.engine}. ${f.verdict}. ${f.severity}. ${f.issue}.` +
+          (elemStr ? ` Element: ${elemStr.slice(0, 120)}.` : ''));
+      }
 
       const tdIss   = document.createElement('td');
       /* v5.3.1 a11y: id is derived from f.id (stable across filter
@@ -926,7 +941,11 @@
       toggle.className = 'finding-toggle';
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-controls', detailId);
-      toggle.textContent = f.issue;
+      /* v5.3.2: prefix issue with element so sighted users see the
+         affected component in the collapsed row too. */
+      toggle.textContent = elemStr
+        ? `[${elemStr.slice(0, 60)}] ${f.issue}`
+        : f.issue;
       toggle.addEventListener('click', () => {
         const d = document.getElementById(detailId);
         const expanded = toggle.getAttribute('aria-expanded') === 'true';
@@ -1036,6 +1055,26 @@
     downloadFile(generateHtmlReport(), 'AMASAMYA-report.html', 'text/html');
     announce('HTML report exported.');
   });
+
+  /* v5.3.2 Accessible PDF: same-shape HTML with an auto-print script,
+     opened in a new tab via a blob URL. User picks Save as PDF in the
+     print dialog. Works in Firefox sidebar (WebExtensions) and Chrome
+     side panel (MV3). */
+  if ($('export-pdf')) {
+    $('export-pdf').addEventListener('click', () => {
+      const html = generateHtmlReport();
+      const withPrint = html.replace('</body>',
+        '<script>window.addEventListener("load",function(){setTimeout(function(){try{window.print();}catch(e){}},400);});</script></body>');
+      const blob = new Blob([withPrint], {type: 'text/html'});
+      const url  = URL.createObjectURL(blob);
+      const opened = window.open(url, '_blank');
+      if (!opened && typeof browser !== 'undefined' && browser.tabs && browser.tabs.create) {
+        browser.tabs.create({url});
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      announce('Accessible report opened in a new tab. Print dialog will open shortly. Choose Save as PDF as the destination.');
+    });
+  }
 
   $('export-csv').addEventListener('click', () => {
     const headers = ['ID','Engine','Element','Criterion','Issue','Computed','Required','Verdict','Severity','How to Fix'];

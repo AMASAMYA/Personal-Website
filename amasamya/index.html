@@ -1666,6 +1666,7 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
           <button class="btn btn-primary btn-sm" id="wa-export-html" type="button">Export HTML</button>
+          <button class="btn btn-sm" id="wa-export-pdf"  type="button" title="Opens a print-ready report in a new tab. Choose Save as PDF in the browser print dialog.">Export accessible PDF</button>
           <button class="btn btn-sm" id="wa-export-csv"  type="button">Export CSV</button>
           <button class="btn btn-sm" id="wa-export-txt"  type="button">Plain Text</button>
           <button class="btn btn-sm" id="wa-export-json" type="button">Export JSON</button>
@@ -1869,6 +1870,12 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
             aria-label="HTML report format, currently selected">
             <div class="export-format">HTML</div>
             <div class="export-desc">Accessible HTML with headings, landmarks, and data table</div>
+          </div>
+          <div class="export-card" role="button" tabindex="0"
+            data-format="pdf" aria-pressed="false"
+            aria-label="Accessible PDF format. Opens a print-ready report in a new tab; choose Save as PDF in the browser print dialog.">
+            <div class="export-format">Accessible PDF</div>
+            <div class="export-desc">Print-to-PDF workflow with tagged, semantic structure</div>
           </div>
           <div class="export-card" role="button" tabindex="0"
             data-format="word" aria-pressed="false"
@@ -3327,6 +3334,14 @@ function renderFindingsTable(findings) {
     const vClass = {Fail:'v-fail',Warning:'v-warn',Pass:'v-pass',Info:'v-info'}[f.verdict]||'v-info';
     const sClass = {Critical:'s-critical',Serious:'s-serious',Moderate:'s-moderate',Minor:'s-minor'}[f.severity]||'';
     const tr = document.createElement('tr');
+    const elemStr = (f.element || '').trim();
+    /* Row-level aria-label: full context in one breath for SR users
+       browsing rows. */
+    tr.setAttribute('aria-label',
+      'Finding ' + f.id + ': ' + (f.issue || '(no summary)') +
+      (elemStr ? '. Element: ' + elemStr.slice(0, 120) : '') +
+      '. ' + (f.verdict || '') + ' at ' + (f.severity || '') + '. ' +
+      'Criterion ' + (f.criterion || '') + '.');
     tr.innerHTML = `
       <td><code>${escHtml(f.id)}</code></td>
       <td style="white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--text-dim);">${escHtml(f.engine)}</td>
@@ -3335,14 +3350,22 @@ function renderFindingsTable(findings) {
       <td><span class="${vClass}">${escHtml(f.verdict)}</span></td>
       <td></td>`;
     const detailCell = tr.cells[5];
+    /* Inline lead so sighted users also see issue + affected element
+       without expanding. */
+    const lead = document.createElement('div');
+    lead.className = 'finding-lead';
+    lead.style.cssText = 'font-size:12px;margin-bottom:6px;line-height:1.45;';
+    lead.innerHTML = '<span class="finding-issue">' + escHtml(f.issue || '') + '</span>' +
+      (elemStr ? ' <span class="finding-elem" style="color:var(--text-dim);">- Element: <code>' + escHtml(elemStr.slice(0, 120)) + '</code></span>' : '');
+    detailCell.appendChild(lead);
     const detailId   = 'imp-detail-' + f.id;
     const expandBtn  = document.createElement('button');
     expandBtn.className   = 'expand-btn';
     expandBtn.type        = 'button';
-    expandBtn.textContent = 'Detail';
+    expandBtn.textContent = 'More detail';
     expandBtn.setAttribute('aria-expanded','false');
     expandBtn.setAttribute('aria-controls', detailId);
-    expandBtn.setAttribute('aria-label','Show detail for finding ' + f.id);
+    expandBtn.setAttribute('aria-label','Show computed, required, and how-to-fix for finding ' + f.id);
     const detailDiv  = document.createElement('div');
     detailDiv.className  = 'finding-detail';
     detailDiv.id         = detailId;
@@ -3359,7 +3382,7 @@ function renderFindingsTable(findings) {
     expandBtn.addEventListener('click', () => {
       const open = detailDiv.classList.toggle('open');
       expandBtn.setAttribute('aria-expanded', String(open));
-      expandBtn.textContent = open ? 'Close' : 'Detail';
+      expandBtn.textContent = open ? 'Close' : 'More detail';
       announce(open ? 'Finding detail expanded.' : 'Finding detail collapsed.');
     });
     detailCell.appendChild(expandBtn);
@@ -3469,6 +3492,29 @@ function generateReport(findings, format, title, standard, dateStr) {
     // Accessible HTML masquerading as .doc - opens in Word and retains structure
     content = buildWordHTML(findings, title, stdLabel, dateStr, fail, warn, crit);
     mime='application/msword'; ext='doc';
+
+  } else if (format === 'pdf') {
+    /* Accessible PDF path: build the same semantic HTML report we ship
+       for the HTML export, inject an auto-print script, open it in a
+       new tab. The user picks "Save as PDF" in the browser's print
+       dialog; Chrome and Edge emit a tagged PDF with reading order and
+       heading structure preserved (Firefox emits an untagged PDF, still
+       selectable and searchable). No third-party library, no untagged
+       raster fallback. */
+    const html = buildHTMLReport(findings, title, stdLabel, dateStr, fail, warn, crit);
+    const withPrint = html.replace('</body>',
+      '<script>window.addEventListener("load",function(){setTimeout(function(){try{window.print();}catch(e){}},400);});</script></body>');
+    const blob = new Blob([withPrint], {type:'text/html'});
+    const url  = URL.createObjectURL(blob);
+    const w    = window.open(url, '_blank');
+    if (!w) {
+      URL.revokeObjectURL(url);
+      announce('Report tab was blocked. Please allow pop-ups for amasamya.com and try again.', 'assertive');
+      return;
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    announce('Accessible report opened in a new tab. Print dialog will open shortly. Choose Save as PDF as the destination.');
+    return;
 
   } else {
     // HTML (default)
@@ -4947,6 +4993,7 @@ function waRenderResults(findings) {
 
   // Wire export buttons
   $('wa-export-html').onclick = () => generateReport(waCurrentFindings,'html',waAuditedTitle || 'Web Audit',$('wa-standard').value,new Date().toISOString().replace('T',' ').slice(0,19));
+  $('wa-export-pdf').onclick  = () => generateReport(waCurrentFindings,'pdf', waAuditedTitle || 'Web Audit',$('wa-standard').value,new Date().toISOString().replace('T',' ').slice(0,19));
   $('wa-export-csv').onclick  = () => generateReport(waCurrentFindings,'csv', waAuditedTitle || 'Web Audit',$('wa-standard').value,new Date().toISOString().replace('T',' ').slice(0,19));
   $('wa-export-txt').onclick  = () => generateReport(waCurrentFindings,'txt', waAuditedTitle || 'Web Audit',$('wa-standard').value,new Date().toISOString().replace('T',' ').slice(0,19));
   $('wa-export-json').onclick = () => generateReport(waCurrentFindings,'json',waAuditedTitle || 'Web Audit',$('wa-standard').value,new Date().toISOString().replace('T',' ').slice(0,19));
@@ -4968,6 +5015,16 @@ function waRenderTable(findings) {
     const vClass = {Fail:'v-fail',Warning:'v-warn',Pass:'v-pass',Info:'v-info'}[f.verdict]||'v-info';
     const sClass = {Critical:'s-critical',Serious:'s-serious',Moderate:'s-moderate',Minor:'s-minor'}[f.severity]||'';
     const tr = document.createElement('tr');
+    /* Row-level aria-label so NVDA/JAWS announce the essentials
+       (issue, element, verdict, severity, criterion) as one breath
+       when browsing rows, without forcing the user to expand every
+       disclosure to know which component failed. */
+    const elemStr = (f.element || '').trim();
+    tr.setAttribute('aria-label',
+      'Finding ' + f.id + ': ' + (f.issue || '(no summary)') +
+      (elemStr ? '. Element: ' + elemStr.slice(0, 120) : '') +
+      '. ' + (f.verdict || '') + ' at ' + (f.severity || '') + '. ' +
+      'Criterion ' + (f.criterion || '') + '.');
     tr.innerHTML = '<td><code>' + escHtml(f.id) + '</code></td>' +
       '<td style="white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--text-dim);">' + escHtml(f.engine) + '</td>' +
       '<td style="font-size:12px;">' + escHtml(f.criterion) + '</td>' +
@@ -4975,12 +5032,22 @@ function waRenderTable(findings) {
       '<td><span class="' + vClass + '">' + escHtml(f.verdict) + '</span></td>' +
       '<td></td>';
     const detailCell = tr.cells[5];
+    /* Inline lead: the issue text and the affected element render
+       visibly above the Detail button so sighted users no longer have
+       to expand every row either. Kept in the same last cell to avoid
+       changing table column count. */
+    const lead = document.createElement('div');
+    lead.className = 'finding-lead';
+    lead.style.cssText = 'font-size:12px;margin-bottom:6px;line-height:1.45;';
+    lead.innerHTML = '<span class="finding-issue">' + escHtml(f.issue || '') + '</span>' +
+      (elemStr ? ' <span class="finding-elem" style="color:var(--text-dim);">- Element: <code>' + escHtml(elemStr.slice(0, 120)) + '</code></span>' : '');
+    detailCell.appendChild(lead);
     const detailId = 'wa-detail-' + f.id;
     const btn = document.createElement('button');
-    btn.className='expand-btn'; btn.type='button'; btn.textContent='Detail';
+    btn.className='expand-btn'; btn.type='button'; btn.textContent='More detail';
     btn.setAttribute('aria-expanded','false');
     btn.setAttribute('aria-controls', detailId);
-    btn.setAttribute('aria-label','Show detail for finding ' + f.id);
+    btn.setAttribute('aria-label','Show computed, required, and how-to-fix for finding ' + f.id);
     const div = document.createElement('div');
     div.className='finding-detail';
     div.id = detailId;
@@ -4996,7 +5063,7 @@ function waRenderTable(findings) {
     btn.addEventListener('click',()=>{
       const open=div.classList.toggle('open');
       btn.setAttribute('aria-expanded',String(open));
-      btn.textContent=open?'Close':'Detail';
+      btn.textContent=open?'Close':'More detail';
       announce(open ? 'Finding detail expanded.' : 'Finding detail collapsed.');
     });
     detailCell.appendChild(btn); detailCell.appendChild(div);
