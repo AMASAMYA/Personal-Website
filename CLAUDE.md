@@ -81,12 +81,12 @@ this project, ever, going forward.
 |---|---|
 | `/silent` | No preamble, no commentary - give the answer directly. |
 
-## Project context (as of 2026-09-15)
+## Project context (as of 2026-09-15, post-Academy retirement)
 
 - **Personal-Website** (this repo) hosts three product surfaces plus the founder portfolio:
   1. akhileshmalani.com - personal portfolio + blog.
   2. amasamya.akhileshmalani.com - the AMASAMYA audit platform (single-file SPA in `amasamya/index.html`, Firebase Auth + Firestore).
-  3. amasamya.com - **mega-platform brand home** (live), currently serves `amasamya-home.html` with the two-pillars framing (Accessibility Audit Suite + AMASAMYA Academy).
+  3. amasamya.com - **product brand home** (live), serves `amasamya-home.html`. Rewritten 2026-09-15 to be product-only (the four surfaces, the Web Audit Portal, install links). Previous two-pillar framing that included AMASAMYA Academy was retired; see the Academy note below.
 
 - **Domains owned:** akhileshmalani.com (root portfolio, live), amasamya.com (mega-platform home, live), amasamya.org and amasamya.in (reserved, not yet pointed anywhere). Netlify auto-deploys on push to `main`.
 
@@ -100,9 +100,7 @@ this project, ever, going forward.
 
 - **v5.2.0 feature summary (across Chrome/Edge/Firefox)**: Scheduled Crawls (chrome.alarms per user-configured schedule; alarm-fire runs Site Crawl and diffs against history; run summary posted to Slack / Teams / generic-JSON webhook; run records flushed to Firestore scheduledRuns collection when platform tab is open; missed-run replay on service worker startup; 23 unit tests). v4.3.0 shipped Audit Diff and History (10 audits per URL in chrome.storage.local, 8 MB soft cap with eviction, four-verdict diff engine, diff CSV export, History section with per-URL Load and clear controls, polite-region diff summary announcement). v4.2.0 "Site Crawl" (queue + sitemap parser + side-panel tab + platform Aggregated Reports + four export shapes + concurrent runner + JAWS-arrow-key `role="application"` URL fields + focus trap + confirmation dialog on Close/Escape). Default keyboard shortcut Alt+Shift+1 after JAWS conflicts on Alt+Shift+Period. See `amasamya-extension/ROADMAP.md`.
 
-- **AMASAMYA Academy (mega-platform)** - Scaffolding built (`academy.html`, `academy-admin.html`, `academy-author.html`, `apply.html`, `amasamya-home.html`, `accessibility.html`, `amasamya-linter.js`, `library-admin.html`). Firestore rules for `academy_applications` deployed 2026-08-26 with founder-only read/update via Google Sign-In. Learner surface, educator studio wiring, and content production paused because L. Subramani (Academy co-lead) is unavailable until roughly mid-September 2026. See memories: `project-subramani-hold`, `project-amasamya-strategic-proposal`.
-
-- **Strategic proposal source-of-truth** for the mega-platform: `D:\AMASAMYA\AMASAMYA_Strategic_Proposal_v2.1.md` (Aug 2026; workspace moved from `C:\Users\akhi_\antigravity\focused-fermi` to `D:\AMASAMYA` on 2026-09-07). Key facts settled in v2.1: Akhilesh is sole owner of the master entity and all software IP; Subramani is Founding Academic Director with an equitable revenue-share on Academy revenue after infrastructure costs; certificates co-signed; four pillars with Year-1 = Pillar 1 + Pillar 4a, Year-2 = CopyAudit + CodeLab, v3+ = Indic regional languages; three-phase 12-month roadmap with numeric gates.
+- **AMASAMYA Academy - retired on 2026-09-15**. The Academy pillar (learner surface, educator studio, cohort programme, School of English & Communication) was dropped when Akhilesh decided to proceed solo. L. Subramani, previously slated as Academy co-lead, is no longer involved in AMASAMYA. All Academy source files (`academy.html`, `academy-admin.html`, `academy-author.html`, `apply.html`, `library-admin.html`) were moved to `_archived/academy/` preserving git history. Firestore rules for `academy_applications` were removed; any residual writes to `academy_*` collections are now denied by the default deny-everything-else rule. `amasamya-home.html` was rewritten to be product-only. The strategic proposal at `D:\AMASAMYA\AMASAMYA_Strategic_Proposal_v2.1.md` describes the previous two-pillar plan and is now historical; a solo v3.0 document has not been written yet.
 
 - **Public source** - github.com/AMASAMYA/AMASAMYA (mirror of the Chrome extension code; MIT licence). The full Personal-Website source remains private at github.com/AMASAMYA/Personal-Website.
 

@@ -38,16 +38,6 @@
 
 # Clean URL aliases
 [[redirects]]
-  from = "/academy"
-  to = "/academy.html"
-  status = 200
-
-[[redirects]]
-  from = "/apply"
-  to = "/apply.html"
-  status = 200
-
-[[redirects]]
   from = "/checker"
   to = "/checker.html"
   status = 200
@@ -63,19 +53,34 @@
   status = 200
 
 [[redirects]]
-  from = "/author"
-  to = "/academy-author.html"
-  status = 200
-
-[[redirects]]
   from = "/accessibility"
   to = "/accessibility.html"
   status = 200
 
+# Academy routes retired on 2026-09-15 (programme scope narrowed to
+# product-only). The old /academy, /apply, /academy-admin, and /author
+# paths now permanently redirect to the AMASAMYA product home so that
+# any inbound link from posts, listings, or shared bookmarks still
+# lands on a live page instead of a 404.
+[[redirects]]
+  from = "/academy"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/apply"
+  to = "/"
+  status = 301
+
 [[redirects]]
   from = "/academy-admin"
-  to = "/academy-admin.html"
-  status = 200
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/author"
+  to = "/"
+  status = 301
 
 # AMASAMYA subdomain - root path serves the public landing page so that
 # Google has something indexable to find. The auth-walled app at
