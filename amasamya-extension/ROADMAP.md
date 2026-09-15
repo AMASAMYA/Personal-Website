@@ -1,10 +1,20 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-09-15 (Chrome live at v5.3.2; Edge live at v5.3.2, approved 2026-09-15; Firefox live at v5.3.3, approved 2026-09-10).
+Last reviewed: 2026-09-15 (Chrome live at v5.3.2; Edge live at v5.3.2; Firefox live at v5.3.3. v5.3.4 built for all three stores to drop the retired-Academy link from every finding row's detail; awaiting upload).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
+
+## Built and awaiting upload to all three stores: v5.3.4 (2026-09-15)
+
+Small maintenance patch across all three extensions. Drops the "Learn in AMASAMYA Academy" row from the finding detail disclosure inside the results table. The Academy programme was retired on 2026-09-15 as part of the scope narrowing to product-only; the link at amasamya.akhileshmalani.com/academy.html now 301-redirects to the product home, so leaving the row in would send users through a redirect for no purpose.
+
+The finding detail now contains: Element, Criterion, Computed, Required, How to Fix. That is what an engineer needs to fix the defect. No behaviour changes, no new permissions.
+
+Packages in `dist/`:
+- `amasamya-extension-v5.3.4.zip` (CWS + Edge)
+- `amasamya-firefox-v5.3.4.zip`
 
 ## Firefox-only patch, live on addons.mozilla.org: v5.3.3 (approved 2026-09-10)
 

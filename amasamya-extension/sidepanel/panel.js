@@ -963,13 +963,20 @@
       detail.id = detailId; detail.className = 'finding-detail';
       detail.setAttribute('role', 'group');
       detail.setAttribute('aria-label', `Detail for ${f.id}`);
+      /* v5.3.4: the "Learn in AMASAMYA Academy" row was removed. The
+         Academy programme was retired on 2026-09-15 and the link at
+         amasamya.akhileshmalani.com/academy.html now 301-redirects to
+         the product home. Rather than replace the link with a
+         redirect target, the row is dropped entirely: the finding
+         already carries Element, Criterion, Computed, Required, and
+         How to Fix, which is what an engineer actually needs to fix
+         the defect. */
       safeSetHtml(detail, `<dl>
         <dt>Element</dt><dd><code>${escHtml(f.element)}</code></dd>
         <dt>Criterion</dt><dd>${escHtml(f.criterion)}</dd>
         <dt>Computed</dt><dd><code>${escHtml(f.computed)}</code></dd>
         <dt>Required</dt><dd>${escHtml(f.required)}</dd>
         <dt>How to Fix</dt><dd>${escHtml(f.howToFix)}</dd>
-        <dt>Learn</dt><dd><a href="https://amasamya.akhileshmalani.com/academy.html" target="_blank" rel="noopener" style="color:#00e5ff;font-weight:bold;">🎓 Learn in AMASAMYA Academy</a></dd>
       </dl>`);
 
       tdIss.appendChild(toggle); tdIss.appendChild(detail);
