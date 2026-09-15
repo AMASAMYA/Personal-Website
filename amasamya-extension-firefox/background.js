@@ -93,7 +93,19 @@ async function persistAuditToHistory(message) {
 }
 
 chrome.action.onClicked.addListener(async (tab) => {
-  try { await chrome.sidePanel.open({ windowId: tab.windowId }); } catch (_) {}
+  /* v5.3.3 Firefox fix: chrome.sidePanel is a Chromium-only API and does
+     not exist in Firefox. Firefox exposes the sidebar via
+     browser.sidebarAction. Opening the sidebar from a user gesture
+     (toolbar click or a keyboard command bound to _execute_action)
+     is permitted. Fall back silently if neither API is present
+     (defensive; Firefox 109+ has this API for sure). */
+  try {
+    if (typeof browser !== "undefined" && browser.sidebarAction && browser.sidebarAction.open) {
+      await browser.sidebarAction.open();
+    } else if (chrome.sidebarAction && chrome.sidebarAction.open) {
+      await chrome.sidebarAction.open();
+    }
+  } catch (_) {}
   const reason = restrictedUrlReason(tab && tab.url);
   if (reason) {
     /* Surface the reason to the side panel so a screen-reader

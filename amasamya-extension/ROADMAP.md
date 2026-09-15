@@ -1,12 +1,28 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-09-01 (v5.3.0 Published across CWS + Edge + Firefox; v5.3.1 and v5.3.2 built and packaged, awaiting upload to all three stores).
+Last reviewed: 2026-09-15 (Chrome live at v5.3.2; Edge live at v5.3.2, approved 2026-09-15; Firefox live at v5.3.3, approved 2026-09-10).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
 
-## Built, awaiting upload to all three stores: v5.3.2 (2026-09-01)
+## Firefox-only patch, live on addons.mozilla.org: v5.3.3 (approved 2026-09-10)
+
+Firefox-only fixes. Chrome and Edge remain on v5.3.2 (their code does not need the same fix). Version alignment policy Option B permits per-store PATCH divergence.
+
+Two bugs discovered in the Firefox add-on:
+
+- **The manifest's suggested keyboard shortcut was `Ctrl+Shift+U`, which Firefox reserves** for View Source or Unicode input. Users reported it never worked. Manifest updated to `Alt+Shift+1` on all platforms, matching Chrome and Edge.
+- **`background.js` called `chrome.sidePanel.open()` on toolbar-button click**, but `sidePanel` is a Chromium-only API. Firefox exposes the sidebar via `browser.sidebarAction.open()`. The try/catch silently swallowed the error so the sidebar never opened via keyboard or click. Fixed with a runtime check that prefers `browser.sidebarAction.open()` on Firefox and falls back gracefully.
+
+Also new in v5.3.3, at the source level (not shipped in the package, ships with the repo):
+
+- `amasamya-extension-firefox/USAGE.md` written for the addons.mozilla.org listing description and for direct reading. Screen-reader-first instructions covering install, run, navigate, export, and manual shortcut assignment. Covers Firefox's per-add-on quirk (sidebar limits, absence of the Visual Layout Auditor on Firefox because Firefox does not expose the `debugger` permission the way Chromium does).
+
+Package sitting in `dist/`:
+- `amasamya-firefox-v5.3.3.zip`
+
+## Live on Chrome and Edge: v5.3.2 (built 2026-09-01; Chrome approved shortly after; Edge approved 2026-09-15). Firefox skipped this version in favour of v5.3.3 above.
 
 Two additions on the findings-table results view, both driven by real
 usage feedback from a blind NVDA/JAWS user:
