@@ -16,13 +16,75 @@ console.log('----------------------------------------------------\n');
 
 const targetArg = process.argv[2] || '.';
 
+function findRawTextEnd(html, start, closeTag) {
+  // Scan a <script> or <style> body respecting JS/CSS string and comment
+  // boundaries so a stringified `</script>` inside a JS literal does not
+  // close the block prematurely. Returns the index one past the closing tag,
+  // or html.length if unclosed.
+  const lowerClose = closeTag.toLowerCase();
+  const len = html.length;
+  let i = start;
+  let quote = null;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  while (i < len) {
+    const c = html[i];
+    const n = html[i + 1];
+
+    if (inLineComment) {
+      if (c === '\n') inLineComment = false;
+      i++; continue;
+    }
+    if (inBlockComment) {
+      if (c === '*' && n === '/') { inBlockComment = false; i += 2; continue; }
+      i++; continue;
+    }
+    if (quote) {
+      if (c === '\\') { i += 2; continue; }
+      if (c === quote) { quote = null; }
+      i++; continue;
+    }
+    if (c === '/' && n === '/') { inLineComment = true; i += 2; continue; }
+    if (c === '/' && n === '*') { inBlockComment = true; i += 2; continue; }
+    if (c === '"' || c === "'" || c === '`') { quote = c; i++; continue; }
+
+    if (html.substr(i, lowerClose.length).toLowerCase() === lowerClose) {
+      return i + lowerClose.length;
+    }
+    i++;
+  }
+  return len;
+}
+
+function stripRawTextElements(html, tagName) {
+  const openRe = new RegExp('<' + tagName + '\\b[^>]*>', 'gi');
+  const closeTag = '</' + tagName + '>';
+  let out = '';
+  let last = 0;
+  let m;
+  openRe.lastIndex = 0;
+  while ((m = openRe.exec(html)) !== null) {
+    const bodyStart = m.index + m[0].length;
+    const end = findRawTextEnd(html, bodyStart, closeTag);
+    out += html.slice(last, m.index);
+    last = end;
+    openRe.lastIndex = end;
+  }
+  out += html.slice(last);
+  return out;
+}
+
 function stripCodeExamples(html) {
-  // Remove content that is code-about-HTML rather than live markup:
-  // <textarea> bodies and attributes (placeholder shows escaped example HTML),
-  // <pre> and <code> blocks (documentation examples).
-  return html
-    .replace(/<script\b[\s\S]*?<\/script>/gi, '')
-    .replace(/<style\b[\s\S]*?<\/style>/gi, '')
+  // Remove content that is code-about-HTML or non-markup rather than live
+  // markup: <script> and <style> bodies (state-machine strip that respects
+  // JS/CSS string and comment boundaries so a `</script>` inside a JS
+  // string literal does not close the block prematurely), <textarea>
+  // bodies and attributes (placeholder shows escaped example HTML),
+  // <pre> and <code> blocks (documentation examples), and HTML comments.
+  let out = stripRawTextElements(html, 'script');
+  out = stripRawTextElements(out, 'style');
+  return out
     .replace(/<textarea\b[^>]*>[\s\S]*?<\/textarea>/gi, '')
     .replace(/<textarea\b[^>]*\/?>/gi, '')
     .replace(/<pre\b[\s\S]*?<\/pre>/gi, '')
