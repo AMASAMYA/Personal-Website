@@ -16,8 +16,23 @@ console.log('----------------------------------------------------\n');
 
 const targetArg = process.argv[2] || '.';
 
+function stripCodeExamples(html) {
+  // Remove content that is code-about-HTML rather than live markup:
+  // <textarea> bodies and attributes (placeholder shows escaped example HTML),
+  // <pre> and <code> blocks (documentation examples).
+  return html
+    .replace(/<script\b[\s\S]*?<\/script>/gi, '')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, '')
+    .replace(/<textarea\b[^>]*>[\s\S]*?<\/textarea>/gi, '')
+    .replace(/<textarea\b[^>]*\/?>/gi, '')
+    .replace(/<pre\b[\s\S]*?<\/pre>/gi, '')
+    .replace(/<code\b[\s\S]*?<\/code>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '');
+}
+
 function auditHtmlFile(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
+  const scanContent = stripCodeExamples(content);
   const fileName = path.basename(filePath);
   const issues = [];
 
@@ -27,7 +42,7 @@ function auditHtmlFile(filePath) {
   }
 
   // Check 2: Images missing alt attribute
-  const imgMatches = content.match(/<img\b[^>]*>/gi) || [];
+  const imgMatches = scanContent.match(/<img\b[^>]*>/gi) || [];
   imgMatches.forEach(img => {
     if (!/\balt=["']/i.test(img)) {
       issues.push({ id: 'IMG_ALT_MISSING', severity: 'Fail', wcag: '1.1.1', desc: `Image element missing alt attribute: ${img.slice(0, 45)}...` });
@@ -35,7 +50,7 @@ function auditHtmlFile(filePath) {
   });
 
   // Check 3: Buttons without accessible names
-  const btnMatches = content.match(/<button\b[^>]*>[\s\S]*?<\/button>/gi) || [];
+  const btnMatches = scanContent.match(/<button\b[^>]*>[\s\S]*?<\/button>/gi) || [];
   btnMatches.forEach(btn => {
     const textContent = btn.replace(/<[^>]+>/g, '').trim();
     const hasText = textContent.length > 0;
@@ -47,11 +62,22 @@ function auditHtmlFile(filePath) {
   });
 
   // Check 4: Form inputs without labels
-  const inputMatches = content.match(/<input\b[^>]*>/gi) || [];
+  // Recognize implicit label wrapping: <label>...<input>text</label> (WCAG H44).
+  const wrappedInputs = new Set();
+  const labelBlocks = scanContent.match(/<label\b[^>]*>[\s\S]*?<\/label>/gi) || [];
+  labelBlocks.forEach(lbl => {
+    const stripped = lbl.replace(/<[^>]+>/g, '').trim();
+    if (!stripped) return; // empty label wrapper is not a real label
+    const nested = lbl.match(/<input\b[^>]*>/gi) || [];
+    nested.forEach(inp => wrappedInputs.add(inp));
+  });
+
+  const inputMatches = scanContent.match(/<input\b[^>]*>/gi) || [];
   inputMatches.forEach(inp => {
     const typeMatch = inp.match(/\btype=["']([^"']+)["']/i);
     const type = typeMatch ? typeMatch[1].toLowerCase() : 'text';
     if (['hidden', 'submit', 'button', 'image', 'reset'].includes(type)) return;
+    if (wrappedInputs.has(inp)) return;
     const hasId = /\bid=["'][^"']+["']/i.test(inp);
     const hasAriaLabel = /\baria-label=["'][^"']+["']/i.test(inp);
     const hasAriaLabelledBy = /\baria-labelledby=["'][^"']+["']/i.test(inp);
@@ -60,9 +86,11 @@ function auditHtmlFile(filePath) {
     }
   });
 
-  // Check 5: CAPTCHA without accessibility notes
-  if (/captcha/i.test(content) && !/aria-live/i.test(content) && !/audio/i.test(content)) {
-    issues.push({ id: 'CAPTCHA_INACCESSIBLE', severity: 'Warning', wcag: '3.3.8', desc: 'CAPTCHA verification detected without visible audio alternative or aria-live status region.' });
+  // Check 5: CAPTCHA widget without accessibility affordances.
+  // Only flag actual widget markup, not prose that mentions the word.
+  const captchaWidget = /class=["'][^"']*g-recaptcha|data-sitekey=|recaptcha\/api\.js|hcaptcha\.com\/|cf-turnstile|<iframe[^>]+recaptcha/i;
+  if (captchaWidget.test(scanContent) && !/aria-live/i.test(scanContent) && !/audio/i.test(scanContent)) {
+    issues.push({ id: 'CAPTCHA_INACCESSIBLE', severity: 'Warning', wcag: '3.3.8', desc: 'CAPTCHA widget detected without visible audio alternative or aria-live status region.' });
   }
 
   return { fileName, filePath, totalChecks: 5, violations: issues };

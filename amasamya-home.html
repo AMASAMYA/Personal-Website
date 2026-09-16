@@ -11,12 +11,12 @@
 
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://amasamya.com/">
-  <meta property="og:title" content="AMASAMYA - Inclusive Technology & Professional Learning Platform">
-  <meta property="og:description" content="Barrier-free technology, enterprise accessibility auditing, and executive communication education for persons with disabilities and mainstream learners worldwide. Founded by Akhilesh Malani.">
+  <meta property="og:title" content="AMASAMYA - Accessibility Audit Suite for Chrome, Edge, Firefox, and Android">
+  <meta property="og:description" content="AMASAMYA is an accessibility audit suite by a blind engineer. Live on Chrome, Microsoft Edge, Firefox, and Google Play. Covers WCAG 2.2, GIGW 3.0, and IS 17802 Part 1:2021. Exports VPAT 2.4 ACR one-click.">
   <meta property="og:site_name" content="AMASAMYA">
   <meta property="og:image" content="https://akhileshmalani.com/images/og-banner.png">
 
-  <title>AMASAMYA - Inclusive Technology & Professional Learning Platform</title>
+  <title>AMASAMYA - Accessibility Audit Suite for Chrome, Edge, Firefox, and Android</title>
   <link rel="icon" type="image/svg+xml" href="images/logo-icon.svg">
   <link rel="preload" href="styles.css" as="style">
   <link rel="stylesheet" href="styles.css">
@@ -260,7 +260,7 @@
         </div>
         <h1 id="platform-title">AMASAMYA</h1>
         <p class="byline">
-          <strong>Accessibility audit tools built and shipped by a blind engineer.</strong> AMASAMYA runs WCAG 2.2 conformance audits plus two India-national engines (GIGW 3.0 and IS 17802 Part 1:2021) on any web page or Android app. Live as a browser extension on Chrome, Microsoft Edge, and Firefox, and as a native Android app on Google Play. Founded and engineered by <strong>Akhilesh Malani</strong>.
+          <strong>Accessibility audit suite built by a blind engineer.</strong> Runs WCAG 2.2, GIGW 3.0, and IS 17802 Part 1:2021 checks on any web page or Android app.
         </p>
 
         <div class="cta-row">
@@ -274,55 +274,55 @@
     </section>
 
     <!-- Product Overview -->
-    <div class="platform-section">
+    <section class="platform-section" aria-labelledby="overview-title">
       <div class="container">
-        <h2 class="section-title">What AMASAMYA is</h2>
+        <h2 id="overview-title" class="section-title">What AMASAMYA is</h2>
         <p style="font-size: 1.05rem; line-height: 1.6; color: var(--color-text);">
-          One accessibility audit tool. Four surfaces. Same engine on every surface. Every result is keyboard operable and every state change is announced with meaning through a screen reader, because the product is built and tested by a blind screen-reader user before any sighted second-pair-of-eyes review.
+          One accessibility audit engine. Four surfaces. Keyboard operable throughout, with meaningful screen-reader announcements at every state change.
         </p>
 
         <div class="pillars-grid">
 
           <!-- Browser extensions -->
-          <article class="pillar-card" tabindex="0" aria-labelledby="p1-title">
-            <h3 id="p1-title">Browser extensions for Chrome, Edge, and Firefox</h3>
-            <p class="pillar-lead">Audit any web page in situ. Free.</p>
+          <article class="pillar-card" aria-labelledby="p1-title">
+            <h3 id="p1-title">Browser extensions</h3>
+            <p class="pillar-lead">Chrome, Microsoft Edge, and Firefox. Free.</p>
             <p>
-              Runs WCAG 2.2 conformance checks per page and site-wide (via built-in crawler) against 24 audit engines. Also runs GIGW 3.0 (Guidelines for Indian Government Websites, NIC and MeitY) and IS 17802 Part 1:2021 (Bureau of Indian Standards accessibility standard for ICT) - engines that no other auditor I know of currently ships.
+              Runs 24 audit engines per page and site-wide, via built-in crawler.
             </p>
             <ul class="pillar-features">
-              <li><strong>Findings row aria-label includes the affected component's CSS selector</strong>, so screen-reader users hear which element failed without expanding the row.</li>
-              <li><strong>One-click VPAT 2.4 ACR export</strong> for procurement and compliance conversations.</li>
-              <li><strong>Accessible PDF export</strong>: opens a print-ready report in a new tab and auto-triggers the print dialog for Save as PDF.</li>
-              <li><strong>Visual audit diffs across runs</strong>: New, Regressed, Unchanged, Resolved, so teams can see what changed release over release.</li>
-              <li><strong>Scheduled crawls</strong>: alarm-fires audits, posts summaries to Slack, Teams, or a generic webhook.</li>
+              <li><strong>Findings row announces the affected component's CSS selector</strong>, so screen-reader users hear which element failed without expanding the row.</li>
+              <li><strong>One-click VPAT 2.4 ACR export</strong> for procurement conversations.</li>
+              <li><strong>Accessible PDF export</strong> via print-to-PDF, tagged reading order preserved.</li>
+              <li><strong>Visual audit diffs</strong>: New, Regressed, Unchanged, Resolved across runs.</li>
+              <li><strong>Scheduled crawls</strong> post summaries to Slack, Teams, or a generic webhook.</li>
             </ul>
             <a href="/extension" class="btn-link">Extension details and install links</a>
           </article>
 
           <!-- Android app -->
-          <article class="pillar-card" tabindex="0" aria-labelledby="p2-title">
-            <h3 id="p2-title">Android app for auditing native Android apps</h3>
-            <p class="pillar-lead">Runs against other Android apps via the AccessibilityService API. Free.</p>
+          <article class="pillar-card" aria-labelledby="p2-title">
+            <h3 id="p2-title">Android app</h3>
+            <p class="pillar-lead">Audits other Android apps live via the AccessibilityService API. Free.</p>
             <p>
-              A different animal from the browser extensions. Attaches to Android's AccessibilityService API to audit any native Android app on the device in real time, without needing source code or a rebuild.
+              Attaches to Android's Accessibility Service to audit any installed app in real time, without source code or a rebuild.
             </p>
             <ul class="pillar-features">
-              <li><strong>Live TalkBack captions</strong> as you interact with any app, so sighted developers can see what a blind user hears.</li>
-              <li><strong>Colour-coded touch-target boundary mapper</strong>: pass, borderline, fail against WCAG 2.5.5 and 2.5.8 target-size criteria.</li>
+              <li><strong>Live TalkBack captions</strong> as you interact, so sighted developers see what a blind user hears.</li>
+              <li><strong>Touch-target boundary mapper</strong> with pass, borderline, and fail markers against WCAG 2.5.5 and 2.5.8.</li>
               <li><strong>Focus-trail visualiser and focus-trap detector.</strong></li>
-              <li><strong>Real-time contrast drift scanner</strong> for text and UI-component colours.</li>
-              <li><strong>TalkBack simulator mode</strong> for sighted testers who want to experience the app the way a blind user does, without turning on the system-wide screen reader.</li>
+              <li><strong>Contrast drift scanner</strong> for text and UI-component colours.</li>
+              <li><strong>TalkBack simulator mode</strong> for sighted testers, no need to enable the system-wide screen reader.</li>
             </ul>
-            <a href="https://play.google.com/store/apps/details?id=org.amasamya.accessibility" class="btn-link" rel="external">Install AMASAMYA on Google Play</a>
+            <a href="https://play.google.com/store/apps/details?id=org.amasamya.accessibility" class="btn-link" rel="external">Get it on Google Play</a>
           </article>
 
           <!-- Web audit portal -->
-          <article class="pillar-card" tabindex="0" aria-labelledby="p3-title">
+          <article class="pillar-card" aria-labelledby="p3-title">
             <h3 id="p3-title">Web Audit Portal</h3>
-            <p class="pillar-lead">Browser-based, no install required. Free.</p>
+            <p class="pillar-lead">Browser-based, no install. Free.</p>
             <p>
-              The full audit engine on a web page you can bookmark. Paste a URL, run the same 24 engines, get the same VPAT export, download the same accessible PDF. Useful when you want to audit without adding an extension, or from a device where you cannot install browser add-ons.
+              Full audit engine on a bookmarkable web page. Paste a URL, run the audit, download VPAT and accessible PDF. Useful when you cannot install a browser extension.
             </p>
             <a href="/checker" class="btn-link">Open the Web Audit Portal</a>
           </article>
@@ -333,12 +333,12 @@
         <section class="trust-banner" aria-labelledby="trust-title">
           <h3 id="trust-title" style="margin-top: 0; color: var(--color-primary); font-size: 1.2rem;">Built on lived experience and enterprise standards</h3>
           <p style="margin: 0; font-size: 0.95rem; line-height: 1.6; color: var(--color-text-light);">
-            AMASAMYA is created by Akhilesh Malani, a blind Accessibility Architect with 16+ years of client work including Google, Bank of Montreal, Dun & Bradstreet, and Oracle Financial Services, and is built in personal capacity. Every tool aims to conform to WCAG 2.2 Level AA, and is designed against the RPwD Act 2016, GIGW 3.0, and BIS IS 17802. Our own conformance position is set out in the <a href="/accessibility">Accessibility Statement</a>.
+            Created by Akhilesh Malani, a blind Accessibility Architect with 16+ years of client work including Google, Bank of Montreal, Dun & Bradstreet, and Oracle Financial Services, and built in personal capacity. Every tool aims to conform to WCAG 2.2 Level AA. Our conformance position is set out in the <a href="/accessibility">Accessibility Statement</a>.
           </p>
         </section>
 
       </div>
-    </div>
+    </section>
 
   </main>
 
@@ -348,7 +348,7 @@
         &copy; 2026 AMASAMYA. Founded, engineered, and owned by Akhilesh Malani.
       </p>
       <p style="margin: 0; font-size: 0.85rem; color: #94a3b8;">
-        Equal opportunity in technology, accessibility engineering, and executive communication.
+        Accessibility auditing for the web and Android, built for the standards that matter.
       </p>
     </div>
   </footer>
