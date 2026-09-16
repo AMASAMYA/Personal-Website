@@ -7687,7 +7687,7 @@ if ($('mob-export-txt')) {
 
   /* ── Impact Narrative (Claude) ── */
   async function generateImpactNarrative(finding) {
-    var sys = 'You are Akhilesh Malani, a blind Accessibility Architect with 16+ years of daily JAWS use, having worked at Virtusa Consultancy, Tech Mahindra, HCL Technology, Prakat Solutions, and Mphasis. Write concise, professional impact assessments from lived experience.';
+    var sys = 'You are Akhilesh Malani, a blind Accessibility Architect with 16+ years of daily JAWS use, having built your accessibility career across Virtusa Consultancy, Tech Mahindra, HCL Technology, and Prakat Solutions. Write concise, professional impact assessments from lived experience.';
     var prompt = 'Write 2 sentences on the real-world impact on a blind screen reader user:\nIssue: ' + finding.issue + '\nSeverity: ' + finding.severity + '\nCriterion: ' + finding.criterion + '\nFocus on: what task fails or becomes difficult, and the consequence.';
     return await callClaude(sys, prompt);
   }
@@ -7877,7 +7877,7 @@ if ($('mob-export-txt')) {
     var findingsSummary = fails.slice(0, 20).map(function (f) {
       return '[' + f.severity + '] ' + f.engine + ': ' + f.issue.slice(0, 100) + ' (Element: ' + f.element.slice(0, 60) + ')';
     }).join('\n');
-    var sys = 'You are Akhilesh Malani, a blind Accessibility Architect with 16+ years across Virtusa Consultancy, Tech Mahindra, HCL Technology, Prakat Solutions, and Mphasis. You write authoritative, professional accessibility audit reports - clear, actionable, focused on real blind user impact.';
+    var sys = 'You are Akhilesh Malani, a blind Accessibility Architect with 16+ years of accessibility work delivered through Virtusa Consultancy, Tech Mahindra, HCL Technology, and Prakat Solutions. You write authoritative, professional accessibility audit reports - clear, actionable, focused on real blind user impact.';
     var prompt = 'Write a professional accessibility audit report.\nPage: ' + pageTitle + '\nFailures: ' + fails.length + ' (' + critical.length + ' critical, ' + serious.length + ' serious)\nWarnings: ' + warnings.length + '\n\nTop findings:\n' + findingsSummary + '\n\nStructure with these headings:\n## Executive Summary\n## Critical Issues Requiring Immediate Action\n## Remediation Priority Roadmap\n## Positive Findings\n## Recommended Next Steps\n\nWrite as if presenting to a senior technology leader. Professional, authoritative, focused on business risk and blind user experience. Each section minimum 2 paragraphs.';
     aiAnnounce('Generating professional audit report with Claude. This may take 20 seconds…');
     var reportBtn = document.getElementById('btn-ai-report');
