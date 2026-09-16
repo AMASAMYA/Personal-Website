@@ -137,12 +137,18 @@
       color: #1e293b;
     }
     [data-theme="dark"] .pillar-features li { color: #cbd5e1; }
+    /* Purely visual bullet drawn as a CSS shape so screen readers do not */
+    /* announce the character in the accessibility tree. */
     .pillar-features li::before {
-      content: "•";
-      color: #0072bc;
-      font-weight: bold;
+      content: "";
+      display: block;
+      width: 6px;
+      height: 6px;
+      background: #0072bc;
+      border-radius: 50%;
       position: absolute;
-      left: 0;
+      left: 2px;
+      top: 14px;
     }
     .pillar-card .btn-link {
       margin-top: auto;
