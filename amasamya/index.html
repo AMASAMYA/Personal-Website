@@ -2393,7 +2393,7 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
       <!-- ── Create/edit form. Toggled via sched-new-btn or Edit action.
            Hidden until user opens it. Fieldsets group related inputs
            for NVDA/JAWS legend announcement. ── -->
-      <section id="sched-form-section" aria-labelledby="sched-form-heading" hidden>
+      <section id="sched-form-section" hidden>
         <h2 id="sched-form-heading" class="section-heading">New schedule</h2>
         <form id="sched-form" novalidate>
           <input type="hidden" id="sched-id" value="">
@@ -2515,7 +2515,7 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
            the first schedule is created. Rendered as a table because
            it is tabular data and JAWS/NVDA table navigation is the
            right pattern for scanning rows. ── -->
-      <section aria-labelledby="sched-list-heading" style="margin-top:24px;">
+      <section style="margin-top:24px;">
         <h2 id="sched-list-heading" class="section-heading">Your schedules</h2>
 
         <div id="sched-list-empty" class="callout" role="status">
@@ -2542,7 +2542,7 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
 
       <!-- ── Runs history for the currently selected schedule.
            Hidden until user clicks View runs on a row. ── -->
-      <section id="sched-runs-section" aria-labelledby="sched-runs-heading" style="margin-top:24px;" hidden>
+      <section id="sched-runs-section" style="margin-top:24px;" hidden>
         <h2 id="sched-runs-heading" class="section-heading">Recent runs</h2>
         <p class="panel-desc" id="sched-runs-context"></p>
         <table id="sched-runs-table" class="findings-table" aria-describedby="sched-runs-heading">
