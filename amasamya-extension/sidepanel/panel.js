@@ -33,6 +33,42 @@
   } catch (_) { /* fall through to the hardcoded fallback in the HTML */ }
 
   /* ================================================================
+     AUTO-FOCUS ON PANEL OPEN (Edge + Firefox parity with Chrome)
+
+     Chrome moves focus into the side-panel document automatically
+     when chrome.sidePanel.open() runs. Edge, despite sharing the
+     Chromium sidePanel API, does not; Firefox's sidebarAction.open()
+     also opens the sidebar with focus still on the triggering page.
+     For a keyboard user pressing Alt+Shift+1, that means the panel
+     appears but their next Tab still cycles the underlying page,
+     not the panel controls.
+
+     Explicitly focus the first panel tab so the shortcut behaves the
+     same way in every browser. The setTimeout defer lets Chrome's
+     own auto-focus settle first; in Chrome the subsequent focus()
+     lands on an already-in-scope element and produces no additional
+     screen-reader utterance beyond what Chrome would say anyway.
+
+     visibilitychange handles re-opens without a reload: side-panel
+     and sidebar documents persist across close/reopen cycles on all
+     three browsers, so DOMContentLoaded fires only once per session.
+  ================================================================ */
+  function focusFirstPanelTab() {
+    try {
+      var firstTab = document.getElementById('ptab-wcag');
+      if (firstTab && typeof firstTab.focus === 'function') {
+        firstTab.focus();
+      }
+    } catch (_) {}
+  }
+  setTimeout(focusFirstPanelTab, 80);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      setTimeout(focusFirstPanelTab, 80);
+    }
+  });
+
+  /* ================================================================
      UTILITIES
   ================================================================ */
 

@@ -8,9 +8,11 @@ If a feature is not on this list, it is not planned.
 
 ## Packaged for all three stores: v5.3.5 (2026-09-17)
 
-Version-display fix across all three extensions. The side-panel header, About section, and footer had the version string hardcoded in three separate places each and were still reading "v4.3" long after the extension had reached v5.3.4. Akhilesh observed the drift after v5.3.4 approved.
+Two fixes.
 
-The panel HTML now carries `[data-version-slot]` markers instead of hardcoded strings. Panel.js reads `chrome.runtime.getManifest().version` (Firefox falls back to `browser.runtime`) at load and writes it into every slot. From this release forward, bumping the manifest version is enough to update every user-visible version display in the panel; no more three-place edits.
+**Edge and Firefox focus parity on Alt+Shift+1 (blocker).** Chrome's `chrome.sidePanel.open()` moves focus into the panel document automatically on open. Edge, despite sharing the Chromium sidePanel API, does not; Firefox's `browser.sidebarAction.open()` also opens the sidebar with focus still on the triggering page. A keyboard user pressing Alt+Shift+1 in Edge or Firefox saw the panel appear but their next Tab still cycled the underlying page controls. Panel.js now focuses the first tab (`#ptab-wcag`) on DOMContentLoaded with an 80 ms defer (which lets Chrome's own auto-focus settle first, so Chrome behaviour is preserved) and again on every `visibilitychange` to `visible` (so close-reopen cycles land correctly without needing a document reload).
+
+**Version display reads the manifest at runtime.** The side-panel header, About section, and footer had the version string hardcoded in three separate places each and were still reading "v4.3" long after the extension had reached v5.3.4. Akhilesh observed the drift after v5.3.4 approved. The panel HTML now carries `[data-version-slot]` markers instead of hardcoded strings. Panel.js reads `chrome.runtime.getManifest().version` (Firefox falls back to `browser.runtime`) at load and writes it into every slot. From this release forward, bumping the manifest version is enough to update every user-visible version display in the panel; no more three-place edits.
 
 Packages in `dist/`:
 - `amasamya-extension-v5.3.5.zip` (CWS + Edge)

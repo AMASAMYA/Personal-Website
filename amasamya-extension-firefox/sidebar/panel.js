@@ -34,6 +34,38 @@
   } catch (_) { /* fall through to the hardcoded fallback in the HTML */ }
 
   /* ================================================================
+     AUTO-FOCUS ON SIDEBAR OPEN (Firefox parity with Chrome)
+
+     browser.sidebarAction.open() opens the sidebar but leaves focus
+     on the page that triggered the shortcut, so a keyboard user
+     pressing Alt+Shift+1 has to Tab into the sidebar manually. This
+     is a documented Firefox behaviour; Chrome's side-panel API
+     auto-focuses the panel on open, and users expect the same.
+
+     Explicitly focus the first panel tab on load so the shortcut
+     lands the user on interactive content immediately. The
+     setTimeout defer gives the sidebar mount a beat to settle before
+     the focus call runs. visibilitychange re-fires the focus each
+     time the sidebar becomes visible again, so a close-reopen cycle
+     also lands correctly (the sidebar document persists across the
+     cycle and DOMContentLoaded fires only on first mount).
+  ================================================================ */
+  function focusFirstPanelTab() {
+    try {
+      var firstTab = document.getElementById('ptab-wcag');
+      if (firstTab && typeof firstTab.focus === 'function') {
+        firstTab.focus();
+      }
+    } catch (_) {}
+  }
+  setTimeout(focusFirstPanelTab, 80);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      setTimeout(focusFirstPanelTab, 80);
+    }
+  });
+
+  /* ================================================================
      UTILITIES
   ================================================================ */
 
