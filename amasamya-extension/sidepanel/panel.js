@@ -1,8 +1,11 @@
 /**
- * AMASAMYA Extension - Side Panel v4.3.0
+ * AMASAMYA Extension - Side Panel
+ *
+ * The runtime version comes from the manifest and is injected into
+ * every [data-version-slot] element in panel.html on load.
  *
  * Panels:
- *   1. WCAG Audit      - 24 engines + v4.3.0 Audit Diff and History
+ *   1. WCAG Audit      - 24 engines + Audit Diff and History (v4.3.0)
  *   2. Visual Audit    - Focus Narrator (Module 2) + Visual Layout (Module 1)
  *   3. Settings        - Vision AI API keys
  *   4. Site Crawl      - v4.2.0
@@ -10,6 +13,24 @@
 
 (function () {
   'use strict';
+
+  /* ================================================================
+     VERSION DISPLAY
+
+     Read the live version from the extension manifest and inject it
+     into every [data-version-slot] element in the panel. Removes the
+     hardcoded-string drift that put stale versions in the header,
+     About section, and footer even after the extension was patched.
+  ================================================================ */
+  try {
+    var _mv = (chrome && chrome.runtime && chrome.runtime.getManifest &&
+               chrome.runtime.getManifest().version) || '';
+    if (_mv) {
+      document.querySelectorAll('[data-version-slot]').forEach(function (el) {
+        el.textContent = 'v' + _mv;
+      });
+    }
+  } catch (_) { /* fall through to the hardcoded fallback in the HTML */ }
 
   /* ================================================================
      UTILITIES
