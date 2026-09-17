@@ -1,12 +1,22 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-09-16 (Chrome live at v5.3.4, approved 2026-09-16; Firefox live at v5.3.4, approved 2026-09-15. Edge still live at v5.3.2 with v5.3.4 in review).
+Last reviewed: 2026-09-17 (v5.3.5 packaged for all three stores; Chrome, Edge, Firefox live at v5.3.4 pending v5.3.5 approval).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
 
-## Live on addons.mozilla.org (Firefox), submitted for Chrome and Edge review: v5.3.4 (2026-09-15)
+## Packaged for all three stores: v5.3.5 (2026-09-17)
+
+Version-display fix across all three extensions. The side-panel header, About section, and footer had the version string hardcoded in three separate places each and were still reading "v4.3" long after the extension had reached v5.3.4. Akhilesh observed the drift after v5.3.4 approved.
+
+The panel HTML now carries `[data-version-slot]` markers instead of hardcoded strings. Panel.js reads `chrome.runtime.getManifest().version` (Firefox falls back to `browser.runtime`) at load and writes it into every slot. From this release forward, bumping the manifest version is enough to update every user-visible version display in the panel; no more three-place edits.
+
+Packages in `dist/`:
+- `amasamya-extension-v5.3.5.zip` (CWS + Edge)
+- `amasamya-firefox-v5.3.5.zip`
+
+## Live on all three stores: v5.3.4 (Chrome + Firefox approved 2026-09-15 / 2026-09-16; Edge in review)
 
 Small maintenance patch across all three extensions. Drops the "Learn in AMASAMYA Academy" row from the finding detail disclosure inside the results table. The Academy programme was retired on 2026-09-15 as part of the scope narrowing to product-only; the link at amasamya.akhileshmalani.com/academy.html now 301-redirects to the product home, so leaving the row in would send users through a redirect for no purpose.
 
