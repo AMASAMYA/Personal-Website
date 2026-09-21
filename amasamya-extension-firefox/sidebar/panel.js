@@ -52,6 +52,15 @@
   ================================================================ */
   function focusFirstPanelTab() {
     try {
+      /* v5.3.6: window.focus() as a belt-and-braces attempt before the
+         element focus. Firefox blocks the sidebar's own script from
+         moving focus across the document boundary from the triggering
+         page (bugzilla.mozilla.org bug 1319368, WONTFIX), so this is a
+         best-effort call that helps on Firefox builds that permit
+         sidebar self-focus and is a harmless no-op otherwise. The
+         permanent F6 instruction in panel.html is the reliable
+         mitigation for the case where window.focus() is ignored. */
+      if (typeof window.focus === 'function') { window.focus(); }
       var firstTab = document.getElementById('ptab-wcag');
       if (firstTab && typeof firstTab.focus === 'function') {
         firstTab.focus();

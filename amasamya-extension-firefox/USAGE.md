@@ -2,6 +2,13 @@ AMASAMYA ACCESSIBILITY AUDIT, FIREFOX ADD-ON
 USER GUIDE FOR SIGHTED AND SCREEN-READER USERS
 
 
+THE ONE FIREFOX-SPECIFIC THING TO KNOW FIRST
+
+When you press Alt plus Shift plus 1, the AMASAMYA sidebar opens but your keyboard focus stays on the page you were reading. This is Firefox platform behaviour (Mozilla bug 1319368, deliberately not fixed), not a bug in the add-on. Press F6 to move your keyboard focus into the sidebar; F6 is Firefox's built-in cycle between browser regions and reaches the sidebar in one or two presses. Your screen reader announces the AMASAMYA panel banner when it lands.
+
+From v5.3.6 onwards the panel also shows a permanent visible note under the header restating this, so once you have installed the add-on you never have to remember it.
+
+
 WHAT THIS ADD-ON DOES
 
 AMASAMYA is an accessibility audit tool for the current web page. When you run an audit, the add-on scans the page against WCAG 2.2, GIGW 3.0, and IS 17802 rules, and shows the results in a Firefox sidebar. Every result row is keyboard operable, every state change is announced via a polite or assertive screen-reader live region, and the results table exposes the affected element in each row's aria-label so you hear which component failed without expanding the row.
@@ -39,7 +46,7 @@ Screen reader tested: NVDA and JAWS on Windows Firefox 128 ESR and later.
 
 Sequence of what you hear when you press Alt plus Shift plus 1 on a web page:
 
-Step one. Firefox opens the sidebar. Focus stays on the page's active element (Firefox behaviour, not something the add-on controls).
+Step one. Firefox opens the sidebar. Focus stays on the page's active element. This is a Firefox platform behaviour, not something the add-on can override: Firefox blocks a sidebar extension from moving focus to itself for security reasons (Mozilla bug 1319368). To move keyboard focus into the AMASAMYA sidebar, press F6. F6 is Firefox's built-in cycle between browser regions and reaches the sidebar in one or two presses. Your screen reader will announce the AMASAMYA panel banner. From v5.3.6 the panel also shows a permanent visible note under the header restating this so you never have to remember it.
 
 Step two. The audit runs. The sidebar's polite live region announces: "Audit running on [page title]. Please wait." within 1 second.
 

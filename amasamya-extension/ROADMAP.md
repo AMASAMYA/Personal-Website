@@ -1,10 +1,25 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-09-21 (Chrome and Firefox live at v5.3.5; Firefox approved 2026-09-21 at 13:56 UTC. Edge live at v5.3.4 with v5.3.5 in certification since 2026-09-21).
+Last reviewed: 2026-09-21 (Chrome live at v5.3.5; Firefox v5.3.5 approved earlier today but the focus fix silently no-ops on Firefox due to bug 1319368, so v5.3.6 Firefox-only was packaged and submitted the same evening to add the F6 instruction and window.focus() attempt. Edge live at v5.3.4 with v5.3.5 in certification).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
+
+## Firefox-only patch, submitted to addons.mozilla.org: v5.3.6 (2026-09-21)
+
+The v5.3.5 focus fix works on Chrome and Edge because Chromium's side-panel document shares the triggering page's focus scope, so `.focus()` from the panel script crosses successfully. Firefox's sidebar is architecturally different (a XUL panel hosting a separate document), and Firefox blocks the sidebar's own script from moving focus across the document boundary. This is Mozilla bug 1319368, WONTFIX. Akhilesh confirmed with NVDA on 2026-09-21 after v5.3.5 approved: sidebar opens, NVDA continues reading the page, focus never reaches the panel.
+
+v5.3.6 Firefox-only ships three mitigations.
+
+- Panel.js adds a `window.focus()` call before the element focus in `focusFirstPanelTab()`. Best-effort; helps on Firefox builds that permit sidebar self-focus, harmless no-op otherwise.
+- Panel.html adds a permanent, always-visible instruction under the header: "Panel opened. Press F6 to bring keyboard focus into this panel." The panel banner is the first thing NVDA and JAWS announce when the user reaches the panel by any route, so the recovery keystroke is baked into the UI instead of hidden in documentation.
+- USAGE.md leads with a new "The one Firefox-specific thing to know first" section explaining F6 before any other content, and Step one of the audit walkthrough now names F6 explicitly instead of just acknowledging the focus stays on the page.
+
+Chrome and Edge codebase is not touched by v5.3.6; both remain at v5.3.5 (Chrome live, Edge in certification).
+
+Packages in `dist/`:
+- `amasamya-firefox-v5.3.6.zip`
 
 ## Live on Chrome Web Store and addons.mozilla.org; in certification on Edge Add-ons: v5.3.5 (2026-09-17)
 
