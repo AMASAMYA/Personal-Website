@@ -1,12 +1,12 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-09-21 (Chrome live at v5.3.5; Edge and Firefox live at v5.3.4 with v5.3.5 submitted for review on 2026-09-21).
+Last reviewed: 2026-09-21 (Chrome and Firefox live at v5.3.5; Firefox approved 2026-09-21 at 13:56 UTC. Edge live at v5.3.4 with v5.3.5 in certification since 2026-09-21).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
 
-## Live on Chrome Web Store; in review on Edge Add-ons and addons.mozilla.org: v5.3.5 (2026-09-17)
+## Live on Chrome Web Store and addons.mozilla.org; in certification on Edge Add-ons: v5.3.5 (2026-09-17)
 
 Two fixes.
 
