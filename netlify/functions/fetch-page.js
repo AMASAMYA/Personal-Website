@@ -16,7 +16,13 @@
  */
 
 const ALLOWED_SCHEMES = ['http:', 'https:'];
-const TIMEOUT_MS = 10000;
+/* 2026-09-23: bumped from 10s to 20s after Mujtaba Merchant reported
+   TCS iON timing out on the checker. Large enterprise portals (LMS,
+   banking, government tender sites) sometimes take 12-18 seconds to
+   respond on cold TLS. Netlify's function wall-clock budget on the
+   free tier is 26 seconds, so 20 leaves headroom for the surrounding
+   AbortController handling and response serialisation. */
+const TIMEOUT_MS = 20000;
 
 exports.handler = async function (event) {
   /* ── CORS preflight ── */

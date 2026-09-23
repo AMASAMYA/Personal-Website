@@ -1542,14 +1542,42 @@
          the normal analysis pipeline. */
       if (looksLikeUrl(code)) {
         var target = normalizeUrl(code);
-        setStatus('Fetching ' + target + ' \u2014 this can take a few seconds\u2026');
+        setStatus('Fetching ' + target + '. Large sites can take up to 20 seconds.');
+        /* 2026-09-23: mid-fetch reassurance updates. Large enterprise
+           portals occasionally take 12-18 seconds to respond on cold
+           TLS; a silent wait made users assume the tool had hung. */
+        var slowNudge1 = setTimeout(function () {
+          setStatus('Still fetching ' + target + '. The site is slow but the request is still in flight.');
+        }, 8000);
+        var slowNudge2 = setTimeout(function () {
+          setStatus('Still fetching ' + target + '. Almost at the 20-second timeout; if it fails, paste the page HTML directly.');
+        }, 15000);
         fetchLiveUrl(target).then(function (html) {
+          clearTimeout(slowNudge1); clearTimeout(slowNudge2);
           if (!html || html.trim().length < 40) {
             throw new Error('The fetched page was empty or blocked. Try pasting the page source instead.');
           }
           runAnalysis(html, { sourceLabel: target });
         }).catch(function (err) {
-          setStatus('Could not fetch the URL: ' + (err.message || 'unknown error') + '. Try pasting the page HTML instead.');
+          clearTimeout(slowNudge1); clearTimeout(slowNudge2);
+          /* 2026-09-23: translate the raw browser TypeError string
+             into an actionable diagnosis. Reported by Mujtaba Merchant
+             on tcsion.com, where a proxy timeout surfaced as the stock
+             "Failed to fetch" message with no clue what to do. */
+          var msg = (err && err.message) ? err.message : 'unknown error';
+          var hint;
+          if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+            hint = 'The target site did not respond in time, or its firewall blocked the AMASAMYA proxy. This often happens with large portals and sites behind bot protection (Cloudflare, Akamai, Imperva). Try again in a minute, or paste the page HTML directly into the box above.';
+          } else if (/timed out|timeout/i.test(msg)) {
+            hint = 'The target site took longer than 20 seconds to respond. Try again in a minute, or paste the page HTML directly.';
+          } else if (/HTTP 4\d\d/i.test(msg)) {
+            hint = 'The target site returned a client error (' + msg + '). The URL may be behind a login, or the page may have moved. Paste the page HTML instead.';
+          } else if (/HTTP 5\d\d/i.test(msg)) {
+            hint = 'The target site returned a server error (' + msg + '). The site itself is having a problem; try again later, or paste the page HTML.';
+          } else {
+            hint = msg + '. Paste the page HTML instead.';
+          }
+          setStatus('Could not fetch the URL. ' + hint);
           runBtn.disabled = false;
         });
         return;
