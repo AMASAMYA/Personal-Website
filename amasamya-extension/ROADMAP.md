@@ -1,12 +1,12 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-09-29 (v5.4.0 packaged for all three stores after the same-day Interaction Sweep engine build; Chrome, Edge, and Firefox previously live at v5.3.5. Platform is at v5.2.0 and now two MAJOR.MINOR increments behind the extensions; Option B alignment policy needs a decision).
+Last reviewed: 2026-09-29 (v5.4.0 submitted for review on Chrome Web Store, Edge Add-ons, and addons.mozilla.org the same day as the Interaction Sweep engine build. Chrome, Edge, and Firefox all live at v5.3.5 pending v5.4.0 approval. Web platform bumped to v5.4.0 in the same commit chain to restore Option B alignment).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
 
-## Packaged for all three stores: v5.4.0 (2026-09-29)
+## Submitted for review to all three stores: v5.4.0 (2026-09-29)
 
 Interaction Sweep engine, four detectors, wired into `content-script.js` and injected before it by `background.js`. Manifest bumped from v5.3.5 (Chrome/Edge) and v5.3.6 (Firefox) to a common v5.4.0 across all three trees.
 
