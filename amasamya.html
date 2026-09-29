@@ -178,7 +178,15 @@
     <div class="container">
       <div class="brand-line">
         <span class="brand">AMASAMYA</span>
-        <span class="version" aria-label="Current Chrome Web Store version 5.2.0 with Scheduled Crawls">v5.2.0 - Scheduled Crawls on Chrome Web Store</span>
+        <!--
+          2026-09-29: version-consistency sweep. Static "v5.2.0 -
+          Scheduled Crawls" replaced with a data-slot the inline
+          script below fills from a single AMASAMYA_LATEST constant.
+          When the next release ships, update AMASAMYA_LATEST and the
+          edition string in one place; the chip on this page and the
+          matching chip on amasamya/landing.html follow.
+        -->
+        <span class="version" data-amasamya-version-slot aria-label="Current AMASAMYA release version 5.4.0 with Interaction Sweep">v5.4.0 - Interaction Sweep engine</span>
       </div>
       <h1 id="amasamya-h1">
         The <span class="accent">blind-first</span> WCAG 2.2 accessibility audit toolkit.
@@ -336,5 +344,38 @@
 
 <script src="script.js" defer></script>
 <!-- 2026-07-10: screen-reader.js deprecated; script tag removed. -->
+<!--
+  2026-09-29: version-consistency writer. Single source of truth for
+  the visible version chip on this page and on the /extension landing
+  page (amasamya/landing.html). Update AMASAMYA_LATEST and
+  AMASAMYA_EDITION here, and commit the same values to
+  amasamya/landing.html's copy of this block, whenever a new release
+  ships. All [data-amasamya-version-slot] elements read from this
+  block at DOMContentLoaded. See memory: feedback-version-consistency.
+-->
+<script>
+(function () {
+  var AMASAMYA_LATEST  = '5.4.0';
+  var AMASAMYA_EDITION = 'Interaction Sweep engine';
+  function write() {
+    try {
+      var text = 'v' + AMASAMYA_LATEST + ' - ' + AMASAMYA_EDITION;
+      var slots = document.querySelectorAll('[data-amasamya-version-slot]');
+      for (var i = 0; i < slots.length; i++) {
+        slots[i].textContent = text;
+        slots[i].setAttribute(
+          'aria-label',
+          'Current AMASAMYA release version ' + AMASAMYA_LATEST + ' with ' + AMASAMYA_EDITION
+        );
+      }
+    } catch (_) {}
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', write);
+  } else {
+    write();
+  }
+})();
+</script>
 </body>
 </html>

@@ -1,10 +1,47 @@
 STORE LISTING COPY, COMPACT VERSIONS UNDER 3000 CHARACTERS
 FOR addons.mozilla.org SUBMISSION FIELDS
 
+Update AMASAMYA_LATEST at the top of the release-notes and reviewer-notes sections when a new release ships. The how-to-use section below is evergreen.
 
-VERSION 5.3.3 RELEASE NOTES, PASTE INTO "RELEASE NOTES FOR THIS VERSION"
 
-Character count: 462.
+VERSION 5.4.0 RELEASE NOTES, PASTE INTO "RELEASE NOTES FOR THIS VERSION"
+
+v5.4.0 ships the new Interaction Sweep engine. Four runtime detectors that static accessibility rules cannot catch.
+
+One. Focus-accept sweep. Focuses every element in tab order and flags any that decline. Catches SPA route transitions where an element is still in the tab order after its ancestor has unmounted.
+
+Two. Focus-indicator sweep. Snapshots outline, box-shadow, border, and background before and after focus. No change means no visible focus indicator. Catches sites shipping outline zero via utility CSS without a focus-visible fallback.
+
+Three. Keyboard-trap sweep. Focuses each element, dispatches synthetic Tab, Shift plus Tab, and Escape, and flags any handler in the propagation path that calls preventDefault. Catches modal focus traps and Escape-swallowing dialogs.
+
+Four. Unreachable-clickable sweep. Finds cursor-pointer or onclick elements that are not natively focusable, have no focusable role, and no tabindex zero or higher. Mouse users can click them; keyboard users are locked out.
+
+Triggered by a real-user report on 2026-09-29 that neither AMASAMYA nor any other automated auditor flagged a public government site as inaccessible despite the site being unusable with NVDA and JAWS. Root cause was architectural: every static rule engine looks at the DOM at one point in time. Interaction Sweep observes runtime behaviour.
+
+No new permissions. No new host permissions. No API surface changes.
+
+
+VERSION 5.4.0 REVIEWER NOTES, PASTE INTO "NOTES TO REVIEWER"
+
+Feature release. Manifest bumped 5.3.5 (Firefox last live) to 5.4.0. One new engine file (engines/interaction-sweep.js, 506 lines), one new engines array entry in content-script.js, and one line change in background.js that adds engines/interaction-sweep.js to the executeScript files list so the global self.AMASAMYAInteractionSweep is defined before content-script.js references it.
+
+The engine dispatches synthetic KeyboardEvent objects on focused elements to detect preventDefault behaviour in keydown handlers. Synthetic events do not trigger native browser behaviour (only trusted user events do), so this sweep does not move focus, does not navigate the page, and does not open menus. It only observes whether any application-code keydown handler in the propagation path calls preventDefault, which is the mechanism modal focus traps use.
+
+The engine also calls .focus() with preventScroll: true on each focusable element and reads document.activeElement to verify the focus took. Original activeElement is restored in a finally path so the user's own place on the page is preserved.
+
+No new permissions, no new host permissions, no fetch to remote endpoints, no new content-security-policy directives, no new manifest keys. Same permission set as v5.3.5.
+
+
+VERSION 5.3.6 RELEASE NOTES, KEPT FOR REFERENCE
+
+v5.3.6 Firefox-only patch, Mozilla bug 1319368 workaround.
+
+Firefox blocks a sidebar extension from moving focus to itself, so v5.3.5's shared focus-on-open handler silently no-ops on Firefox. v5.3.6 adds three mitigations: a window.focus() call before the element focus (best-effort), a permanent visible instruction under the panel header telling users to press F6, and a new leading section in USAGE.md that explains F6 before any other content.
+
+No new permissions.
+
+
+VERSION 5.3.3 RELEASE NOTES, KEPT FOR REFERENCE
 
 v5.3.3 Firefox-only patch, two bugs fixed.
 
