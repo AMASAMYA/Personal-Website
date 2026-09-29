@@ -77,6 +77,29 @@
     /* Results */
     .checker-results { display: none; }
     .checker-results.visible { display: block; }
+    /* 2026-09-29: SPA-shell warning banner. High-contrast amber so a
+       sighted user cannot miss the caveat above the score; role=alert
+       and a redundant polite live-region emission handle screen
+       readers. Left-border cue plus the text carries meaning; the
+       colour alone is never the signal (WCAG 1.4.1 Use of Colour). */
+    .spa-shell-warning {
+      background: #fef3c7;
+      border-left: 6px solid #b45309;
+      color: #78350f;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      border-radius: var(--radius);
+    }
+    .spa-shell-warning h3 { color: #78350f; }
+    .spa-shell-warning a { color: #78350f; text-decoration: underline; font-weight: 700; }
+    .spa-shell-warning a:focus { outline: 2px solid #b45309; outline-offset: 2px; }
+    [data-theme="dark"] .spa-shell-warning {
+      background: #451a03;
+      border-left-color: #fbbf24;
+      color: #fde68a;
+    }
+    [data-theme="dark"] .spa-shell-warning h3 { color: #fde68a; }
+    [data-theme="dark"] .spa-shell-warning a { color: #fde68a; }
     .results-summary {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -484,6 +507,19 @@
       <!-- Results Section -->
       <section class="checker-results" id="checker-results">
         <h2 id="results-heading" tabindex="-1">Results</h2>
+        <!--
+          2026-09-29: SPA-shell warning banner. The Web Audit Portal
+          fetches HTML via a server-side proxy that does not execute
+          JavaScript, so single-page apps that render their UI client-
+          side are audited against an empty shell and score deceptively
+          high. Reported by Akhilesh 2026-09-29 against npci.org.in.
+          Populated in detectSpaShell() before runAnalysis(); stays
+          visible for the life of the results view so a user reading
+          the score cannot miss the caveat. Kept as a semantic
+          <aside role="alert"> so NVDA and JAWS announce it before
+          the score.
+        -->
+        <aside id="spa-shell-warning" class="spa-shell-warning" role="alert" hidden></aside>
         <div class="results-summary" id="results-summary" role="group" aria-label="Issue summary"></div>
 
         <!-- Filters -->
@@ -1519,6 +1555,80 @@
       });
     }
 
+    /* 2026-09-29: SPA-shell detector. Single-page apps that render
+       their UI client-side send an almost-empty HTML shell to any
+       server-side fetcher; the shell has script tags but no
+       interactive elements or landmarks. Auditing that shell scores
+       deceptively high because there is nothing on the page to fail.
+       npci.org.in is the canonical example: 11 KB, 8 script tags,
+       zero buttons, zero anchors, zero form fields, zero landmarks.
+       Every static-fetch tool has this limitation (WAVE Online,
+       tenon.io, etc); WCAG-EM explicitly says automated tools catch
+       at most 20-30% of defects and the rest requires manual and
+       user testing. This detector warns loudly when the fetched HTML
+       matches the shape of an SPA shell, so the tool never reports
+       a green score for a site it fundamentally cannot audit. */
+    function detectSpaShell(html) {
+      if (!html) return null;
+      var scriptTags     = (html.match(/<script\b/gi)   || []).length;
+      var buttons        = (html.match(/<button\b/gi)   || []).length;
+      var anchors        = (html.match(/<a\b/gi)        || []).length;
+      var inputs         = (html.match(/<input\b/gi)    || []).length;
+      var selects        = (html.match(/<select\b/gi)   || []).length;
+      var textareas      = (html.match(/<textarea\b/gi) || []).length;
+      var landmarks      = (html.match(/<(main|nav|header|footer|aside|section)\b/gi) || []).length;
+      var interactive    = buttons + anchors + inputs + selects + textareas;
+      var totalStructural = interactive + landmarks;
+      /* Threshold: scripts present, structural elements almost absent.
+         Tuned empirically: real content pages usually carry dozens
+         of anchors even on a minimal landing page (nav, footer links,
+         social icons); an SPA shell often carries fewer than five. */
+      if (scriptTags >= 3 && totalStructural < 8) {
+        return {
+          scriptTags: scriptTags,
+          interactive: interactive,
+          landmarks: landmarks,
+          totalStructural: totalStructural
+        };
+      }
+      return null;
+    }
+
+    function showSpaShellWarning(diagnostic, target) {
+      var el = document.getElementById('spa-shell-warning');
+      if (!el) return;
+      var host = '';
+      try { host = new URL(target).hostname; } catch (_) { host = target; }
+      el.innerHTML =
+        '<h3 style="margin:0 0 8px 0; font-size:1rem;">Warning: this looks like a JavaScript-rendered app</h3>' +
+        '<p style="margin:0 0 8px 0;">The AMASAMYA Web Audit Portal fetched ' + host +
+        ' via a server-side proxy that does not execute JavaScript. What came back is a shell with ' +
+        diagnostic.scriptTags + ' script tags but only ' + diagnostic.interactive +
+        ' interactive elements and ' + diagnostic.landmarks +
+        ' landmarks. Real content on this page loads after the JavaScript runs, and the audit below cannot see it.</p>' +
+        '<p style="margin:0 0 8px 0;"><strong>The score below is not a real audit of what a user sees.</strong> ' +
+        'For accurate results on this site, install the AMASAMYA Chrome, Edge, or Firefox extension ' +
+        'and run the audit from inside your own browser after the page has finished loading.</p>' +
+        '<p style="margin:0;">Every static-fetch accessibility auditor has this limitation. ' +
+        'See the <a href="/limitations.html">limitations page</a> for the full list of what the Web Audit Portal cannot see.</p>';
+      el.hidden = false;
+      /* Also route through the polite live region if the page has one,
+         so screen readers hear the warning immediately without needing
+         to navigate to the alert. role="alert" on the aside handles
+         announcement in most screen readers, but the redundant polite
+         emission covers NVDA edge cases where role=alert on hidden ->
+         visible transitions does not fire. */
+      var polite = document.getElementById('live-region-polite');
+      if (polite) {
+        polite.textContent = 'Warning. ' + host + ' appears to be a JavaScript-rendered app. The score below is not a real audit of what a user sees. Install the AMASAMYA browser extension and audit from inside your browser for accurate results.';
+      }
+    }
+
+    function hideSpaShellWarning() {
+      var el = document.getElementById('spa-shell-warning');
+      if (el) { el.hidden = true; el.innerHTML = ''; }
+    }
+
     runBtn.addEventListener('click', function () {
       var code = htmlInput.value.trim();
       if (!code) { setStatus('Please paste some HTML code or a URL first.'); htmlInput.focus(); return; }
@@ -1552,11 +1662,18 @@
         var slowNudge2 = setTimeout(function () {
           setStatus('Still fetching ' + target + '. Almost at the 20-second timeout; if it fails, paste the page HTML directly.');
         }, 15000);
+        hideSpaShellWarning();
         fetchLiveUrl(target).then(function (html) {
           clearTimeout(slowNudge1); clearTimeout(slowNudge2);
           if (!html || html.trim().length < 40) {
             throw new Error('The fetched page was empty or blocked. Try pasting the page source instead.');
           }
+          /* Check for SPA-shell shape before running the audit. If
+             detected, show the warning banner but still run the audit
+             so users see what the tool did see, alongside the caveat
+             that it is not a real audit of what a user sees. */
+          var spa = detectSpaShell(html);
+          if (spa) { showSpaShellWarning(spa, target); }
           runAnalysis(html, { sourceLabel: target });
         }).catch(function (err) {
           clearTimeout(slowNudge1); clearTimeout(slowNudge2);
@@ -1583,6 +1700,9 @@
         return;
       }
 
+      /* Pasted HTML path: user pasted the source directly, so any
+         SPA-shell diagnostic from a prior fetch does not apply. */
+      hideSpaShellWarning();
       runAnalysis(code);
     });
 
