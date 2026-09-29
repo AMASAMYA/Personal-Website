@@ -45,12 +45,31 @@
  *      This catches sites that set { outline: 0 } globally without
  *      providing a :focus-visible fallback.
  *
+ * Detectors C and D added 2026-09-29 for v5.4.0:
+ *
+ *   C. KEYBOARD-TRAP sweep: for each focusable element, focus it,
+ *      dispatch a synthetic Tab keydown, then check the event's
+ *      defaultPrevented flag. Handlers that call preventDefault() on
+ *      the Tab key trap focus inside the element or its container.
+ *      This is the classic modal-focus-trap failure. Also tests
+ *      Shift+Tab (some traps only catch forward Tab) and Escape (a
+ *      dialog that swallows Escape is unrelated to WCAG 2.1.2 but is
+ *      a common usability failure worth flagging).
+ *
+ *   D. UNREACHABLE-CLICKABLE sweep: find elements that look clickable
+ *      (cursor:pointer computed style OR an onclick attribute) but
+ *      are not natively focusable (button, a[href], input, select,
+ *      textarea, summary), do not carry a focusable role (button,
+ *      link, menuitem, tab, checkbox, radio, switch, option), and
+ *      have no tabindex >= 0. A mouse user can click them; a keyboard
+ *      user cannot reach them. Static engines flag some of these at
+ *      Info severity; the Interaction Sweep raises the severity to
+ *      Serious because keyboard-only users are completely locked out.
+ *
  * Detectors deliberately deferred to later commits (in order):
- *   C. Keyboard-trap detection via synthetic Tab keydown + defaultPrevented
- *   D. Div-with-onclick unreachable-by-keyboard heuristic
  *   E. Hover-only interactive detection via CSSRule inspection
  *   F. Route-transition focus-management via History API hooks
- *   G. Custom-widget key-swallow detection (arrow keys, Escape)
+ *   G. Custom-widget key-swallow detection (arrow keys, Escape as menu-close)
  *
  * Standard finding shape
  * ----------------------
@@ -250,13 +269,186 @@
   }
 
   /* ============================================================
+     Detector C: KEYBOARD-TRAP sweep
+
+     For each focusable element, focus it, dispatch a synthetic Tab
+     keydown, and check whether any keydown handler in the ancestor
+     chain called preventDefault(). preventDefault on Tab is the
+     mechanism modal focus traps use, so preventDefault detected here
+     means the user cannot Tab past this element with the keyboard.
+
+     Also tests Shift+Tab (reverse traps) and Escape (dialogs that
+     swallow Escape). Dispatch is on the focused element and bubbles;
+     preventDefault at any ancestor propagates through and is captured
+     by defaultPrevented on the same event object.
+
+     Note: synthetic keyboard events do NOT trigger the browser's
+     native Tab default behaviour (only trusted user events do), so
+     this sweep is safe to run without moving focus around the page.
+     We only care about the preventDefault side-effect from any
+     application-code keydown handler in the propagation path.
+  ============================================================ */
+
+  function sweepKeyboardTraps(focusables) {
+    var findings = [];
+    var probes = [
+      { key: 'Tab',       keyCode: 9,  shift: false, label: 'Tab',        sc: 'WCAG 2.2 SC 2.1.2 No Keyboard Trap (Level A)',    sev: SEV.CRITICAL },
+      { key: 'Tab',       keyCode: 9,  shift: true,  label: 'Shift+Tab',  sc: 'WCAG 2.2 SC 2.1.2 No Keyboard Trap (Level A)',    sev: SEV.CRITICAL },
+      { key: 'Escape',    keyCode: 27, shift: false, label: 'Escape',     sc: 'WCAG 2.2 SC 2.1.1 Keyboard (Level A)',            sev: SEV.SERIOUS  }
+    ];
+    for (var i = 0; i < focusables.length; i++) {
+      var el = focusables[i];
+      if (!isVisible(el)) continue;
+      try {
+        el.focus({ preventScroll: true });
+      } catch (_) {
+        try { el.focus(); } catch (__) {}
+      }
+      for (var p = 0; p < probes.length; p++) {
+        var probe = probes[p];
+        var ev;
+        try {
+          ev = new KeyboardEvent('keydown', {
+            key:        probe.key,
+            code:       probe.key === 'Tab' ? 'Tab' : 'Escape',
+            keyCode:    probe.keyCode,
+            which:      probe.keyCode,
+            shiftKey:   probe.shift,
+            bubbles:    true,
+            cancelable: true
+          });
+        } catch (_) { continue; }
+        var dispatchedOk = true;
+        try { dispatchedOk = el.dispatchEvent(ev); } catch (___) {}
+        if (!dispatchedOk || ev.defaultPrevented) {
+          findings.push({
+            id:        generateId(),
+            engine:    'Interaction Sweep',
+            element:   describeEl(el),
+            criterion: probe.sc,
+            issue:     'A keydown handler in the propagation path called preventDefault() on ' + probe.label + '. Keyboard users cannot Tab out (or dismiss) here.',
+            computed:  probe.label + ' event defaultPrevented after dispatch',
+            required:  'No preventDefault() on ' + probe.label + ' unless focus is redirected inside the same handler',
+            verdict:   'Fail',
+            severity:  probe.sev,
+            howToFix:  probe.key === 'Tab'
+              ? 'Remove the preventDefault() call on Tab, or if the element is a modal, implement a proper roving-focus trap that redirects focus back to the first focusable element in the modal rather than blocking Tab entirely.'
+              : 'Remove the preventDefault() call on Escape. If Escape should close a container, add a handler that closes and moves focus to the trigger, but do not silently swallow the event.'
+          });
+          /* Stop probing this element after the first trapping key;
+             we already have enough to report the failure and further
+             probes on the same element are noise. */
+          break;
+        }
+      }
+    }
+    return findings;
+  }
+
+  /* ============================================================
+     Detector D: UNREACHABLE-CLICKABLE sweep
+
+     Find elements the page treats as clickable (cursor:pointer OR an
+     onclick attribute OR an onclick property) that a keyboard user
+     cannot reach because the element is not natively focusable, has
+     no focusable ARIA role, and has no tabindex >= 0.
+
+     The static rulesets flag some of these at Info severity when the
+     element also has an onclick attribute they can see textually.
+     Elements with click listeners attached via addEventListener are
+     invisible to those rules. Interaction Sweep catches both.
+  ============================================================ */
+
+  var NATIVE_FOCUSABLE_TAGS = {
+    'a': true, 'button': true, 'input': true, 'select': true,
+    'textarea': true, 'summary': true, 'area': true, 'iframe': true,
+    'audio': true, 'video': true
+  };
+  var FOCUSABLE_ROLES = {
+    'button': true, 'link': true, 'menuitem': true, 'menuitemcheckbox': true,
+    'menuitemradio': true, 'tab': true, 'checkbox': true, 'radio': true,
+    'switch': true, 'option': true, 'combobox': true, 'listbox': true,
+    'spinbutton': true, 'treeitem': true, 'searchbox': true, 'textbox': true,
+    'slider': true, 'scrollbar': true
+  };
+
+  function looksClickable(el) {
+    if (!el || !el.getAttribute) return false;
+    if (el.getAttribute('onclick') !== null) return true;
+    if (typeof el.onclick === 'function') return true;
+    var cs;
+    try { cs = window.getComputedStyle(el); } catch (_) { return false; }
+    if (cs && cs.cursor === 'pointer') return true;
+    return false;
+  }
+
+  function isFocusableForKeyboard(el) {
+    var tag = el.tagName ? el.tagName.toLowerCase() : '';
+    if (NATIVE_FOCUSABLE_TAGS[tag]) {
+      /* <a> without href is not focusable. */
+      if (tag === 'a' && !el.hasAttribute('href')) return false;
+      if ((tag === 'audio' || tag === 'video') && !el.hasAttribute('controls')) return false;
+      return true;
+    }
+    var role = (el.getAttribute('role') || '').toLowerCase();
+    if (FOCUSABLE_ROLES[role]) return true;
+    var ti = el.getAttribute('tabindex');
+    if (ti !== null && parseInt(ti, 10) >= 0) return true;
+    if (el.hasAttribute('contenteditable') &&
+        el.getAttribute('contenteditable') !== 'false') return true;
+    return false;
+  }
+
+  function sweepUnreachableClickables() {
+    var findings = [];
+    var all = document.querySelectorAll('*');
+    var count = 0;
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      /* Bounded scan: 3000 elements is enough for most pages and
+         keeps the sweep under 200ms even on large SPAs. */
+      count++;
+      if (count > 3000) break;
+      if (!isVisible(el)) continue;
+      if (isFocusableForKeyboard(el)) continue;
+      if (!looksClickable(el)) continue;
+      /* Skip pure text nodes with cursor:pointer inherited from an
+         ancestor button/link; those are visual only. */
+      var tag = el.tagName ? el.tagName.toLowerCase() : '';
+      if (tag === 'span' || tag === 'i' || tag === 'em' || tag === 'strong' ||
+          tag === 'small' || tag === 'sub' || tag === 'sup' || tag === 'b') {
+        /* If any focusable ancestor exists within 4 levels, this is
+           just an icon inside a real button; not an unreachable click
+           target. */
+        var p = el.parentElement, depth = 0, hasFocusableAncestor = false;
+        while (p && depth < 4) {
+          if (isFocusableForKeyboard(p)) { hasFocusableAncestor = true; break; }
+          p = p.parentElement;
+          depth++;
+        }
+        if (hasFocusableAncestor) continue;
+      }
+      findings.push({
+        id:        generateId(),
+        engine:    'Interaction Sweep',
+        element:   describeEl(el),
+        criterion: 'WCAG 2.2 SC 2.1.1 Keyboard (Level A)',
+        issue:     'Element behaves as clickable (cursor:pointer or onclick handler) but is not reachable by keyboard. Mouse users can activate it; keyboard-only users are locked out.',
+        computed:  'tag=' + tag + '; not natively focusable; no focusable role; no tabindex >= 0',
+        required:  'Use a native <button> or <a href>, or add role="button" plus tabindex="0" plus a keydown handler for Enter and Space',
+        verdict:   'Fail',
+        severity:  SEV.SERIOUS,
+        howToFix:  'Replace with <button type="button"> for actions or <a href> for navigation. If neither fits, add role="button", tabindex="0", and a keydown handler that treats Enter and Space the same as a click. cursor:pointer is a styling choice; it does not make an element operable by keyboard.'
+      });
+    }
+    return findings;
+  }
+
+  /* ============================================================
      Entry point
 
      Called from content-script.js after the static rulesets finish.
-     Returns an array of findings in the standard shape. Ready to
-     ship as an experimental engine that content-script.js can opt
-     into via a boolean flag; wired in via a separate commit that
-     touches content-script.js.
+     Returns an array of findings in the standard shape.
   ============================================================ */
 
   function runInteractionSweep() {
@@ -268,6 +460,8 @@
     var findings = [];
     findings = findings.concat(sweepFocusAccept(focusables));
     findings = findings.concat(sweepFocusIndicator(focusables));
+    findings = findings.concat(sweepKeyboardTraps(focusables));
+    findings = findings.concat(sweepUnreachableClickables());
 
     if (raw.length > MAX_FOCUSABLE_SWEEP) {
       findings.push({

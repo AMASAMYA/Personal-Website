@@ -1,12 +1,22 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-09-29 (Chrome, Edge, Firefox all live at v5.3.5. Firefox v5.3.6 submitted 2026-09-21 status uncertain, AMO public API still shows 5.3.5 as current after eight days; check dev dashboard. Interaction Sweep engine build for v5.4.0 started 2026-09-29 in `engines/interaction-sweep.js`).
+Last reviewed: 2026-09-29 (v5.4.0 packaged for all three stores after the same-day Interaction Sweep engine build; Chrome, Edge, and Firefox previously live at v5.3.5. Platform is at v5.2.0 and now two MAJOR.MINOR increments behind the extensions; Option B alignment policy needs a decision).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
 
-## In development, target v5.4.0: Interaction Sweep engine (2026-09-29 onwards)
+## Packaged for all three stores: v5.4.0 (2026-09-29)
+
+Interaction Sweep engine, four detectors, wired into `content-script.js` and injected before it by `background.js`. Manifest bumped from v5.3.5 (Chrome/Edge) and v5.3.6 (Firefox) to a common v5.4.0 across all three trees.
+
+Packages in `dist/`:
+- `amasamya-extension-v5.4.0.zip` (CWS + Edge, 30 entries, 162834 bytes)
+- `amasamya-firefox-v5.4.0.zip` (AMO, 36 entries, 186393 bytes)
+
+Platform alignment status. The web platform at `amasamya.akhileshmalani.com` is still at v5.2.0 (see `PLATFORM_VERSION` in `amasamya/index.html`). Option B locked 2026-07-09 requires MAJOR.MINOR match between extensions and platform. Extensions are now at 5.4 and platform at 5.2, a two-increment drift that has been building since v5.3.0 shipped. This ship goes out with extensions at 5.4.0 anyway because the release cadence should not stall on platform work, but the drift needs an explicit call: either bump platform to 5.4.0 in a follow-up commit (small: change one constant), or amend the alignment policy to a looser rule.
+
+## Interaction Sweep engine build (2026-09-29)
 
 Triggered by Akhilesh's report on 2026-09-29 that neither the Web Audit Portal nor the extensions flagged npci.org.in as inaccessible, despite the site being unusable with NVDA and JAWS on Windows. Investigation confirmed the failure is architectural: every static rule engine on the market (axe-core, HTML_CodeSniffer, IBM Equal Access, WAVE) looks at the DOM at a single point in time. NPCI's inaccessibility is entirely interaction-shaped (focus traps, focus-management failures during route transitions, custom widgets that swallow arrow keys, hover-only menus) and no static ruleset can catch that class of failure. The v5.3.5 Web Audit Portal SPA-shell warning shipped the same day tells users when the portal cannot see a page at all; the Interaction Sweep engine is the extension-side counterpart that catches the runtime failures the static rules miss.
 

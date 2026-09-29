@@ -1366,6 +1366,47 @@
   }
 
   /* ================================================================
+     Interaction Sweep runner (v5.4.0)
+
+     Wraps the standalone engines/interaction-sweep.js script that
+     background.js injects into the tab immediately before this
+     content-script. Degrades gracefully to an empty result if the
+     sweep script did not load, so a partial deploy or a mid-refactor
+     state cannot break the main audit pipeline.
+
+     The sweep runs four detectors: focus-accept, focus-indicator,
+     keyboard-trap (Tab, Shift+Tab, Escape), and unreachable-clickable.
+     See engines/interaction-sweep.js for the full design spec.
+  ================================================================ */
+  function auditInteractionSweep() {
+    try {
+      var sweep = (typeof self !== 'undefined' && self.AMASAMYAInteractionSweep) ||
+                  (typeof window !== 'undefined' && window.AMASAMYAInteractionSweep) || null;
+      if (sweep && typeof sweep.run === 'function') {
+        return sweep.run();
+      }
+      return [{
+        id: generateId(), engine: 'Interaction Sweep', element: 'Page',
+        criterion: 'AMASAMYA Internal',
+        issue: 'Interaction Sweep engine did not load (self.AMASAMYAInteractionSweep is undefined). Other results are still valid.',
+        computed: 'AMASAMYAInteractionSweep undefined at run time',
+        required: 'engines/interaction-sweep.js loaded before content-script.js',
+        verdict: 'Info', severity: SEV.MINOR,
+        howToFix: 'Reinstall or update the extension; report the page URL if it recurs.'
+      }];
+    } catch (err) {
+      return [{
+        id: generateId(), engine: 'Interaction Sweep', element: 'Page',
+        criterion: 'AMASAMYA Internal',
+        issue: 'Interaction Sweep threw: ' + (err && err.message ? err.message : String(err)),
+        computed: String(err), required: 'Engine should complete without errors',
+        verdict: 'Info', severity: SEV.MINOR,
+        howToFix: 'Report this page URL. Other results are still valid.'
+      }];
+    }
+  }
+
+  /* ================================================================
      MAIN RUNNER
   ================================================================ */
   try {
@@ -1395,7 +1436,13 @@
       { name: 'Dragging Movements', fn: auditDraggingMovements },
       { name: 'Consistent Help', fn: auditConsistentHelp },
       { name: 'Redundant Entry', fn: auditRedundantEntry },
-      { name: 'Accessible Authentication', fn: auditAccessibleAuth }
+      { name: 'Accessible Authentication', fn: auditAccessibleAuth },
+      /* v5.4.0: Interaction Sweep. Runtime detectors that static rule
+         engines cannot catch. Injected by background.js before this
+         file so the global is available at engines-list build time.
+         The runner is a thin wrapper that also degrades gracefully
+         when the sweep script did not load. */
+      { name: 'Interaction Sweep', fn: auditInteractionSweep }
     ];
 
     const findings = [];

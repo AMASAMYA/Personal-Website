@@ -106,7 +106,11 @@ chrome.action.onClicked.addListener(async (tab) => {
     return;
   }
   try {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content-script.js'] });
+    /* v5.4.0: Interaction Sweep runs alongside the static engines.
+       Order matters: engines/interaction-sweep.js exposes
+       self.AMASAMYAInteractionSweep and must load before
+       content-script.js references it in the engines array. */
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['engines/interaction-sweep.js', 'content-script.js'] });
   } catch (err) {
     console.error('AMASAMYA injection error:', err);
     const msg = { type: 'audit-error', error: 'AMASAMYA could not run on this tab: ' + err.message };
