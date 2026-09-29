@@ -2230,7 +2230,15 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
         <div class="settings-row">
           <div>
             <div class="settings-label">AMASAMYA Platform</div>
-            <div class="settings-desc">Version 5.2.0 - Scheduled Crawls Edition - AMASAMYA.akhileshmalani.com</div>
+            <!--
+              2026-09-29: text is written at runtime from the single
+              PLATFORM_VERSION constant to prevent the exact drift the
+              extension panel suffered (v4.3 hardcoded string surviving
+              to v5.3.4 in three places). Fallback text below stays in
+              sync with the constant for the offline / JS-disabled
+              case.
+            -->
+            <div class="settings-desc" data-platform-version-slot>Version 5.4.0 - Interaction Sweep Edition - AMASAMYA.akhileshmalani.com</div>
           </div>
         </div>
         <div class="settings-row">
@@ -2636,7 +2644,7 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
 
 <script>
 /* ═══════════════════════════════════════════════════════════
-   AMASAMYA Platform v5.2.0 - Application Logic
+   AMASAMYA Platform v5.4.0 - Application Logic
 ═══════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -2649,9 +2657,43 @@ input[type="file"]:focus + .file-input-label { outline: none; box-shadow: var(--
    platform ships a new release. ENGINE_COUNT tracks the Chrome
    extension engine count since the web-audit and report pipelines
    use the same engine set as the extension. */
-const PLATFORM_VERSION = '5.2.0';
-const ENGINE_COUNT     = 24;
+/* 2026-09-29: bumped 5.2.0 -> 5.4.0 to restore Option B alignment
+   (extension + platform MAJOR.MINOR match, PATCH may differ) after
+   the extensions moved to 5.3.x and then 5.4.0 while the platform
+   sat at 5.2.0. ENGINE_COUNT bumped 24 -> 25 for the new Interaction
+   Sweep engine that ships with the v5.4.0 Chromium and Firefox
+   packages. Edition label reflects the release theme; keep in
+   sync with the extension ROADMAP whenever the theme changes. */
+const PLATFORM_VERSION = '5.4.0';
+const ENGINE_COUNT     = 25;
 const PLATFORM_LABEL   = 'AMASAMYA v' + PLATFORM_VERSION;
+const PLATFORM_EDITION = 'Interaction Sweep Edition';
+
+/* 2026-09-29: write PLATFORM_VERSION into every element carrying the
+   data-platform-version-slot attribute at DOMContentLoaded. Removes
+   the hardcoded-string drift the extension panel suffered (v4.3
+   surviving to v5.3.4 in three places) from ever recurring here.
+   Per the version-consistency memory, the constant above is the
+   single source of truth; every visible version chip on this page
+   should route through this hook rather than embed the version
+   string directly. */
+(function writePlatformVersionSlots() {
+  function write() {
+    try {
+      var text = 'Version ' + PLATFORM_VERSION + ' - ' + PLATFORM_EDITION +
+                 ' - AMASAMYA.akhileshmalani.com';
+      var slots = document.querySelectorAll('[data-platform-version-slot]');
+      for (var i = 0; i < slots.length; i++) {
+        slots[i].textContent = text;
+      }
+    } catch (_) {}
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', write);
+  } else {
+    write();
+  }
+})();
 
 /* ── Utilities ── */
 const $ = id => document.getElementById(id);
