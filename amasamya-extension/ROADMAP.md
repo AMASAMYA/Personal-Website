@@ -1,10 +1,30 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-09-21 (Chrome live at v5.3.5; Firefox v5.3.5 approved earlier today but the focus fix silently no-ops on Firefox due to bug 1319368, so v5.3.6 Firefox-only was packaged and submitted the same evening to add the F6 instruction and window.focus() attempt. Edge live at v5.3.4 with v5.3.5 in certification).
+Last reviewed: 2026-09-29 (Chrome, Edge, Firefox all live at v5.3.5. Firefox v5.3.6 submitted 2026-09-21 status uncertain, AMO public API still shows 5.3.5 as current after eight days; check dev dashboard. Interaction Sweep engine build for v5.4.0 started 2026-09-29 in `engines/interaction-sweep.js`).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
+
+## In development, target v5.4.0: Interaction Sweep engine (2026-09-29 onwards)
+
+Triggered by Akhilesh's report on 2026-09-29 that neither the Web Audit Portal nor the extensions flagged npci.org.in as inaccessible, despite the site being unusable with NVDA and JAWS on Windows. Investigation confirmed the failure is architectural: every static rule engine on the market (axe-core, HTML_CodeSniffer, IBM Equal Access, WAVE) looks at the DOM at a single point in time. NPCI's inaccessibility is entirely interaction-shaped (focus traps, focus-management failures during route transitions, custom widgets that swallow arrow keys, hover-only menus) and no static ruleset can catch that class of failure. The v5.3.5 Web Audit Portal SPA-shell warning shipped the same day tells users when the portal cannot see a page at all; the Interaction Sweep engine is the extension-side counterpart that catches the runtime failures the static rules miss.
+
+Detector roadmap. Two shipped in the first commit at `engines/interaction-sweep.js` on 2026-09-29:
+
+- A. Focus-accept sweep. For every focusable element in tab order, attempt `.focus({preventScroll: true})` and check `document.activeElement` matches. Elements that decline focus surface as SC 2.1.1 Keyboard failures with severity Serious. This catches SPA route transitions that partially unmount ancestors while the element is still in the tab order.
+
+- B. Focus-indicator sweep. For every focusable element, snapshot outline, box-shadow, border, and background before and after focus. No visible change means no visible focus indicator, surfaced as SC 2.4.7 with severity Serious. Complements the existing static Focus Visibility check by catching sites that ship `{ outline: 0 }` via utility CSS (Tailwind `focus:outline-none`, Bootstrap `.form-control`) without a `:focus-visible` fallback.
+
+Deferred to later commits, in priority order:
+
+- C. Keyboard-trap detection via synthetic Tab keydown plus `defaultPrevented`.
+- D. Div-with-onclick unreachable-by-keyboard heuristic, higher-severity than axe's current Info-level equivalent.
+- E. Hover-only interactive detection via CSSRule inspection.
+- F. Route-transition focus-management via History API hooks and MutationObserver during simulated navigation.
+- G. Custom-widget key-swallow detection for arrow keys and Escape.
+
+Once the detector set is complete and wired into `content-script.js`, v5.4.0 ships as a joint release across Chrome, Edge, and Firefox. Per the version alignment memory this triggers a matching v5.4.0 bump on the web platform.
 
 ## Firefox-only patch, submitted to addons.mozilla.org: v5.3.6 (2026-09-21)
 
