@@ -1,10 +1,36 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-09-30 (v5.4.0 live on all three stores. Firefox approved 2026-09-29 at 09:31 UTC same-day, confirmed via AMO public API. Chrome and Edge approval dates in the 2026-09-29 to 2026-09-30 window pending confirmation from Akhilesh's approval emails. Web platform at v5.4.0 since 2026-09-29 push, Option B alignment restored across all four surfaces).
+Last reviewed: 2026-09-30 (v5.4.1 packaged for all three stores after Akhilesh's NPCI-audit review flagged 224 Interaction Sweep false positives and 590 total findings on one page. Chrome, Edge, Firefox all live at v5.4.0 pending v5.4.1 upload).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
+
+## Packaged for all three stores: v5.4.1 (2026-09-30)
+
+Same-day patch after Akhilesh reviewed the v5.4.0 audit against npci.org.in and reported 590 findings with roughly 224 of them false positives from the Interaction Sweep focus-indicator detector. Three fixes.
+
+Fix 1. Interaction Sweep focus-indicator rewritten as static CSS analysis.
+
+The v5.4.0 implementation captured getComputedStyle before and after a programmatic .focus() call and flagged when the two snapshots matched. This produced hundreds of false positives on every SPA for two reasons. First, browsers only apply :focus-visible styles when focus was reached via keyboard, not via programmatic focus(). Modern sites style focus almost exclusively through :focus-visible, so the "after" snapshot matched "before" even when the element was fully styled. Second, between the focus() call and the follow-up getComputedStyle() call in the same event tick, the browser had not painted yet.
+
+The v5.4.1 implementation walks document.styleSheets once at the start of the sweep, collects every CSS rule whose selector mentions :focus, :focus-visible, or :focus-within AND whose declaration modifies at least one visual property (outline, box-shadow, border, background, colour, transform, filter, opacity), and for each focusable element tests whether any of those rules match with the focus pseudo-class stripped. If at least one rule matches, the element has a declared focus indicator; do not flag. If none match, flag. Cross-origin stylesheets throw SecurityError when the extension tries to read cssRules; in that case the whole detector abstains for the affected sheets with an Info finding explaining the limitation. False negatives beat false positives for a tool asking to be trusted.
+
+Fix 2. Finding clustering pass added to the audit pipeline.
+
+New clusterFindings() function in content-script.js groups findings that share the same engine plus criterion plus issue text. Groups of three or more collapse into a single cluster row whose issue field prefixes "Affects N elements on this page" and whose element field lists up to five sample descriptions with "and X more" for the tail. Threshold of three was chosen empirically: two identical findings are still legible as two rows, but the moment a third appears the finding list stops being useful. Small groups (two or fewer) stay expanded because clustering would hide useful per-element context. The panel renderer is unchanged; only issue and element fields are rewritten so no downstream code needs adjustment.
+
+Fix 3. Site Crawl UI copy rewritten in plain English.
+
+Tab label "Site Crawl" becomes "Check a whole site". Section heading "Audit a whole website (Site Crawl)" becomes "Check a whole website". Intro paragraph rewritten as a short two-sentence description a non-accessibility user can follow. Fieldset legend, radio labels, textarea label, hint text, and both action button labels rewritten to match. Same edits applied to the Chrome/Edge panel.html and the Firefox sidebar/panel.html. Per the feedback-language-plain-human.md memory rule established the same day.
+
+TOOL_VERSION constant in content-script.js bumped 5.4.0 to 5.4.1 across both trees. All three [data-version-slot] fallbacks in each panel.html bumped 5.4.0 to 5.4.1.
+
+Packages:
+- dist/amasamya-extension-v5.4.1.zip (Chrome + Edge, 30 entries, 165684 bytes)
+- dist/amasamya-firefox-v5.4.1.zip (AMO, 36 entries, 189017 bytes)
+
+Both ZIPs verified: manifest.json says 5.4.1 and content-script.js constant TOOL_VERSION says 5.4.1 inside each package.
 
 ## Live on all three stores: v5.4.0 (2026-09-29)
 

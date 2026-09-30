@@ -215,56 +215,148 @@
   }
 
   /* ============================================================
-     Detector B: FOCUS-INDICATOR sweep
+     Detector B: FOCUS-INDICATOR sweep (v5.4.1 rewrite)
 
-     For each focusable element, capture the visual signature before
-     and after focus. If nothing changed, the page has no visible
-     focus indicator on this element. Complements the static
-     Focus Visibility check in content-script.js, which only detects
-     explicit outline: none / outline: 0 rules; this catches sites
-     that ship { outline: 0 } through utility CSS frameworks (Tailwind
-     focus:outline-none, Bootstrap .form-control, etc.) without a
-     :focus-visible fallback.
+     PRIOR IMPLEMENTATION (v5.4.0, broken)
+       Captured getComputedStyle before and after a programmatic
+       .focus() call and flagged when the two snapshots matched.
+       This produced ~200 false positives on every SPA because:
+         1. Browsers only apply :focus-visible styles when focus was
+            reached via keyboard, not via a programmatic focus() call.
+            Modern sites style focus almost exclusively through
+            :focus-visible, so the "after" snapshot matched the
+            "before" snapshot even when the element was fully styled.
+         2. Between the focus() call and the follow-up
+            getComputedStyle() call in the same event tick, the
+            browser had not painted yet, so the computed style had
+            not updated either.
+       Akhilesh confirmed 224 spurious Interaction Sweep findings on
+       npci.org.in on 2026-09-30, most of them from this detector.
+
+     v5.4.1 IMPLEMENTATION (static CSS analysis)
+       Walk document.styleSheets once at the start of the sweep.
+       Collect every CSS rule whose selector mentions :focus,
+       :focus-visible, or :focus-within AND whose declaration block
+       modifies at least one visual property (outline, box-shadow,
+       border, background, color, transform, filter, opacity).
+       For each focusable element, test whether any of those rules
+       would match the element with the focus pseudo-class stripped
+       from the selector. If at least one rule matches, the element
+       has a declared focus indicator; do not flag. If none match,
+       flag as a real SC 2.4.7 failure.
+
+       Cross-origin stylesheets throw SecurityError when we try to
+       read their cssRules. When any accessible-stylesheet count is
+       zero but at least one cross-origin sheet exists, we cannot
+       confidently flag any element (a focus rule may live in a
+       stylesheet we cannot read) and the whole detector abstains
+       with a single Info finding explaining the limitation. This
+       is deliberate: false negatives beat false positives for a
+       tool asking to be trusted by the accessibility community.
+
+     Complements the older static Focus Visibility engine in
+     content-script.js, which only catches explicit outline: none
+     / outline: 0. This catches the broader case of no focus rule
+     applying at all, or a focus rule that changes nothing visual.
   ============================================================ */
+
+  function collectFocusStyleRules() {
+    var rules = [];
+    var sheets;
+    try {
+      sheets = Array.prototype.slice.call(document.styleSheets);
+    } catch (_) {
+      return { rules: rules, corsBlocked: 0, readable: 0 };
+    }
+    var corsBlocked = 0;
+    var readable = 0;
+    var VISUAL_PROP = /outline|box-shadow|border(-|:| )|background|(^| )color(:| )|transform|filter|opacity/;
+    for (var s = 0; s < sheets.length; s++) {
+      var sheet = sheets[s];
+      var cssRules;
+      try {
+        cssRules = sheet.cssRules;
+        readable++;
+      } catch (e) {
+        corsBlocked++;
+        continue;
+      }
+      if (!cssRules) continue;
+      for (var r = 0; r < cssRules.length; r++) {
+        var rule = cssRules[r];
+        if (!rule || !rule.selectorText || !rule.style) continue;
+        var sel = rule.selectorText;
+        if (!/:focus(-visible|-within)?\b/.test(sel)) continue;
+        var text = rule.style.cssText || '';
+        if (!VISUAL_PROP.test(text)) continue;
+        /* Split comma-separated selectors so each one can be tested
+           independently against the target element. */
+        var parts = sel.split(',');
+        for (var p = 0; p < parts.length; p++) {
+          var part = parts[p].trim();
+          if (!/:focus/.test(part)) continue;
+          var stripped = part.replace(/:focus(-visible|-within)?/g, '').trim();
+          /* An empty stripped selector means the rule is bare
+             `:focus`, which matches every element. Store as '*' so
+             the matches() call below always returns true. */
+          if (!stripped) stripped = '*';
+          rules.push(stripped);
+        }
+      }
+    }
+    return { rules: rules, corsBlocked: corsBlocked, readable: readable };
+  }
+
+  function elementHasFocusStyle(el, strippedSelectors) {
+    for (var i = 0; i < strippedSelectors.length; i++) {
+      try {
+        if (el.matches(strippedSelectors[i])) return true;
+      } catch (_) { /* invalid selector, skip */ }
+    }
+    return false;
+  }
 
   function sweepFocusIndicator(focusables) {
     var findings = [];
-    var originalActive = document.activeElement;
+    var collected = collectFocusStyleRules();
+
+    /* Confidence guard: if all stylesheets are cross-origin (readable
+       count is zero) AND at least one CORS-blocked sheet exists, we
+       cannot confidently say whether any element has a focus rule.
+       Emit one Info finding explaining the abstention and return. */
+    if (collected.readable === 0 && collected.corsBlocked > 0) {
+      findings.push({
+        id:        generateId(),
+        engine:    'Interaction Sweep',
+        element:   'Page',
+        criterion: 'WCAG 2.2 SC 2.4.7 Focus Visible (Level AA)',
+        issue:     'Focus-indicator check skipped: all ' + collected.corsBlocked + ' stylesheet(s) on this page are cross-origin and cannot be inspected from the extension. Load the page from an origin that hosts its own CSS, or check focus styles manually with the keyboard.',
+        computed:  collected.corsBlocked + ' cross-origin stylesheet(s), 0 readable',
+        required:  'At least one same-origin stylesheet, or an inline <style> block, for the sweep to run',
+        verdict:   'Info',
+        severity:  SEV.MINOR,
+        howToFix:  'Not an accessibility defect. This is a detector limitation: the browser refuses to expose the contents of stylesheets loaded from a different domain. On sites where you can add an inline <style> block or a same-origin stylesheet, the check will run.'
+      });
+      return findings;
+    }
+
     for (var i = 0; i < focusables.length; i++) {
       var el = focusables[i];
       if (!isVisible(el)) continue;
-      var before = focusStyleSignature(el);
-      try {
-        el.focus({ preventScroll: true });
-      } catch (_) {
-        try { el.focus(); } catch (__) {}
-      }
-      /* Wait one microtask so :focus-visible pseudo styles apply. */
-      var after = focusStyleSignature(el);
-      if (before === after) {
-        findings.push({
-          id:        generateId(),
-          engine:    'Interaction Sweep',
-          element:   describeEl(el),
-          criterion: 'WCAG 2.2 SC 2.4.7 Focus Visible (Level AA)',
-          issue:     'Focusing this element produced no visible change in outline, box-shadow, border, or background. A keyboard user cannot see where they are.',
-          computed:  before,
-          required:  'A visually distinguishable focus indicator (outline, box-shadow, border, or background change) on focus',
-          verdict:   'Fail',
-          severity:  SEV.SERIOUS,
-          howToFix:  'Add a :focus-visible style with a visible 2px+ outline or equivalent box-shadow, contrast ratio 3:1 or better against the adjacent surface.'
-        });
-      }
+      if (elementHasFocusStyle(el, collected.rules)) continue;
+      findings.push({
+        id:        generateId(),
+        engine:    'Interaction Sweep',
+        element:   describeEl(el),
+        criterion: 'WCAG 2.2 SC 2.4.7 Focus Visible (Level AA)',
+        issue:     'No CSS rule with :focus, :focus-visible, or :focus-within matches this element with a visual-property change. A keyboard user cannot see where they are when they Tab here.',
+        computed:  collected.rules.length + ' focus-style rule(s) found on the page; none apply to this element',
+        required:  'A CSS rule matching this element that changes outline, box-shadow, border, background, or a similar visual property when the element is focused',
+        verdict:   'Fail',
+        severity:  SEV.SERIOUS,
+        howToFix:  'Add a :focus-visible style with a visible outline (2 pixels or more) or an equivalent box-shadow. The change must contrast at least 3 to 1 against the surface behind it.'
+      });
     }
-    /* Restore original focus so the audit does not disturb the user's
-       own place on the page. */
-    try {
-      if (originalActive && originalActive.focus) {
-        originalActive.focus({ preventScroll: true });
-      } else if (document.body && document.body.focus) {
-        document.body.focus({ preventScroll: true });
-      }
-    } catch (_) {}
     return findings;
   }
 

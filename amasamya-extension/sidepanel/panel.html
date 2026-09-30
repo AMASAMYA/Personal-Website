@@ -25,7 +25,7 @@
 <header role="banner">
   <div class="header-bar">
     <h1>AMASAMYA</h1>
-    <span class="version" data-version-slot>v5.4.0</span>
+    <span class="version" data-version-slot>v5.4.1</span>
     <button id="close-panel-btn" type="button" class="btn btn-small close-panel-btn"
             aria-label="Close AMASAMYA panel">Close</button>
   </div>
@@ -69,7 +69,7 @@
     <li role="presentation" id="ptab-crawl-item" hidden>
       <button class="panel-tab" role="tab" id="ptab-crawl"
               aria-controls="ppanel-crawl" aria-selected="false" tabindex="-1"
-              type="button">Site Crawl</button>
+              type="button">Check a whole site</button>
     </li>
   </ul>
 </nav>
@@ -489,7 +489,7 @@
     <section aria-labelledby="about-heading">
       <h2 id="about-heading">About</h2>
       <p class="section-desc">
-        AMASAMYA <span data-version-slot>v5.4.0</span> - Built by Akhilesh Malani, Accessibility Architect &amp;
+        AMASAMYA <span data-version-slot>v5.4.1</span> - Built by Akhilesh Malani, Accessibility Architect &amp;
         Digital Inclusion Strategist.<br>
         <a href="https://amasamya.akhileshmalani.com" target="_blank" rel="noopener"
            aria-label="Visit AMASAMYA.akhileshmalani.com (opens in a new tab)">
@@ -513,29 +513,25 @@
   <div role="tabpanel" id="ppanel-crawl" aria-labelledby="ptab-crawl" tabindex="-1" hidden>
 
     <section aria-labelledby="crawl-heading">
-      <h2 id="crawl-heading">Audit a whole website (Site Crawl)</h2>
+      <h2 id="crawl-heading">Check a whole website</h2>
       <p class="section-desc">
-        This runs the AMASAMYA audit on many pages of a website, one
-        after another, instead of just the page you are on. The
-        results go to the AMASAMYA web platform if you have it open
-        in another tab. Up to 200 pages per run.
+        Instead of checking one page at a time, AMASAMYA can check many pages of a website in one go. Up to 200 pages. Results appear on the AMASAMYA website if you have it open in another tab.
       </p>
 
       <fieldset class="settings-fieldset">
-        <legend>Which pages do you want to check?</legend>
+        <legend>Which pages to check?</legend>
         <div class="radio-group">
           <label class="radio-label">
             <input type="radio" name="crawl-source" id="crawl-src-list" value="list" checked>
-            I will paste the page addresses myself (works on any site)
+            I will paste the page addresses. Works on any site.
           </label>
           <label class="radio-label">
             <input type="radio" name="crawl-source" id="crawl-src-sitemap" value="sitemap">
-            Let AMASAMYA find the pages from the website's own list (only works on sites that publish a list)
+            Let AMASAMYA find the pages itself. Only works on sites that publish a public page list.
           </label>
         </div>
         <p class="field-hint" style="margin-top:8px;">
-          If you are not sure which option to pick, choose the first one
-          and paste 3 or 4 page addresses to start.
+          Not sure? Pick the first option and paste three or four page addresses to start.
         </p>
       </fieldset>
 
@@ -557,37 +553,31 @@
              everything outside - radio group, headings, links - keeps
              normal virtual-cursor navigation. -->
       <div class="settings-field" id="crawl-list-wrap" role="application">
-        <label for="crawl-url-list">Page addresses to check, one per line</label>
+        <label for="crawl-url-list">Page addresses, one per line</label>
         <textarea id="crawl-url-list" rows="8" class="key-input"
                   autocomplete="off" spellcheck="false"
                   placeholder="https://example.com/&#10;https://example.com/about&#10;https://example.com/contact"
                   aria-describedby="crawl-list-hint"></textarea>
         <p id="crawl-list-hint" class="field-hint">
-          Each line must start with https:// or http://. Up to 200
-          addresses. If you paste more, the extra ones are ignored
-          with a notice before the audit starts.
+          Each line starts with https:// or http://. Up to 200 addresses. If you paste more, the extra ones are skipped with a notice before the check starts.
         </p>
       </div>
 
       <div class="settings-field" id="crawl-sitemap-wrap" role="application" hidden>
-        <label for="crawl-sitemap-url">Website address (homepage URL)</label>
+        <label for="crawl-sitemap-url">Website homepage address</label>
         <input type="text" inputmode="url"
                id="crawl-sitemap-url" class="key-input"
                autocomplete="off" spellcheck="false"
                placeholder="https://example.com"
                aria-describedby="crawl-sitemap-hint">
         <p id="crawl-sitemap-hint" class="field-hint">
-          AMASAMYA tries to read the website's published list of pages
-          (called a sitemap). This works on most marketing and content
-          sites. Large stores like Amazon and most banks block this on
-          purpose; for those sites, switch to the first option above
-          and paste the page addresses yourself.
+          AMASAMYA tries to read the website's own list of pages. This works on most content and marketing sites. Big shopping sites and most banks block this on purpose; for those, switch to the first option above and paste the page addresses yourself.
         </p>
       </div>
 
       <div class="settings-actions">
-        <button id="crawl-start-btn"  type="button" class="btn btn-primary">Start crawl</button>
-        <button id="crawl-cancel-btn" type="button" class="btn btn-danger" hidden>Cancel crawl</button>
+        <button id="crawl-start-btn"  type="button" class="btn btn-primary">Start checking</button>
+        <button id="crawl-cancel-btn" type="button" class="btn btn-danger" hidden>Stop</button>
       </div>
 
       <p id="crawl-status" class="settings-status" aria-live="polite"></p>
@@ -651,7 +641,7 @@
 </main>
 
 <footer role="contentinfo">
-  <p>AMASAMYA <span data-version-slot>v5.4.0</span> - Private and Confidential</p>
+  <p>AMASAMYA <span data-version-slot>v5.4.1</span> - Private and Confidential</p>
 </footer>
 
 <!-- v4.2.1: Close-confirmation dialog. Shown whenever the user tries

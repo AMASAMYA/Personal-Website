@@ -21,7 +21,7 @@
      the platform's per-extension telemetry lines up with the release
      users actually installed. Future bumps: change this constant AND
      manifest.json in the same commit. */
-  const TOOL_VERSION = '5.4.0';
+  const TOOL_VERSION = '5.4.1';
   const CONTRAST = { NORMAL_AA: 4.5, LARGE_AA: 3.0, NORMAL_AAA: 7.0, LARGE_AAA: 4.5, NON_TEXT: 3.0 };
   const LARGE_TEXT_PT_BOLD = 14;
   const LARGE_TEXT_PT_NORMAL = 18;
@@ -1413,6 +1413,63 @@
   }
 
   /* ================================================================
+     Finding clustering (v5.4.1)
+
+     Groups findings that share the same engine + criterion + issue
+     text and collapses groups of three or more into a single
+     cluster row. The cluster row gets a modified issue prefix
+     ("Affects N elements. ...") and its element field lists up to
+     five sample descriptions with "and X more" for the tail.
+
+     Design decisions:
+       - Threshold of three: two identical findings are still legible
+         as two rows; the moment a third appears you get eyestrain
+         and the finding list stops being useful.
+       - Grouping key includes criterion so a finding under 2.1.1
+         does not cluster with a finding under 2.4.7 even if the
+         issue text happens to overlap.
+       - Sample cap of five: gives enough per-cluster detail to
+         start fixing without swamping the row.
+       - Order preserved: cluster representative takes the position
+         of the first finding in the group, so the results table
+         reads in the same order as the un-clustered version.
+       - No new finding-shape fields: the panel renderer stays
+         unchanged. Only `issue` and `element` are rewritten.
+  ================================================================ */
+  function clusterFindings(findings) {
+    const groups = new Map();
+    const order = [];
+    for (let i = 0; i < findings.length; i++) {
+      const f = findings[i];
+      const key = (f.engine || '') + '||' + (f.criterion || '') + '||' + (f.issue || '');
+      if (!groups.has(key)) {
+        groups.set(key, []);
+        order.push(key);
+      }
+      groups.get(key).push(f);
+    }
+    const out = [];
+    for (let i = 0; i < order.length; i++) {
+      const group = groups.get(order[i]);
+      if (group.length <= 2) {
+        for (let j = 0; j < group.length; j++) out.push(group[j]);
+        continue;
+      }
+      const first = group[0];
+      const sampleCount = Math.min(5, group.length);
+      const sampleElements = [];
+      for (let j = 0; j < sampleCount; j++) sampleElements.push(group[j].element);
+      const extra = group.length - sampleCount;
+      const clustered = Object.assign({}, first, {
+        issue: 'Affects ' + group.length + ' elements on this page. ' + first.issue,
+        element: sampleElements.join('; ') + (extra > 0 ? '; and ' + extra + ' more' : '')
+      });
+      out.push(clustered);
+    }
+    return out;
+  }
+
+  /* ================================================================
      MAIN RUNNER
   ================================================================ */
   try {
@@ -1467,10 +1524,23 @@
       }
     });
 
+    /* v5.4.1 clustering pass.
+       Many engines produce the same finding repeated across many
+       elements (Focus Visibility fires 80 times for one missing
+       :focus rule; Interaction Sweep can fire 200 times for the
+       same root cause). A 590-finding wall of text is unusable
+       regardless of accuracy. Group by (engine, criterion, issue)
+       and collapse groups of three or more into a single cluster
+       row that names the count and shows up to five sample
+       elements. Small groups (two or fewer) stay expanded because
+       they read fine on their own and clustering would hide useful
+       per-element context. */
+    const clusteredFindings = clusterFindings(findings);
+
     // Send results to service worker
     chrome.runtime.sendMessage({
       type: 'audit-results',
-      findings: findings,
+      findings: clusteredFindings,
       pageTitle: document.title,
       pageUrl: window.location.href,
       timestamp: new Date().toISOString()
