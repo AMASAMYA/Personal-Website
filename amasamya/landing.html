@@ -201,16 +201,13 @@
       -->
       <span class="version" data-amasamya-version-slot aria-label="Current AMASAMYA release version 5.4.0 with Interaction Sweep">v5.4.0</span>
     </div>
-    <h1>The <span class="accent">blind-first</span> WCAG 2.2 accessibility audit platform.</h1>
+    <h1>Check your website, your documents, and your mobile apps for accessibility problems.</h1>
     <p class="hero-desc">
-      Run accessibility audits on live web pages, on document files, and through a
-      structured mobile-app checklist. The whole interface is keyboard- and screen-reader-first;
-      every audit finding includes specific remediation guidance and a link to the relevant
-      WCAG technique.
+      Paste in a website. Upload a PDF or Word document. Tick through a checklist for iPhone or Android. AMASAMYA tells you what would stop a blind or low-vision person from using it, and how to fix each thing. Built by a blind engineer, so the tool itself works cleanly with a screen reader from start to finish.
     </p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="/auth.html">Sign in to start auditing</a>
-      <a class="btn btn-secondary" href="https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif">Get the Chrome extension</a>
+      <a class="btn btn-primary" href="/auth.html">Sign in to start</a>
+      <a class="btn btn-secondary" href="https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif">Get the Chrome add-on</a>
     </div>
   </div>
 </header>
@@ -335,113 +332,97 @@
   <div class="container">
 
     <section>
-      <h2 id="what-it-does">What AMASAMYA does</h2>
+      <h2 id="what-it-does">What you can check</h2>
       <p class="lead">
-        Three audit surfaces, one consistent experience, designed so a non-sighted developer
-        or content author can drive the entire workflow without sighted help.
+        Three kinds of things, one tool, all in your browser. You do not need any special software or a developer's help.
       </p>
       <div class="features">
         <article class="feature">
-          <h3 id="feat-web">Web audits</h3>
+          <h3 id="feat-web">Websites</h3>
           <p>
-            Paste a URL or click the toolbar button on any tab. AMASAMYA runs a full WCAG 2.2
-            audit covering colour contrast, ARIA validation, focus management, and structural
-            semantics - across the interaction patterns the standard requires.
+            Paste the address of any page and get back a plain list of the problems on it, with the fix for each. If you can install browser add-ons, you can also check pages you are already looking at by pressing one keyboard shortcut.
           </p>
         </article>
         <article class="feature">
-          <h3 id="feat-doc">Document audits</h3>
+          <h3 id="feat-doc">Documents</h3>
           <p>
-            Upload a file and AMASAMYA audits its accessibility. The supported formats include
-            PDFs, Microsoft Office files, EPUB books, and OpenDocument files. Findings are
-            format-specific because the underlying remediation differs from one format to the next.
+            Upload a file. AMASAMYA reads it and tells you where a blind person would get stuck. Works on PDFs, Word, Excel, PowerPoint, EPUB books, and OpenDocument files. The advice you get is specific to the file type, because the fix for a bad PDF is not the same as the fix for a bad PowerPoint.
           </p>
         </article>
         <article class="feature">
-          <h3 id="feat-mobile">Mobile checklist</h3>
+          <h3 id="feat-mobile">Mobile apps</h3>
           <p>
-            A structured manual-test workflow for iOS, Android, and WearOS. Each item names the
-            WCAG criterion, the assistive technology to use, and the specific test method.
-            Reports can be exported.
+            A step-by-step checklist you tick off while trying out an iPhone, Android, or wearable app. Each step tells you what to try, which built-in screen reader or setting to use, and what a passing result looks like. When you are done you can download a report.
           </p>
         </article>
       </div>
     </section>
 
     <section>
-      <h2 id="vision-ai">Vision AI modules - optional, bring your own key</h2>
+      <h2 id="vision-ai">Optional AI helpers (you bring your own key)</h2>
       <p>
-        Three optional modules use a Vision AI provider you configure (OpenAI or Anthropic).
-        Your API key is encrypted at rest in your browser with a non-extractable WebCrypto
-        master key - keys never reach AMASAMYA servers, because there are none.
+        Some accessibility checks only make sense if you can see the screen. If you want AMASAMYA to handle those too, you can plug in a key from OpenAI, Anthropic, or Google. The key is scrambled and kept on your own computer. AMASAMYA has no server that can see it.
       </p>
       <div class="features">
         <article class="feature">
-          <h3 id="feat-narrator">Focus Indicator Narrator</h3>
+          <h3 id="feat-narrator">See where the keyboard is</h3>
           <p>
-            Describes what the keyboard focus indicator looks like at every focusable element.
-            Lets a blind tester independently verify visual focus indicators without sighted help.
+            Sighted users see a highlight around whatever button they just tabbed to. Blind users cannot verify that highlight is actually visible. This module uses AI to describe the highlight on every button, so a blind tester can check it without asking a colleague.
           </p>
         </article>
         <article class="feature">
-          <h3 id="feat-layout">Visual Layout Auditor</h3>
+          <h3 id="feat-layout">Check the layout at different sizes</h3>
           <p>
-            Captures the page at four viewport widths and detects layout shifts and reflow
-            failures across breakpoints. Reports map to WCAG 1.4.10 Reflow and 1.4.4 Resize Text.
+            AMASAMYA takes pictures of your page at four common screen widths and uses AI to spot when the page breaks (buttons overlap, text gets cut off, menus fall off the screen).
           </p>
         </article>
         <article class="feature">
-          <h3 id="feat-watchdog">State Change Watchdog</h3>
+          <h3 id="feat-watchdog">Watch for silent changes</h3>
           <p>
-            Runs locally with no AI calls. Monitors the page in real time for dynamic content
-            additions, dialog focus failures, and ARIA state changes that screen readers would
-            otherwise miss.
+            Some things on a page change without telling anyone (a new message appears, a menu opens, an error shows up). Blind users miss these because their screen reader was not told. This module watches the page and reports every silent change, so you can fix them to announce properly. Runs on your own computer, no AI involved.
           </p>
         </article>
       </div>
     </section>
 
     <section>
-      <h2 id="principles">Designed blind-first</h2>
+      <h2 id="principles">Made to be used by blind people</h2>
       <div class="principles">
         <ul>
-          <li>Every screen is fully operable with major Windows, macOS, and Android screen readers.</li>
-          <li>Audit findings announce role, severity, and remediation in a logical reading order.</li>
-          <li>Exported reports are themselves accessible - semantic headings, labelled regions, navigable tables.</li>
-          <li>Audits run locally; no page content is ever sent to AMASAMYA servers.</li>
-          <li>The platform's own pages pass an axe-core 4.10 self-audit with zero violations.</li>
+          <li>Every page and screen works fully with the screen readers used most on Windows, Mac, and Android.</li>
+          <li>Every problem AMASAMYA finds is read out cleanly, in the order you would expect, with the fix included.</li>
+          <li>Reports you download are themselves usable by a blind person reading them, not just PDFs of a screenshot.</li>
+          <li>Nothing you check ever leaves your computer.</li>
+          <li>AMASAMYA's own pages are checked with the same tools you would use on other websites, and pass.</li>
         </ul>
       </div>
     </section>
 
     <section>
-      <h2 id="start">Get started</h2>
+      <h2 id="start">How to start</h2>
       <div class="start-paths">
         <div class="start-path">
-          <h3>Open the platform</h3>
-          <p>Sign in with Google or with email and password. Audits run and stay on your device. Scheduled crawls and their run history sync to your account so you see the same view on every device you sign in from.</p>
-          <p><a href="/auth.html">Sign in to AMASAMYA →</a></p>
+          <h3>Open AMASAMYA in your browser</h3>
+          <p>Sign in with Google or with an email and password. Your checks stay on your own computer. If you set up regular checks, the summary of when they ran and what they found syncs to your account so you can see it from any device.</p>
+          <p><a href="/auth.html">Sign in →</a></p>
         </div>
         <div class="start-path">
-          <h3>Install the Chrome extension</h3>
-          <p>Audit any page in your browser with one keystroke. Results open in the Chrome side panel.</p>
-          <p><a href="https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif">Chrome Web Store listing →</a></p>
+          <h3>Get the browser add-on</h3>
+          <p>Check any page in your browser by pressing one keyboard shortcut. The results open in a panel next to the page.</p>
+          <p><a href="https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif">Chrome Web Store →</a></p>
         </div>
         <div class="start-path">
-          <h3>Read the policy</h3>
-          <p>Privacy policy, threat model, and the data-handling rules every audit follows.</p>
-          <p><a href="/privacy">Privacy policy →</a></p>
+          <h3>Read what we do with your data</h3>
+          <p>Short version: nothing. Full version is on the privacy page.</p>
+          <p><a href="/privacy">Privacy →</a></p>
         </div>
       </div>
     </section>
 
     <section>
-      <h2 id="who">Who built AMASAMYA</h2>
+      <h2 id="who">Who made this</h2>
       <p>
-        AMASAMYA is built and maintained by <a href="https://akhileshmalani.com">Akhilesh Malani</a> -
-        accessibility architect and digital inclusion strategist. The platform is fully self-funded,
-        with no investor influence on the privacy or feature roadmap. Beta-tester credits are listed
-        on the <a href="/credits">Contributors page</a>.
+        AMASAMYA is made by <a href="https://akhileshmalani.com">Akhilesh Malani</a>, a blind engineer in Chennai. It is free and always will be. Akhilesh runs it in his personal time; nobody else owns it, invests in it, or gets a say in how it works. The people who helped test it are listed on the <a href="/credits">Contributors page</a>.
       </p>
     </section>
 

@@ -189,23 +189,21 @@
         <span class="version" data-amasamya-version-slot aria-label="Current AMASAMYA release version 5.4.0 with Interaction Sweep">v5.4.0 - Interaction Sweep engine</span>
       </div>
       <h1 id="amasamya-h1">
-        The <span class="accent">blind-first</span> WCAG 2.2 accessibility audit toolkit.
+        Check your website for accessibility problems. Free.
       </h1>
       <p class="lead">
-        A Chrome extension and web platform built to be operated BY accessibility
-        testers, developers, and designers who use a screen reader, not just FOR
-        them. Free. Open source. No signup needed for the extension.
+        AMASAMYA is a browser add-on and a website that check any web page for problems that stop blind and low-vision people from using it. Made by a blind engineer. No sign-up.
       </p>
       <div class="cta-row">
         <a class="cta-btn cta-btn-primary"
            href="https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif"
            rel="noopener">
-          Install the Chrome extension
+          Install the Chrome add-on
         </a>
         <a class="cta-btn cta-btn-secondary"
            href="https://amasamya.akhileshmalani.com"
            rel="noopener">
-          Open the web platform
+          Open the web version
         </a>
       </div>
     </div>
@@ -214,27 +212,15 @@
   <!-- What it is -->
   <section class="amasamya-section">
     <div class="container">
-      <h2 id="what-h2">What AMASAMYA is</h2>
+      <h2 id="what-h2">What you get</h2>
       <p>
-        AMASAMYA has two parts. The <strong>Chrome extension</strong> runs 24
-        WCAG 2.2 audit engines against whatever page you are looking at, walks
-        up to 200 pages of a website in one Site Crawl run, diffs each audit
-        against the last one for the same URL so a follow-up run tells you
-        what is New, Regressed, Unchanged, or Resolved, and (from v5.2.0
-        onward) can run a crawl on a schedule you set from the platform.
-        Scheduled runs post a summary to Slack, Microsoft Teams, or your own
-        webhook so a regression on your production site pings your team the
-        moment it lands. Findings appear in a side panel that is fully
-        operable with NVDA, JAWS, and VoiceOver. The
-        <strong>web platform</strong> at
-        <a href="https://amasamya.akhileshmalani.com">amasamya.akhileshmalani.com</a>
-        accepts single-page audits, crawl reports, document files, and
-        structured mobile checklists, and produces reports a manager can read.
-        The new Schedules tab is where you configure recurring crawls.
+        AMASAMYA comes in two parts, and you can use either or both. The <strong>browser add-on</strong> checks the page you are currently looking at, or a whole website in one go (up to 200 pages). It compares each check against your last one and tells you what got fixed, what broke, and what is new. You can also set it to run checks by itself, say every Monday morning, and post the results to your team on Slack or Microsoft Teams.
       </p>
       <p>
-        Both are free. The extension is open source under MIT licence at
-        <a href="https://github.com/AMASAMYA/AMASAMYA" rel="noopener">github.com/AMASAMYA/AMASAMYA</a>.
+        The <strong>web version</strong> at <a href="https://amasamya.akhileshmalani.com">amasamya.akhileshmalani.com</a> does the same page and site checks in your browser without any install, and also checks documents (PDFs, Word, Excel, PowerPoint) and gives you a checklist for mobile apps. It creates reports you can hand to your manager, your compliance team, or a regulator.
+      </p>
+      <p>
+        Both are free. The add-on's source code is public at <a href="https://github.com/AMASAMYA/AMASAMYA" rel="noopener">github.com/AMASAMYA/AMASAMYA</a>.
       </p>
     </div>
   </section>
@@ -243,33 +229,23 @@
   <section class="amasamya-section"
            style="background: var(--bg-alt, #f8fafc);">
     <div class="container">
-      <h2 id="diff-h2">How it is different from other automated audit tools</h2>
+      <h2 id="diff-h2">Why this one and not another</h2>
       <div class="feature-grid">
         <div class="feature-card">
-          <h3>Blind-first design</h3>
-          <p>The side panel UI itself is screen-reader operable. Findings appear as
-          keyboard-navigable tables and lists, not visual overlays. The tool
-          passes the standards it tests for.</p>
+          <h3>Made by someone who needs it</h3>
+          <p>AMASAMYA is built by a blind engineer who uses it every day. The tool itself works with a screen reader from start to finish, which most accessibility tools on the market do not.</p>
         </div>
         <div class="feature-card">
-          <h3>WCAG 2.2 coverage from day one</h3>
-          <p>24 engines covering Level A and AA, including the 2.2 additions
-          (Focus Not Obscured, Dragging Movements, Consistent Help, Redundant
-          Entry, Accessible Authentication) that older tools have not caught
-          up to.</p>
+          <h3>Catches problems other tools miss</h3>
+          <p>Older tools only check the code sitting still on the page. AMASAMYA also watches what happens when someone tries to use the page with a keyboard, so it catches broken menus, dead-end pages, and buttons that no keyboard user can reach.</p>
         </div>
         <div class="feature-card">
-          <h3>Vision AI with your own key</h3>
-          <p>Optional Focus Indicator Narrator and Visual Layout Auditor modules
-          connect to your Anthropic, OpenAI, or Google Gemini key for visual
-          checks a blind tester cannot perform alone. Your key stays on your
-          device.</p>
+          <h3>Optional AI helpers you control</h3>
+          <p>If you want, AMASAMYA can use an AI service (Anthropic, OpenAI, or Google) to describe what a page looks like, so a blind tester can check visual details on their own. You bring your own key. Your key never leaves your computer.</p>
         </div>
         <div class="feature-card">
-          <h3>No accessibility overlay</h3>
-          <p>AMASAMYA finds issues and tells you how to fix them. It does not
-          inject JavaScript into your page to "fix" accessibility, a pattern the
-          community has criticised for not actually solving underlying problems.</p>
+          <h3>No "one-line-of-code" fix pretenders</h3>
+          <p>AMASAMYA tells you what is broken and how to fix it in your code. It does not overlay your website with a widget that promises to make it accessible in one line. Those widgets do not work; the accessibility community has been clear about that for years.</p>
         </div>
       </div>
     </div>
@@ -278,13 +254,13 @@
   <!-- Who benefits -->
   <section class="amasamya-section">
     <div class="container">
-      <h2 id="who-h2">Who benefits</h2>
+      <h2 id="who-h2">Who is this for?</h2>
       <ul>
-        <li><strong>Accessibility testers who are blind or low-vision:</strong> stop relying on a sighted colleague to translate findings.</li>
-        <li><strong>Developers who use a screen reader:</strong> a tool whose UI respects your input modality.</li>
-        <li><strong>Designers verifying WCAG 2.2 work:</strong> check your own work without sighted help.</li>
-        <li><strong>Consultants and auditors:</strong> structured findings, exportable as JSON, HTML, CSV, Text, SARIF, or annotated PNG.</li>
-        <li><strong>Managers and procurement officers:</strong> reports aggregated and presentable, including a VPAT 2.5 generator on the platform.</li>
+        <li><strong>You build or maintain a website</strong> and want to know if it works for everyone before your users tell you it does not.</li>
+        <li><strong>You are legally required</strong> to meet accessibility standards, either because your customers ask for it or because your country's rules say so.</li>
+        <li><strong>You are blind or low-vision yourself</strong> and want an accessibility tool you can actually use without a sighted colleague reading the results to you.</li>
+        <li><strong>You work in compliance, procurement, or as an accessibility consultant</strong>, and need reports your team can hand to auditors and regulators.</li>
+        <li><strong>You are a designer or product manager</strong> checking your team's work before it ships.</li>
       </ul>
     </div>
   </section>

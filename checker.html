@@ -456,38 +456,38 @@
     </nav>
 
     <div class="checker-page">
-      <h1>Web Accessibility Checker</h1>
-      <p class="checker-intro">Paste a <strong>URL</strong> or <strong>HTML code</strong> below and I will analyse it for WCAG 2.2 Level AA compliance using industry-standard engines. URLs are fetched through a CORS proxy; pasted HTML is analysed entirely in your browser.</p>
+      <h1>Check a website</h1>
+      <p class="checker-intro">Paste the address of any website below. In a few seconds you get a list of problems that make the page hard or impossible to use for blind and low-vision people, with the fix for each one. Nothing you paste leaves your browser except the address, which is fetched by our small proxy so we can read the page.</p>
 
       <nav aria-label="Checker tools" class="checker-nav">
-        <a href="checker.html" aria-current="page">Web Checker</a>
-        <a href="doc-checker.html">Document Checker</a>
+        <a href="checker.html" aria-current="page">Check a website</a>
+        <a href="doc-checker.html">Check a document</a>
       </nav>
 
       <form class="checker-form" id="checker-form" onsubmit="return false;">
         <label for="html-input">
-          Paste a URL or HTML code
-          <span class="label-hint">Paste a full URL (e.g. https://example.com) to scan a live page, or paste complete HTML source / a snippet to analyse it in place. Snippets are auto-wrapped in a minimal HTML shell.</span>
+          Paste a website address, or paste the page's HTML if you already have it
+          <span class="label-hint">A website address looks like https://example.com. If you already have the page's HTML code (from View Source, or a file you are working on), you can paste that instead and it will be checked without touching the internet.</span>
         </label>
         <textarea id="html-input" class="checker-textarea" placeholder="https://example.com&#10;&#10;-- or --&#10;&#10;<!DOCTYPE html>&#10;<html lang=&quot;en&quot;>&#10;<head><title>My Page</title></head>&#10;<body>&#10;  <h1>Hello World</h1>&#10;  <img src=&quot;photo.jpg&quot;>&#10;</body>&#10;</html>" spellcheck="false" aria-required="true"></textarea>
         <fieldset class="engine-selection">
-          <legend>Select testing engine(s)</legend>
+          <legend>Which check-engines to use (leave all on if you are not sure)</legend>
           <label class="engine-option">
             <input type="checkbox" id="engine-axe" checked>
-            <span><strong>axe-core</strong> - Industry standard, zero false positives, WCAG 2.2</span>
+            <span><strong>axe-core</strong> - The most trusted open-source engine. Never reports a problem that is not real.</span>
           </label>
           <label class="engine-option">
             <input type="checkbox" id="engine-htmlcs" checked>
-            <span><strong>HTML_CodeSniffer</strong> - Catches additional issues, includes warnings and advisories</span>
+            <span><strong>HTML_CodeSniffer</strong> - Catches some things axe misses. Also flags things worth a second look.</span>
           </label>
           <label class="engine-option">
             <input type="checkbox" id="engine-ibm" checked>
-            <span><strong>IBM Equal Access</strong> - Open-source engine from IBM with rules for WCAG 2.1 AAA, ARIA patterns and mobile a11y</span>
+            <span><strong>IBM Equal Access</strong> - IBM's engine. Adds mobile-web checks and stricter rules.</span>
           </label>
         </fieldset>
         <div class="checker-actions">
           <button type="button" class="checker-btn" id="run-check" aria-describedby="checker-status">
-            Run Accessibility Check
+            Check this page
           </button>
           <button type="button" class="checker-btn checker-btn--secondary" id="clear-check">
             Clear
