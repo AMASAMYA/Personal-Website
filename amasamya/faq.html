@@ -165,45 +165,25 @@
     <summary>What is AMASAMYA?</summary>
     <div class="answer">
       <p>
-        AMASAMYA is an accessibility audit toolkit for the web. It has two
-        parts: a Chrome browser extension that audits whatever page you are
-        looking at, and a web platform at amasamya.akhileshmalani.com that
-        ingests results from the extension, aggregates them, and produces
-        manager-readable reports. Both are built blind-first: the user
-        interface is itself fully operable with a keyboard and a screen
-        reader.
+        AMASAMYA is a free tool that checks websites, documents, and apps for problems that stop blind and low-vision people from using them. You can use it two ways: as an add-on for Chrome, Edge, or Firefox that checks whatever page you are looking at, or as a website you sign into that checks pages, files, and apps in your browser.
       </p>
     </div>
   </details>
 
   <details>
-    <summary>Who built it and why?</summary>
+    <summary>Who made it and why?</summary>
     <div class="answer">
       <p>
-        Akhilesh Malani built it. Akhilesh is blind, uses NVDA and JAWS
-        daily, and has spent his career auditing accessibility at Virtusa
-        Consultancy, Tech Mahindra, HCL Technology, and Prakat Solutions,
-        with an earlier technical-support role at Mphasis before moving
-        into accessibility. The tools on the market work, but very few of
-        them were built to be used <em>by</em> the people they are testing
-        the web for. AMASAMYA exists to close that gap. Read more on the
-        <a href="/about.html">About Akhilesh</a> page.
+        Akhilesh Malani, a blind engineer in Chennai who has been using a screen reader every day for over 16 years. Most accessibility tools on the market work fine if you can see. Very few of them are actually usable by the blind engineers, designers, and testers those tools are supposed to help. AMASAMYA exists because Akhilesh could not find a tool he could use on his own without asking a sighted colleague to read the results to him. There is more on the <a href="/about.html">About Akhilesh</a> page.
       </p>
     </div>
   </details>
 
   <details>
-    <summary>What does "blind-first" actually mean?</summary>
+    <summary>What does "made to be used by blind people" actually mean?</summary>
     <div class="answer">
       <p>
-        It means three concrete things. First, every UI element in the
-        extension and the platform is reachable by keyboard, announces a
-        sensible name and role to NVDA and JAWS, and works without the
-        mouse. Second, audit findings are presented as tables and lists
-        rather than visual overlays, because overlays do not survive a
-        screen-reader read. Third, the development process itself
-        includes screen-reader testing of every release, not as an
-        afterthought.
+        Three concrete things. One, everything in AMASAMYA works with a keyboard and a screen reader from start to finish. No mouse needed. Two, results are shown as plain lists and tables, not as highlights drawn over the page you are checking. Highlights only help if you can see them. Three, every new version is tested with a screen reader before it ships. Not as a last check, as the main check.
       </p>
     </div>
   </details>
@@ -214,9 +194,7 @@
     <summary>Is AMASAMYA free?</summary>
     <div class="answer">
       <p>
-        Yes, today both the Chrome extension and the platform are free to
-        use. The extension is published on the Chrome Web Store at no
-        cost. The platform has a free Firebase sign-in and no paywall.
+        Yes. The browser add-on is free on the Chrome, Edge, and Firefox stores. The website is free to sign into and free to use.
       </p>
     </div>
   </details>
@@ -225,72 +203,45 @@
     <summary>Will it stay free?</summary>
     <div class="answer">
       <p>
-        The Chrome extension will stay free and open-source. The platform
-        may add a paid tier in future with team accounts, scheduled
-        crawls, bug-tracker integrations, and stored audit history.
-        Anything that exists in the free platform today will remain
-        available to existing users; new paid features will be additions
-        on top, not replacements.
+        Yes for the browser add-on, always. For the website, the plan is that everything you can do today stays free. If a paid version ever comes along, it will be new things stacked on top (team accounts, connections to your bug tracker, longer history), not a lock on things that used to be free.
       </p>
     </div>
   </details>
 
   <details>
-    <summary>Can I use AMASAMYA for client work?</summary>
+    <summary>Can I use it for paid client work?</summary>
     <div class="answer">
       <p>
-        Yes. There is no restriction on using AMASAMYA to audit client
-        sites or to produce reports for clients, including paid client
-        engagements. The Chrome extension source is MIT-licensed at
-        github.com/AMASAMYA/AMASAMYA so you can also fork it for
-        your own internal use.
+        Yes. Use AMASAMYA to check your clients' sites and hand them the report. Charge for your time. The source code is public if you want to build it into your own team's workflow.
       </p>
     </div>
   </details>
 
-  <h2>What AMASAMYA actually checks</h2>
+  <h2>What AMASAMYA checks (and does not)</h2>
 
   <details>
-    <summary>How many WCAG 2.2 success criteria does it cover?</summary>
+    <summary>How much of the standard does it cover?</summary>
     <div class="answer">
       <p>
-        The Chrome extension v4.2.0 ships with 24 automated audit engines
-        covering WCAG 2.2 success criteria across Levels A and AA. From
-        v4.2.0 onwards the same engines can also be run across a whole
-        website in one go through the Site Crawl feature (up to 200 pages
-        per run, three pages audited in parallel). A complete engine list
-        is in the README at github.com/AMASAMYA/AMASAMYA. Reliable
-        automated coverage of the full WCAG 2.2 success-criteria set is
-        not possible from any tool; see the
-        <a href="/limitations.html">Known limitations</a> page for an
-        honest list of what AMASAMYA does not catch.
+        AMASAMYA runs 25 automated checks against the international web accessibility standard (called WCAG 2.2), covering the two most-required levels (A and AA). You can also run it across a whole website in one go, up to 200 pages at a time. No automated tool covers the full standard by itself, because some checks need a human to look at the page. The <a href="/limitations.html">known limitations</a> page has an honest list of what AMASAMYA cannot catch on its own.
       </p>
     </div>
   </details>
 
   <details>
-    <summary>What can it audit beyond web pages?</summary>
+    <summary>Does it work on anything besides web pages?</summary>
     <div class="answer">
       <p>
-        The platform has a Document Audit feature for PDF and Office
-        document accessibility. There is also a structured mobile
-        accessibility checklist for guided manual review of mobile apps
-        (iOS and Android). The extension is web-only.
+        Yes. Upload a PDF or a Word/Excel/PowerPoint file and it checks the document. Follow the mobile checklist to check an iPhone or Android app. The browser add-on itself only checks websites.
       </p>
     </div>
   </details>
 
   <details>
-    <summary>Does AMASAMYA fix accessibility issues automatically?</summary>
+    <summary>Does AMASAMYA fix problems for me automatically?</summary>
     <div class="answer">
       <p>
-        No, and on purpose. AMASAMYA finds issues and tells you how to
-        fix them. It does not modify the audited page. Tools that
-        promise automatic remediation through a JavaScript overlay are
-        widely criticised by the accessibility community for not
-        actually solving underlying problems and for sometimes making
-        the page worse for assistive technology. AMASAMYA is the
-        opposite of an overlay.
+        No, and that is on purpose. AMASAMYA tells you what is broken and how to fix it in your code. It does not touch the page you are checking. There are "one-line-of-code" widgets sold as accessibility fixers; they do not actually work, and the accessibility community has been clear about that for years. AMASAMYA is the opposite of one of those.
       </p>
     </div>
   </details>
@@ -298,14 +249,10 @@
   <h2>Data and privacy</h2>
 
   <details>
-    <summary>Where is my audit data stored?</summary>
+    <summary>Where does my data go?</summary>
     <div class="answer">
       <p>
-        Extension audit results live in your browser's session storage
-        and are gone when the browser session ends. Platform sessions
-        are tied to your sign-in and stored in Firebase Firestore under
-        your user record. The developer never receives copies of your
-        audit findings.
+        Checks you run in the browser add-on stay on your own computer and disappear when you close the browser. If you sign into the website, your saved history is kept in your account (hosted on Google's Firebase). Nobody at AMASAMYA sees what you check.
       </p>
     </div>
   </details>
@@ -314,55 +261,36 @@
     <summary>Do you sell or share my data?</summary>
     <div class="answer">
       <p>
-        No. AMASAMYA does not sell, rent, or share any user data with
-        third parties for advertising or profiling. The only external
-        transfer that the extension or platform makes is the optional
-        sending of page screenshots to a Vision AI provider you have
-        configured (Anthropic, OpenAI, or Google Gemini), using your
-        own API key. Full details on the
-        <a href="/privacy.html">Privacy Policy</a> page.
+        No. AMASAMYA does not sell, rent, or share any user data. Ever. The one time anything leaves your computer is if you turn on the optional AI helpers, which send screenshots to the AI service you picked (OpenAI, Anthropic, or Google) using your own key. Full details on the <a href="/privacy.html">privacy page</a>.
       </p>
     </div>
   </details>
 
   <details>
-    <summary>Do I need to sign in to use the extension?</summary>
+    <summary>Do I need to sign in to use the browser add-on?</summary>
     <div class="answer">
       <p>
-        No. The Chrome extension works without any sign-in. The platform
-        requires a free Firebase account so it can save your audit
-        history across sessions.
+        No. Install it and use it. No account needed. Signing in only applies to the website version, and only so it can remember your checks across devices.
       </p>
     </div>
   </details>
 
-  <h2>Comparisons</h2>
+  <h2>How AMASAMYA compares to other tools</h2>
 
   <details>
-    <summary>How does AMASAMYA compare to axe DevTools, WAVE, Lighthouse?</summary>
+    <summary>How is AMASAMYA different from other accessibility tools?</summary>
     <div class="answer">
       <p>
-        All three are mature, credible tools. axe DevTools (and the
-        axe-core rule library that also powers Lighthouse) is the
-        de-facto industry standard rule set. WAVE is a trusted academic
-        tool from WebAIM with a strong visual overlay. AMASAMYA's
-        distinctive points are: blind-first UI, WCAG 2.2 coverage at
-        Level AA from day one, Vision AI integration with the user's
-        own API keys, and an MIT-licensed open-source extension. None
-        of those tools and AMASAMYA fully cover all WCAG 2.2; manual
-        testing is always required.
+        Most accessibility tools (axe, WAVE, Lighthouse, and others) are trusted and useful. What AMASAMYA does that the others do not: it works cleanly with a screen reader from start to finish, so a blind engineer can use it without help; it also watches what happens when someone tries to use the page with a keyboard, so it catches broken menus and dead-end pages that pure code-checkers miss; and it is fully free and open source. If you already use another tool, use AMASAMYA alongside it. Different tools catch different things.
       </p>
     </div>
   </details>
 
   <details>
-    <summary>Should I use AMASAMYA instead of axe?</summary>
+    <summary>Should I use AMASAMYA instead of the tool I already have?</summary>
     <div class="answer">
       <p>
-        Use both if you can. Different rule libraries catch different
-        issues. AMASAMYA is designed to be honest about its limits, so
-        running it alongside another tool is encouraged rather than
-        discouraged.
+        Use both. Every tool catches things others miss. AMASAMYA is honest about what it does not find, so it is designed to sit next to another tool, not to replace it.
       </p>
     </div>
   </details>
@@ -370,14 +298,10 @@
   <h2>Getting help</h2>
 
   <details>
-    <summary>How do I report a bug or request a feature?</summary>
+    <summary>How do I report a bug or ask for a feature?</summary>
     <div class="answer">
       <p>
-        Use the <a href="/feedback.html">Send feedback</a> page on this
-        site, or open an issue at
-        <a href="https://github.com/AMASAMYA/AMASAMYA/issues" rel="noopener">github.com/AMASAMYA/AMASAMYA</a>.
-        AMASAMYA is built and maintained by one person, so response
-        times depend on what else is in flight; every report is read.
+        Use the <a href="/feedback.html">feedback page</a> on this site, or open an issue at <a href="https://github.com/AMASAMYA/AMASAMYA/issues" rel="noopener">github.com/AMASAMYA/AMASAMYA</a>. AMASAMYA is made by one person in his spare time, so a reply might not be instant. Every message is read.
       </p>
     </div>
   </details>
