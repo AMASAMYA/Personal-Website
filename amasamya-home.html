@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AMASAMYA is an accessibility audit suite built and shipped by a blind engineer. Live on Chrome, Microsoft Edge, Firefox, and Android. Covers WCAG 2.2, GIGW 3.0, and IS 17802. Exports VPAT 2.4 ACR one-click. Founded and engineered by Akhilesh Malani.">
-  <meta name="keywords" content="AMASAMYA, accessibility audit, accessibility audit tool, WCAG 2.2, GIGW 3.0, IS 17802, VPAT 2.4 ACR, screen reader, NVDA, JAWS, TalkBack, VoiceOver, browser extension, Chrome, Edge, Firefox, Android, Akhilesh Malani">
+  <meta name="description" content="Free tool that finds accessibility problems on your website or Android app and tells you how to fix each one. Built by a blind engineer. For Chrome, Edge, Firefox, and Android.">
+  <meta name="keywords" content="AMASAMYA, accessibility, accessibility tool, website accessibility, app accessibility, blind users, screen reader, Chrome extension, Edge extension, Firefox add-on, Android accessibility, Akhilesh Malani">
   <meta name="author" content="Akhilesh Malani">
   <meta name="theme-color" content="#0b192c">
   <link rel="canonical" href="https://amasamya.com/">
@@ -12,11 +12,11 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://amasamya.com/">
   <meta property="og:title" content="AMASAMYA - Accessibility Audit Suite for Chrome, Edge, Firefox, and Android">
-  <meta property="og:description" content="AMASAMYA is an accessibility audit suite by a blind engineer. Live on Chrome, Microsoft Edge, Firefox, and Google Play. Covers WCAG 2.2, GIGW 3.0, and IS 17802 Part 1:2021. Exports VPAT 2.4 ACR one-click.">
+  <meta property="og:description" content="Free tool that finds accessibility problems on your website or Android app and tells you how to fix each one. Built by a blind engineer.">
   <meta property="og:site_name" content="AMASAMYA">
   <meta property="og:image" content="https://akhileshmalani.com/images/og-banner.png">
 
-  <title>AMASAMYA - Accessibility Audit Suite for Chrome, Edge, Firefox, and Android</title>
+  <title>AMASAMYA - Find and fix accessibility problems on your site or app</title>
   <link rel="icon" type="image/svg+xml" href="images/logo-icon.svg">
   <link rel="preload" href="styles.css" as="style">
   <link rel="stylesheet" href="styles.css">
@@ -260,21 +260,20 @@
     <section class="platform-hero">
       <div class="container">
         <div class="badge-row">
-          <span class="hero-badge">Accessibility Audit Suite</span>
-          <span class="hero-badge">WCAG 2.2, GIGW 3.0 & IS 17802</span>
-          <span class="hero-badge">Live on four surfaces</span>
+          <span class="hero-badge">Free forever</span>
+          <span class="hero-badge">Built by a blind engineer</span>
         </div>
         <h1 id="platform-title">AMASAMYA</h1>
         <p class="byline">
-          <strong>Accessibility audit suite built by a blind engineer.</strong> Runs WCAG 2.2, GIGW 3.0, and IS 17802 Part 1:2021 checks on any web page or Android app.
+          <strong>Find out what is broken on your website or Android app for blind and low-vision users.</strong> Install it, run it, get a list of problems with a fix for each one.
         </p>
 
         <div class="cta-row">
-          <a href="/checker" class="btn-hero-primary">Launch Web Audit Portal</a>
+          <a href="/checker" class="btn-hero-primary">Check a website now</a>
           <a href="https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif" class="btn-hero-sec" rel="external">Install for Chrome</a>
           <a href="https://microsoftedge.microsoft.com/addons/detail/amasamya-accessibility-/enpnjjkakecacidhckphimkmhobjcblj" class="btn-hero-sec" rel="external">Install for Edge</a>
           <a href="https://addons.mozilla.org/en-US/firefox/addon/amasamya-accessibility-audit/" class="btn-hero-sec" rel="external">Install for Firefox</a>
-          <a href="https://play.google.com/store/apps/details?id=org.amasamya.accessibility" class="btn-hero-sec" rel="external">Get it on Google Play</a>
+          <a href="https://play.google.com/store/apps/details?id=org.amasamya.accessibility" class="btn-hero-sec" rel="external">Get the Android app</a>
         </div>
       </div>
     </section>
@@ -282,64 +281,62 @@
     <!-- Product Overview -->
     <section class="platform-section">
       <div class="container">
-        <h2 id="overview-title" class="section-title">What AMASAMYA is</h2>
+        <h2 id="overview-title" class="section-title">What does AMASAMYA do?</h2>
         <p style="font-size: 1.05rem; line-height: 1.6; color: var(--color-text);">
-          One accessibility audit engine. Four surfaces. Keyboard operable throughout, with meaningful screen-reader announcements at every state change.
+          Websites and apps often have problems that stop blind and low-vision people from using them. Missing labels on buttons. Text that is too light to read. Menus you cannot open with a keyboard. AMASAMYA finds these problems on your website or Android app and tells you how to fix each one. You do not need to know accessibility to use it.
         </p>
 
         <div class="pillars-grid">
 
           <!-- Browser extensions -->
           <article class="pillar-card">
-            <h3 id="p1-title">Browser extensions</h3>
-            <p class="pillar-lead">Chrome, Microsoft Edge, and Firefox. Free.</p>
+            <h3 id="p1-title">For Chrome, Edge, and Firefox</h3>
+            <p class="pillar-lead">Free browser add-on.</p>
             <p>
-              Runs 24 audit engines per page and site-wide, via built-in crawler.
+              Open any web page. Press Alt plus Shift plus 1. In a few seconds you get a list of problems on that page, worst first, with the fix for each.
             </p>
             <ul class="pillar-features">
-              <li><strong>Findings row announces the affected component's CSS selector</strong>, so screen-reader users hear which element failed without expanding the row.</li>
-              <li><strong>One-click VPAT 2.4 ACR export</strong> for procurement conversations.</li>
-              <li><strong>Accessible PDF export</strong> via print-to-PDF, tagged reading order preserved.</li>
-              <li><strong>Visual audit diffs</strong>: New, Regressed, Unchanged, Resolved across runs.</li>
-              <li><strong>Scheduled crawls</strong> post summaries to Slack, Teams, or a generic webhook.</li>
+              <li><strong>Check a whole website at once</strong>, up to 200 pages in one run, not just the page you are on.</li>
+              <li><strong>See what changed since last time</strong>, so you know if your fixes worked and nothing new broke.</li>
+              <li><strong>Run checks on their own</strong>, daily or weekly, and post the results to Slack or Microsoft Teams.</li>
+              <li><strong>Download a report</strong> to hand to your compliance team, procurement, or a regulator.</li>
             </ul>
-            <a href="/extension" class="btn-link">Extension details and install links</a>
+            <a href="/extension" class="btn-link">See what the add-on does</a>
           </article>
 
           <!-- Android app -->
           <article class="pillar-card">
-            <h3 id="p2-title">Android app</h3>
-            <p class="pillar-lead">Audits other Android apps live via the AccessibilityService API. Free.</p>
+            <h3 id="p2-title">For Android apps</h3>
+            <p class="pillar-lead">Free Android app.</p>
             <p>
-              Attaches to Android's Accessibility Service to audit any installed app in real time, without source code or a rebuild.
+              Install it on your phone. Point it at any other app already on the phone. It watches you use that app and tells you where a blind or low-vision person would get stuck.
             </p>
             <ul class="pillar-features">
-              <li><strong>Live TalkBack captions</strong> as you interact, so sighted developers see what a blind user hears.</li>
-              <li><strong>Touch-target boundary mapper</strong> with pass, borderline, and fail markers against WCAG 2.5.5 and 2.5.8.</li>
-              <li><strong>Focus-trail visualiser and focus-trap detector.</strong></li>
-              <li><strong>Contrast drift scanner</strong> for text and UI-component colours.</li>
-              <li><strong>TalkBack simulator mode</strong> for sighted testers, no need to enable the system-wide screen reader.</li>
+              <li><strong>Hear what a blind user hears</strong> as you tap through your app, so you know if the buttons are labelled clearly.</li>
+              <li><strong>Check whether buttons are big enough</strong> to tap with one finger without missing.</li>
+              <li><strong>Find dead ends</strong> where a blind user gets stuck and cannot go back.</li>
+              <li><strong>Try your app as a blind user would</strong>, without turning on the phone's own screen reader.</li>
             </ul>
             <a href="https://play.google.com/store/apps/details?id=org.amasamya.accessibility" class="btn-link" rel="external">Get it on Google Play</a>
           </article>
 
           <!-- Web audit portal -->
           <article class="pillar-card">
-            <h3 id="p3-title">Web Audit Portal</h3>
-            <p class="pillar-lead">Browser-based, no install. Free.</p>
+            <h3 id="p3-title">Right here in your browser</h3>
+            <p class="pillar-lead">No install. Free.</p>
             <p>
-              Full audit engine on a bookmarkable web page. Paste a URL, run the audit, download VPAT and accessible PDF. Useful when you cannot install a browser extension.
+              Paste a website address. Get a report in seconds. Useful when you cannot install add-ons on the machine you are using, or when you want to check a single page fast.
             </p>
-            <a href="/checker" class="btn-link">Open the Web Audit Portal</a>
+            <a href="/checker" class="btn-link">Check a website now</a>
           </article>
 
         </div>
 
         <!-- Trust & Compliance Banner -->
         <section class="trust-banner">
-          <h3 id="trust-title" style="margin-top: 0; color: var(--color-primary); font-size: 1.2rem;">Built on lived experience and enterprise standards</h3>
+          <h3 id="trust-title" style="margin-top: 0; color: var(--color-primary); font-size: 1.2rem;">Who made this and why</h3>
           <p style="margin: 0; font-size: 0.95rem; line-height: 1.6; color: var(--color-text-light);">
-            Created by Akhilesh Malani, a blind Accessibility Architect with 16+ years across Virtusa Consultancy, Tech Mahindra, HCL Technology, and Prakat Solutions, plus an earlier technical-support role at Mphasis, and built in personal capacity. Every tool aims to conform to WCAG 2.2 Level AA. Our conformance position is set out in the <a href="/accessibility">Accessibility Statement</a>.
+            AMASAMYA is made by Akhilesh Malani, a blind engineer in Chennai. Akhilesh has used a screen reader every day for over 16 years and works as an Accessibility Architect at Virtusa Consultancy in his day job. He built AMASAMYA in his personal time because he could not find an accessibility tool that a blind engineer could use on their own, without asking a sighted person for help. It is free. It always will be. Read the <a href="/accessibility">accessibility statement</a> to see how AMASAMYA measures up against the same standards it checks other sites against.
           </p>
         </section>
 
