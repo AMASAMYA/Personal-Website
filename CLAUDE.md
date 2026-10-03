@@ -85,7 +85,7 @@ this project, ever, going forward.
 
 - **Personal-Website** (this repo) hosts three product surfaces plus the founder portfolio:
   1. akhileshmalani.com - personal portfolio + blog.
-  2. amasamya.akhileshmalani.com - the AMASAMYA audit platform (single-file SPA in `amasamya/index.html`, Firebase Auth + Firestore).
+  2. amasamya.akhileshmalani.com - the AMASAMYA audit platform (single-file SPA in `amasamya/index.html`, Firebase Auth + Firestore). **Frozen as of 2026-10-03** (zero end-user engagement since launch); pages stay live because the extensions and store listings link to them, but no new features and no language sweeps without an explicit go-ahead. See memory: `project-platform-freeze`.
   3. amasamya.com - **product brand home** (live), serves `amasamya-home.html`. Rewritten 2026-09-15 to be product-only (the four surfaces, the Web Audit Portal, install links). Previous two-pillar framing that included AMASAMYA Academy was retired; see the Academy note below.
 
 - **Domains owned:** akhileshmalani.com (root portfolio, live), amasamya.com (mega-platform home, live), amasamya.org and amasamya.in (reserved, not yet pointed anywhere). Netlify auto-deploys on push to `main`.
