@@ -1,12 +1,12 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-09-30 (v5.4.1 packaged for all three stores after Akhilesh's NPCI-audit review flagged 224 Interaction Sweep false positives and 590 total findings on one page. Chrome, Edge, Firefox all live at v5.4.0 pending v5.4.1 upload).
+Last reviewed: 2026-10-03 (v5.4.1 live on all three stores. Firefox approved 2026-09-30 at 05:46 UTC same-day, confirmed via AMO public API. Chrome and Edge approval dates in the 2026-09-30 to 2026-10-03 window pending confirmation from Akhilesh's approval emails. Web platform at amasamya.akhileshmalani.com is frozen as of 2026-10-03 per the project-platform-freeze.md memory; its PLATFORM_VERSION stays at 5.4.0 and does not track extension patch bumps).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
 
-## Packaged for all three stores: v5.4.1 (2026-09-30)
+## Live on all three stores: v5.4.1 (2026-09-30)
 
 Same-day patch after Akhilesh reviewed the v5.4.0 audit against npci.org.in and reported 590 findings with roughly 224 of them false positives from the Interaction Sweep focus-indicator detector. Three fixes.
 
