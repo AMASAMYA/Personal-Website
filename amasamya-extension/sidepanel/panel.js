@@ -1325,7 +1325,7 @@
           driver: {
             name: 'AMASAMYA',
             version: '5.2.0',
-            informationUri: 'https://amasamya.akhileshmalani.com',
+            informationUri: 'https://platform.amasamya.com',
             rules
           }
         },

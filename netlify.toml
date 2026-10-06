@@ -82,23 +82,35 @@
   to = "/"
   status = 301
 
-# AMASAMYA subdomain - root path serves the public landing page so that
-# Google has something indexable to find. The auth-walled app at
-# /amasamya/index.html still emits <meta robots="noindex,nofollow"> and
-# is reachable directly via /index.html (preserved by the wildcard rewrite
-# below). Order matters: this specific match must come before the wildcard.
+# platform.amasamya.com - canonical home for the audit platform.
+# Root path serves the public landing page; auth-walled app at /index.html
+# is still reachable via the wildcard rewrite below. Order matters: specific
+# paths must precede the wildcard.
 [[redirects]]
-  from = "https://amasamya.akhileshmalani.com/"
+  from = "https://platform.amasamya.com/"
   to = "/amasamya/landing.html"
   status = 200
   force = true
 
-# AMASAMYA subdomain - clean URLs for the marketing-page links so they
-# don't 404 when Google or a Chrome Web Store reviewer follows them.
 [[redirects]]
-  from = "https://amasamya.akhileshmalani.com/credits"
+  from = "https://platform.amasamya.com/credits"
   to = "/amasamya/credits.html"
   status = 200
+  force = true
+
+# Old subdomain permanently redirects to the canonical platform domain.
+# Keep amasamya.akhileshmalani.com as a custom domain on the Netlify site
+# so Netlify can serve these 301s; do not remove it from the domain list.
+[[redirects]]
+  from = "https://amasamya.akhileshmalani.com/"
+  to = "https://platform.amasamya.com/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://amasamya.akhileshmalani.com/credits"
+  to = "https://platform.amasamya.com/credits"
+  status = 301
   force = true
 
 # AMASAMYA apex domain web app platform routes
@@ -122,11 +134,18 @@
   to = "/amasamya/:splat"
   status = 200
 
-# AMASAMYA subdomain rewrite - every other path serves /amasamya/ content
+# platform.amasamya.com wildcard - every other path serves /amasamya/ content
 [[redirects]]
-  from = "https://amasamya.akhileshmalani.com/*"
+  from = "https://platform.amasamya.com/*"
   to = "/amasamya/:splat"
   status = 200
+  force = true
+
+# Old subdomain wildcard - redirect everything else to the new domain
+[[redirects]]
+  from = "https://amasamya.akhileshmalani.com/*"
+  to = "https://platform.amasamya.com/:splat"
+  status = 301
   force = true
 
 # Redirect old /ama11y/ paths on apex domain to new /amasamya/ paths (backward compat).

@@ -7,7 +7,7 @@
   <meta name="description" content="Tell Akhilesh what is working, what is broken, or what you wish AMASAMYA could do. Every submission is read.">
   <meta name="author" content="Akhilesh Malani">
   <meta name="robots" content="noindex, nofollow">
-  <link rel="canonical" href="https://amasamya.akhileshmalani.com/feedback.html">
+  <link rel="canonical" href="https://platform.amasamya.com/feedback.html">
 
   <!-- Firebase compat SDKs. Loaded the same way as auth.html so we
        can write to Firestore with anonymous auth: the user does not
@@ -274,7 +274,7 @@
     <div class="field">
       <label for="fb-url">Page or URL this is about (optional)</label>
       <p class="hint" id="fb-url-hint">
-        For example https://amasamya.akhileshmalani.com/faq.html or the
+        For example https://platform.amasamya.com/faq.html or the
         site you were auditing when the bug happened.
       </p>
       <input type="url" id="fb-url" name="url" maxlength="500"
@@ -435,7 +435,7 @@
       ua:        (navigator.userAgent || '').slice(0, 400),
       anonUid:   uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      source:    'amasamya.akhileshmalani.com/feedback.html'
+      source:    'platform.amasamya.com/feedback.html'
     };
     return firebase.firestore().collection('feedback').add(doc);
   }

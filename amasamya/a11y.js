@@ -7,7 +7,7 @@
  * every preference.
  *
  * Uses the same localStorage keys as the portfolio so a user who
- * switches between akhileshmalani.com and amasamya.akhileshmalani.com
+ * switches between akhileshmalani.com and platform.amasamya.com
  * carries the same preferences (localStorage is per-origin, so this
  * gives cross-page-within-subdomain persistence only; portfolio and
  * platform each maintain their own copy under the same key names).

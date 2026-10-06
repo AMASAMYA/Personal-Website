@@ -77,7 +77,7 @@ exports.handler = async function (event) {
     const upstream = await fetch(rawUrl, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'AMASAMYA-Checker/3.1.0 (Accessibility Auditor; +https://amasamya.akhileshmalani.com)',
+        'User-Agent': 'AMASAMYA-Checker/3.1.0 (Accessibility Auditor; +https://platform.amasamya.com)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en',
       },

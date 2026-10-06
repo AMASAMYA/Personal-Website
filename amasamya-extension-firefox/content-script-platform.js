@@ -1,7 +1,7 @@
 /**
  * AMASAMYA Extension - Platform Bridge Content Script
  *
- * Runs on the AMASAMYA Platform page (https://amasamya.akhileshmalani.com).
+ * Runs on the AMASAMYA Platform page (https://platform.amasamya.com).
  *
  * Purpose:
  *   The background service worker cannot directly call functions on a web

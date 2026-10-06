@@ -10,7 +10,7 @@
 
 'use strict';
 
-const PLATFORM_URL = 'https://amasamya.akhileshmalani.com';
+const PLATFORM_URL = 'https://platform.amasamya.com';
 
 /* v4.3.1 (2026-07-08): the SITE_CRAWL_ENABLED feature flag lived here
    as a dead constant since v4.2.0 shipped Site Crawl. Removed to make
@@ -565,7 +565,8 @@ async function startFocusNarrator() {
     /* Guard against running on the AMASAMYA platform itself or the side-panel
        extension page - common mistake when users have the AMASAMYA tab focused
        and the bank/audit-target tab in the background. */
-    if (tab.url.startsWith('https://amasamya.akhileshmalani.com') ||
+    if (tab.url.startsWith('https://platform.amasamya.com') ||
+        tab.url.startsWith('https://amasamya.akhileshmalani.com') ||
         tab.url.startsWith('http://localhost:3000/amasamya')) {
       chrome.runtime.sendMessage({
         type: 'focus-narrator-ui',
@@ -844,7 +845,8 @@ async function startVisualLayoutAudit() {
       notifyPanelError('Cannot audit browser internal pages.'); return;
     }
     /* Same cross-tab guard as Focus Narrator. */
-    if (tab.url.startsWith('https://amasamya.akhileshmalani.com') ||
+    if (tab.url.startsWith('https://platform.amasamya.com') ||
+        tab.url.startsWith('https://amasamya.akhileshmalani.com') ||
         tab.url.startsWith('http://localhost:3000/amasamya')) {
       chrome.runtime.sendMessage({
         type: 'visual-layout-ui',
@@ -1351,7 +1353,7 @@ function notifyPanelError(msg) {
     const unsynced = runs.filter(r => r && !r.syncedAt);
     if (unsynced.length === 0) return;
     /* PLATFORM_URL is defined elsewhere in background.js; matches
-       https://amasamya.akhileshmalani.com. */
+       https://platform.amasamya.com. */
     let tabs = [];
     try {
       tabs = await chrome.tabs.query({ url: PLATFORM_URL + '/*' });

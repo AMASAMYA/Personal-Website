@@ -493,7 +493,7 @@ function generateSitemap(posts) {
      subdomains as separate properties, so this is not a substitute
      for submitting the subdomain sitemap in Search Console, but it
      helps discovery from the apex domain's crawl budget. */
-  urls.push('  <url>\n    <loc>https://amasamya.akhileshmalani.com/</loc>\n    <lastmod>' + today + '</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.9</priority>\n  </url>');
+  urls.push('  <url>\n    <loc>https://platform.amasamya.com/</loc>\n    <lastmod>' + today + '</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.9</priority>\n  </url>');
 
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls.join('\n') + '\n</urlset>\n';
 }
