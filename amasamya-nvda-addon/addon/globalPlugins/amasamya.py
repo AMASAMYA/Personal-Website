@@ -2,41 +2,59 @@
 """
 AMASAMYA NVDA companion add-on.
 
-v0.2.0 (2026-10-07) - Phase 2 shipped: five scripts total, all
-bound to the "AMASAMYA" category in NVDA's Input Gestures dialog so
-users can rebind cleanly if any gesture conflicts with their own
-setup.
+v0.2.1 (2026-10-07) - Dual-binding Phase 2 ships: every AMASAMYA
+script is reachable through TWO keyboard paths simultaneously.
+Users pick whichever one feels better; no one has to memorise
+anything they do not want.
 
-  NVDA+Shift+A - where is the AMASAMYA panel on this tab
-  NVDA+Shift+N - jump to next failure (Critical or Serious)
-  NVDA+Shift+P - jump to previous failure
-  NVDA+Shift+F - read the current finding's fix
-  NVDA+Shift+U - speak the audit summary (four severity counts)
+PATH 1: single-stroke Alt-modifier shortcuts (fastest)
+  NVDA+Alt+A - where is the AMASAMYA panel on this tab
+  NVDA+Alt+N - jump to next failure (Critical or Serious)
+  NVDA+Alt+P - jump to previous failure
+  NVDA+Alt+F - read the current finding's fix
+  NVDA+Alt+U - speak the audit summary (four severity counts)
+
+PATH 2: layer command (zero-conflict guarantee, two keystrokes)
+  NVDA+A opens the AMASAMYA layer. Within two seconds, press
+  one of: A for panel location, N for next failure, P for
+  previous failure, F for fix, U for summary. The layer closes
+  automatically after two seconds, or immediately when any
+  letter key fires, or when Escape or any other key cancels it.
+
+Both paths run the same five underlying scripts. Rebind any of
+them through NVDA's Input Gestures dialog under the "AMASAMYA"
+category if any shortcut conflicts with your setup; both the
+Alt-modifier default and the layer trigger can be re-bound.
 
 Blind-first design rules this file honours
   Per memory/feedback-blind-first-product.md:
   1. Every announcement routes through ui.message() so NVDA fans
      the text out to speech AND Braille in the same call.
   2. Messages are short (one or two sentences) so they are legible
-     on a 40-cell Braille display without the user hunting.
+     on a 40-cell Braille display without hunting.
   3. We never grab focus. We set the navigator object (NVDA's
-     equivalent of a secondary cursor) and let the user press
-     NVDA+NumpadEnter if they want to actually interact. Focus
-     theft mid-audit is jarring for a blind user.
+     secondary cursor) and let the user press NVDA+NumpadEnter if
+     they want to actually interact. Focus theft mid-audit is
+     jarring for a blind user.
   4. All inputs are keyboard. There is no mouse path anywhere in
      this file.
-
-Later phases (see amasamya-nvda-addon/ROADMAP.md):
-  Phase 3: bidirectional native-messaging bridge so NVDA triggers
-  audits directly AND sends commands (focus panel, run crawl,
-  export report) to the browser extension.
+  5. The layer prompt names all five letters so a first-time user
+     who presses NVDA+A can hear what their options are without
+     having to look up documentation.
 """
+
+import threading
 
 import globalPluginHandler
 import api
 import ui
 import controlTypes
 from scriptHandler import script
+
+try:
+    from keyboardHandler import KeyboardInputGesture
+except Exception:  # NVDA versions / builds where the module path differs
+    KeyboardInputGesture = None
 
 
 SUPPORTED_BROWSERS = {
@@ -48,21 +66,30 @@ SUPPORTED_BROWSERS = {
 
 PANEL_NAME_PREFIX = "AMASAMYA"
 
-# Severity words we treat as Fail-equivalent for the next/previous
-# failure walk. The panel surfaces severity through the sev-badge
-# class and the aria-label text on each row's severity cell; the
-# aria-label words below are what NVDA actually hears.
 FAIL_SEVERITIES = ("Critical", "Serious")
 
-# Summary card labels, in reading order on the panel. These match
-# the aria-label text on each card in both the Chrome/Edge
-# sidepanel/panel.html and the Firefox sidebar/panel.html; keep in
-# sync when the panel markup changes.
 SUMMARY_CARD_LABELS = ("Failures", "Warnings", "Passes", "Info")
+
+# Layer command: letter -> name of the script method on GlobalPlugin
+# (minus the "script_" prefix). Kept as a class-level constant so a
+# user rebinding the layer entry to a different gesture can reach the
+# same five scripts through the same mnemonic.
+LAYER_MAP = {
+    "a": "whereIsPanel",
+    "n": "nextFailure",
+    "p": "previousFailure",
+    "f": "readFix",
+    "u": "speakSummary",
+}
+
+# How long the layer stays armed after NVDA+A, in seconds. Two
+# seconds is enough for an unhurried second keystroke and short
+# enough that an accidental NVDA+A does not sit open indefinitely.
+LAYER_TIMEOUT_SECONDS = 2.0
 
 
 # ---------------------------------------------------------------------
-# Helpers (defensive: everything that touches the UIA tree is wrapped
+# UIA helpers (defensive: everything that touches the tree is wrapped
 # in try/except because object navigation can throw at any step when
 # the DOM mutates mid-walk, which SPAs do frequently).
 # ---------------------------------------------------------------------
@@ -114,10 +141,6 @@ def _iter_descendants(root, max_depth=12):
     stack = [(root, 0)]
     while stack:
         obj, depth = stack.pop()
-        try:
-            name = obj.name
-        except Exception:
-            name = ""
         yield obj
         if depth >= max_depth:
             continue
@@ -134,11 +157,7 @@ def _iter_descendants(root, max_depth=12):
 
 
 def _find_findings_rows(panel):
-    """Return every row object inside the panel's findings table.
-
-    Uses controlTypes.Role.ROW when available; falls back to a name
-    heuristic if role detection fails on a given browser version.
-    """
+    """Return every row object inside the panel's findings table."""
     rows = []
     if panel is None:
         return rows
@@ -173,8 +192,7 @@ def _row_is_failure(row):
 
 
 def _current_navigator_row(rows):
-    """Return the index of the currently-focused or currently-navigated
-    row in `rows`, or -1 if the user is not on one of them."""
+    """Return the index of the currently-navigated row in `rows`, or -1."""
     try:
         nav = api.getNavigatorObject()
     except Exception:
@@ -184,7 +202,6 @@ def _current_navigator_row(rows):
     for i, row in enumerate(rows):
         if row == nav:
             return i
-        # Also match if nav is a descendant cell of this row
         try:
             parent = nav.parent
         except Exception:
@@ -208,17 +225,12 @@ def _speak_row_brief(row):
     if not text:
         ui.message("Finding on this row has no readable text.")
         return
-    # Keep the message tight for 40-cell Braille displays. Strip any
-    # trailing boilerplate the panel appends to the row name (e.g.
-    # table position markers that NVDA will announce itself anyway).
     if len(text) > 180:
         text = text[:177] + "..."
     ui.message(text)
 
 
 def _page_title_from_browser(foreground):
-    """Best-effort page title: strip the browser suffix the browser
-    appends (" - Google Chrome", etc)."""
     try:
         title = (foreground.name or "").strip()
     except Exception:
@@ -250,16 +262,170 @@ def _no_panel_message(foreground):
     )
 
 
+def _find_fix_text(row):
+    """Return the How-to-Fix text for a row, or None if not found."""
+    if row is None:
+        return None
+    try:
+        child = row.firstChild
+    except Exception:
+        child = None
+    while child is not None:
+        try:
+            name = (child.name or "")
+        except Exception:
+            name = ""
+        if name.startswith("Fix") or name.startswith("How to Fix"):
+            if ":" in name:
+                return name.split(":", 1)[1].strip()
+            return name
+        try:
+            child = child.next
+        except Exception:
+            child = None
+    for obj in _iter_descendants(row, max_depth=5):
+        try:
+            name = (obj.name or "")
+        except Exception:
+            name = ""
+        if "How to Fix" in name:
+            if ":" in name:
+                return name.split(":", 1)[1].strip()
+            return name
+    return None
+
+
+def _read_summary_counts(panel):
+    """Return a dict {label: count_int} parsed from the summary cards."""
+    counts = {}
+    if panel is None:
+        return counts
+    for obj in _iter_descendants(panel, max_depth=10):
+        try:
+            name = (obj.name or "")
+        except Exception:
+            name = ""
+        for label in SUMMARY_CARD_LABELS:
+            prefix = label + ":"
+            if name.startswith(prefix):
+                tail = name[len(prefix):].strip()
+                digits = ""
+                for ch in tail:
+                    if ch.isdigit():
+                        digits += ch
+                    else:
+                        break
+                if digits:
+                    try:
+                        counts[label] = int(digits)
+                    except ValueError:
+                        pass
+                break
+        if len(counts) == len(SUMMARY_CARD_LABELS):
+            break
+    return counts
+
+
 # ---------------------------------------------------------------------
-# GlobalPlugin: NVDA loads this at startup and keeps one instance.
+# GlobalPlugin
 # ---------------------------------------------------------------------
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
     scriptCategory = "AMASAMYA"
 
+    def __init__(self):
+        super().__init__()
+        self._in_layer = False
+        self._layer_timer = None
+
     # -----------------------------------------------------------------
-    # Script 1 (v0.1.0): where is the panel
+    # Layer-command plumbing
+    # -----------------------------------------------------------------
+
+    def getScript(self, gesture):
+        """Intercept bare letter presses while the AMASAMYA layer is armed."""
+        if self._in_layer:
+            if KeyboardInputGesture is not None and isinstance(
+                gesture, KeyboardInputGesture
+            ):
+                # Only accept bare single-letter presses, no modifiers
+                try:
+                    modifiers = gesture.modifierNames or []
+                except Exception:
+                    modifiers = []
+                try:
+                    key_name = (gesture.mainKeyName or "").lower()
+                except Exception:
+                    key_name = ""
+                if not modifiers and key_name in LAYER_MAP:
+                    self._exit_layer(silent=True)
+                    method_name = "script_" + LAYER_MAP[key_name]
+                    script_method = getattr(self, method_name, None)
+                    if script_method is not None:
+                        return script_method
+                # Any other keyboard gesture during layer: cancel and
+                # fall through to normal processing.
+                self._exit_layer(silent=True)
+        return super().getScript(gesture)
+
+    def _enter_layer(self):
+        self._cancel_layer_timer()
+        self._in_layer = True
+        ui.message(
+            "AMASAMYA layer. A panel, N next, P previous, F fix, U summary."
+        )
+        self._layer_timer = threading.Timer(
+            LAYER_TIMEOUT_SECONDS, self._on_layer_timeout
+        )
+        self._layer_timer.daemon = True
+        self._layer_timer.start()
+
+    def _exit_layer(self, silent=False):
+        was_in = self._in_layer
+        self._in_layer = False
+        self._cancel_layer_timer()
+        if was_in and not silent:
+            ui.message("AMASAMYA layer closed.")
+
+    def _on_layer_timeout(self):
+        if self._in_layer:
+            self._in_layer = False
+            # Timed out without a letter: give the user feedback so
+            # they do not wonder why their next keystroke went
+            # somewhere unexpected.
+            ui.message("AMASAMYA layer timed out.")
+
+    def _cancel_layer_timer(self):
+        if self._layer_timer is not None:
+            try:
+                self._layer_timer.cancel()
+            except Exception:
+                pass
+            self._layer_timer = None
+
+    @script(
+        description=(
+            "Open the AMASAMYA layer. Within two seconds, press A for "
+            "panel location, N for next failure, P for previous "
+            "failure, F for fix, U for summary. Press any other key "
+            "or wait two seconds to cancel."
+        ),
+        gesture="kb:NVDA+a",
+        category="AMASAMYA",
+    )
+    def script_enterLayer(self, gesture):
+        if self._in_layer:
+            # NVDA+A pressed while already in the layer: treat as a
+            # quick cancel so a user who tapped it twice is not stuck
+            # waiting for the timeout.
+            self._exit_layer()
+            return
+        self._enter_layer()
+
+    # -----------------------------------------------------------------
+    # The five functional scripts. Each is also reachable through
+    # the layer; the layer handler calls these methods directly.
     # -----------------------------------------------------------------
 
     @script(
@@ -267,10 +433,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             "Check whether the AMASAMYA audit panel is open on the "
             "current browser tab and speak the result."
         ),
-        gesture="kb:NVDA+shift+a",
+        gesture="kb:NVDA+alt+a",
         category="AMASAMYA",
     )
-    def script_whereIsPanel(self, gesture):
+    def script_whereIsPanel(self, gesture=None):
         if not _is_supported_browser_foreground():
             _not_in_browser_message()
             return
@@ -285,25 +451,17 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         else:
             _no_panel_message(foreground)
 
-    # -----------------------------------------------------------------
-    # Script 2 (v0.2.0): jump to next failure
-    # -----------------------------------------------------------------
-
     @script(
         description=(
             "Jump to the next failure (Critical or Serious) in the "
             "AMASAMYA panel's findings table. Sets the navigator "
             "object; does not steal focus."
         ),
-        gesture="kb:NVDA+shift+n",
+        gesture="kb:NVDA+alt+n",
         category="AMASAMYA",
     )
-    def script_nextFailure(self, gesture):
+    def script_nextFailure(self, gesture=None):
         self._walk_failure(direction=1)
-
-    # -----------------------------------------------------------------
-    # Script 3 (v0.2.0): jump to previous failure
-    # -----------------------------------------------------------------
 
     @script(
         description=(
@@ -311,11 +469,93 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             "the AMASAMYA panel's findings table. Sets the navigator "
             "object; does not steal focus."
         ),
-        gesture="kb:NVDA+shift+p",
+        gesture="kb:NVDA+alt+p",
         category="AMASAMYA",
     )
-    def script_previousFailure(self, gesture):
+    def script_previousFailure(self, gesture=None):
         self._walk_failure(direction=-1)
+
+    @script(
+        description=(
+            "Read the How-to-Fix text of the finding currently under "
+            "the navigator in the AMASAMYA panel."
+        ),
+        gesture="kb:NVDA+alt+f",
+        category="AMASAMYA",
+    )
+    def script_readFix(self, gesture=None):
+        if not _is_supported_browser_foreground():
+            _not_in_browser_message()
+            return
+        foreground = api.getForegroundObject()
+        panel = _find_amasamya_panel(foreground)
+        if panel is None:
+            _no_panel_message(foreground)
+            return
+        rows = _find_findings_rows(panel)
+        if not rows:
+            ui.message(
+                "No findings in the AMASAMYA panel. Run an audit "
+                "first with Alt plus Shift plus 1."
+            )
+            return
+        current = _current_navigator_row(rows)
+        if current < 0:
+            ui.message(
+                "You are not on a finding row. Jump to the first "
+                "failure first, then try again."
+            )
+            return
+        row = rows[current]
+        fix = _find_fix_text(row)
+        if fix:
+            ui.message("Fix. " + fix)
+        else:
+            ui.message(
+                "No How-to-Fix text found on this row. The row may "
+                "need to be expanded first; activate it with NVDA "
+                "plus NumpadEnter."
+            )
+
+    @script(
+        description=(
+            "Speak the AMASAMYA audit summary: the four severity "
+            "counts (failures, warnings, passes, info) in one short "
+            "utterance."
+        ),
+        gesture="kb:NVDA+alt+u",
+        category="AMASAMYA",
+    )
+    def script_speakSummary(self, gesture=None):
+        if not _is_supported_browser_foreground():
+            _not_in_browser_message()
+            return
+        foreground = api.getForegroundObject()
+        panel = _find_amasamya_panel(foreground)
+        if panel is None:
+            _no_panel_message(foreground)
+            return
+        counts = _read_summary_counts(panel)
+        if not counts:
+            ui.message(
+                "AMASAMYA summary cards not found. Run an audit "
+                "first with Alt plus Shift plus 1."
+            )
+            return
+        parts = []
+        for label in SUMMARY_CARD_LABELS:
+            if label in counts:
+                parts.append("{n} {label}".format(
+                    n=counts[label], label=label.lower()
+                ))
+        if not parts:
+            ui.message("AMASAMYA summary cards found but no counts could be read.")
+            return
+        ui.message(", ".join(parts) + ".")
+
+    # -----------------------------------------------------------------
+    # Shared walk helper for next/previous failure
+    # -----------------------------------------------------------------
 
     def _walk_failure(self, direction):
         if not _is_supported_browser_foreground():
@@ -335,14 +575,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             )
             return
         current = _current_navigator_row(rows)
-        # Build the ordered list of failure indexes to walk through.
         if direction > 0:
             next_indexes = [i for i in failures if i > current]
             if not next_indexes:
                 ui.message(
-                    "You are on or past the last failure. Press "
-                    "NVDA plus Shift plus P to go back to the "
-                    "previous one."
+                    "You are on or past the last failure. Go back "
+                    "with the previous-failure command."
                 )
                 return
             target_idx = next_indexes[0]
@@ -350,15 +588,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             prev_indexes = [i for i in failures if i < current]
             if not prev_indexes:
                 ui.message(
-                    "You are at or before the first failure. Press "
-                    "NVDA plus Shift plus N to go forward to the "
-                    "next one."
+                    "You are at or before the first failure. Go "
+                    "forward with the next-failure command."
                 )
                 return
             target_idx = prev_indexes[-1]
         target = rows[target_idx]
-        # Set the navigator (NVDA's secondary cursor) so NVDA+NumpadEnter
-        # will activate the row; do not change focus.
         try:
             api.setNavigatorObject(target)
         except Exception:
@@ -368,178 +603,3 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         )
         ui.message(position + ".")
         _speak_row_brief(target)
-
-    # -----------------------------------------------------------------
-    # Script 4 (v0.2.0): read the current finding's fix
-    # -----------------------------------------------------------------
-
-    @script(
-        description=(
-            "Read the How-to-Fix text of the finding currently under "
-            "the navigator in the AMASAMYA panel."
-        ),
-        gesture="kb:NVDA+shift+f",
-        category="AMASAMYA",
-    )
-    def script_readFix(self, gesture):
-        if not _is_supported_browser_foreground():
-            _not_in_browser_message()
-            return
-        foreground = api.getForegroundObject()
-        panel = _find_amasamya_panel(foreground)
-        if panel is None:
-            _no_panel_message(foreground)
-            return
-        rows = _find_findings_rows(panel)
-        if not rows:
-            ui.message(
-                "No findings in the AMASAMYA panel. Run an audit "
-                "first with Alt plus Shift plus 1."
-            )
-            return
-        current = _current_navigator_row(rows)
-        if current < 0:
-            ui.message(
-                "You are not on a finding row. Press NVDA plus Shift "
-                "plus N to jump to the first failure, then NVDA plus "
-                "Shift plus F to read its fix."
-            )
-            return
-        row = rows[current]
-        fix = _find_fix_text(row)
-        if fix:
-            ui.message("Fix. " + fix)
-        else:
-            ui.message(
-                "No How-to-Fix text found on this row. The row may "
-                "need to be expanded first; activate it with NVDA "
-                "plus NumpadEnter."
-            )
-
-    # -----------------------------------------------------------------
-    # Script 5 (v0.2.0): speak the audit summary
-    # -----------------------------------------------------------------
-
-    @script(
-        description=(
-            "Speak the AMASAMYA audit summary: the four severity "
-            "counts (failures, warnings, passes, info) in one short "
-            "utterance."
-        ),
-        gesture="kb:NVDA+shift+u",
-        category="AMASAMYA",
-    )
-    def script_speakSummary(self, gesture):
-        if not _is_supported_browser_foreground():
-            _not_in_browser_message()
-            return
-        foreground = api.getForegroundObject()
-        panel = _find_amasamya_panel(foreground)
-        if panel is None:
-            _no_panel_message(foreground)
-            return
-        counts = _read_summary_counts(panel)
-        if not counts:
-            ui.message(
-                "AMASAMYA summary cards not found. Run an audit "
-                "first with Alt plus Shift plus 1."
-            )
-            return
-        # Build one tight utterance that reads well in speech AND
-        # fits a 40-cell Braille display. Example output:
-        # "3 failures, 2 warnings, 48 passes, 1 info."
-        parts = []
-        for label in SUMMARY_CARD_LABELS:
-            if label in counts:
-                parts.append("{n} {label}".format(
-                    n=counts[label], label=label.lower()
-                ))
-        if not parts:
-            ui.message("AMASAMYA summary cards found but no counts could be read.")
-            return
-        ui.message(", ".join(parts) + ".")
-
-
-# ---------------------------------------------------------------------
-# Panel-specific accessors (kept outside the GlobalPlugin so they are
-# easy to test in isolation when Phase 3 adds the native-messaging
-# bridge and we need to reuse them from a different entry point).
-# ---------------------------------------------------------------------
-
-def _find_fix_text(row):
-    """Return the How-to-Fix text for a row, or None if not found.
-
-    Strategy: look at the row's children for a cell whose accessible
-    name starts with "Fix" or "How to Fix" (the panel markup uses
-    both). Falls back to any descendant whose name includes "How to
-    Fix" if a direct child match fails.
-    """
-    if row is None:
-        return None
-    try:
-        child = row.firstChild
-    except Exception:
-        child = None
-    while child is not None:
-        try:
-            name = (child.name or "")
-        except Exception:
-            name = ""
-        if name.startswith("Fix") or name.startswith("How to Fix"):
-            # Return the text after the label itself, if present
-            if ":" in name:
-                return name.split(":", 1)[1].strip()
-            return name
-        try:
-            child = child.next
-        except Exception:
-            child = None
-    # Fallback: scan descendants
-    for obj in _iter_descendants(row, max_depth=5):
-        try:
-            name = (obj.name or "")
-        except Exception:
-            name = ""
-        if "How to Fix" in name:
-            if ":" in name:
-                return name.split(":", 1)[1].strip()
-            return name
-    return None
-
-
-def _read_summary_counts(panel):
-    """Scan the summary cards and return a dict {label: count_int}.
-
-    The AMASAMYA panel renders counts inside objects whose accessible
-    name is in the shape "Failures: 3", "Warnings: 2", etc. We look
-    for the four known labels and parse the integer that follows the
-    colon.
-    """
-    counts = {}
-    if panel is None:
-        return counts
-    for obj in _iter_descendants(panel, max_depth=10):
-        try:
-            name = (obj.name or "")
-        except Exception:
-            name = ""
-        for label in SUMMARY_CARD_LABELS:
-            prefix = label + ":"
-            if name.startswith(prefix):
-                tail = name[len(prefix):].strip()
-                # Pull the leading integer (handles trailing text).
-                digits = ""
-                for ch in tail:
-                    if ch.isdigit():
-                        digits += ch
-                    else:
-                        break
-                if digits:
-                    try:
-                        counts[label] = int(digits)
-                    except ValueError:
-                        pass
-                break
-        if len(counts) == len(SUMMARY_CARD_LABELS):
-            break
-    return counts

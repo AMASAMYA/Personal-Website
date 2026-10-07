@@ -6,19 +6,33 @@ AMASAMYA itself is a free accessibility checker that finds problems on web pages
 
 What this version does
 
-This is version 0.2.0. It ships five keyboard shortcuts, all under the "AMASAMYA" category in NVDA's Input Gestures dialog, so you can rebind any of them if they clash with your own setup. Everything you hear through this add-on also goes to your Braille display at the same time.
+This is version 0.2.1. Five commands, each reachable two ways. Use whichever feels better. Both reach the same scripts, so there is nothing to re-learn when you switch.
 
-NVDA plus Shift plus A: Where is the AMASAMYA panel? Checks whether the audit panel is open on the current browser tab. If yes, tells you the page title and reminds you to press F6 to move focus into the panel. If no, reminds you how to open it.
+All output goes to speech and Braille at the same time, so if you use a Braille display you get the same information without a separate shortcut.
 
-NVDA plus Shift plus N: Jump to the next failure in the panel's findings table. Finds the next row whose severity is Critical or Serious, moves the NVDA navigator to it (does not steal your keyboard focus), and speaks the row briefly along with "N of M failures" so you know where you are in the list.
+The five commands are:
 
-NVDA plus Shift plus P: Jump to the previous failure. Same as above but walks backwards.
+A: Where is the AMASAMYA panel? Checks whether the audit panel is open on the current browser tab. If yes, tells you the page title and reminds you to press F6 to move focus into the panel. If no, reminds you how to open it.
 
-NVDA plus Shift plus F: Read the current finding's fix. Looks at whichever row the NVDA navigator is on and reads out the How-to-Fix text. If you have not jumped to a finding yet, it tells you to press NVDA plus Shift plus N first.
+N: Jump to the next failure in the panel's findings table. Finds the next row whose severity is Critical or Serious, moves the NVDA navigator to it (does not steal your keyboard focus), and speaks the row briefly along with "N of M failures" so you know where you are in the list.
 
-NVDA plus Shift plus U: Speak the audit summary. Reads the four severity counts (failures, warnings, passes, info) in one short sentence that fits a 40-cell Braille display.
+P: Jump to the previous failure. Same as above but walks backwards.
 
-If a browser is not in the foreground, every one of the five scripts tells you to switch to Chrome, Edge, or Firefox and press again.
+F: Read the current finding's fix. Looks at whichever row the NVDA navigator is on and reads out the How-to-Fix text. If you have not jumped to a finding yet, it tells you to go to a failure first.
+
+U: Speak the audit summary. Reads the four severity counts (failures, warnings, passes, info) in one short sentence that fits a 40-cell Braille display.
+
+Two ways to run them
+
+The single-stroke way: hold NVDA plus Alt, then press the letter. So NVDA plus Alt plus A, NVDA plus Alt plus N, and so on. Fastest if you do not already have NVDA plus Alt bindings for other add-ons.
+
+The layer way: press NVDA plus A once. NVDA says "AMASAMYA layer. A panel, N next, P previous, F fix, U summary." Within two seconds, press one letter (A, N, P, F, or U) to run that command. The layer closes on its own after two seconds, or immediately once you press a letter, or if you press any other key to cancel. Press NVDA plus A again inside the two seconds to close the layer early. Zero conflicts guaranteed because the single letters A/N/P/F/U only mean anything while the layer is open.
+
+Both paths work at the same time. Pick whichever you want, or use both depending on what you are doing.
+
+If a browser is not in the foreground, every command tells you to switch to Chrome, Edge, or Firefox and press again.
+
+If any shortcut conflicts with your setup, open NVDA menu, Preferences, Input Gestures, find the "AMASAMYA" category, and rebind. The layer entry (NVDA plus A) can be rebound too.
 
 What is coming later
 

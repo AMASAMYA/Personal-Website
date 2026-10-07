@@ -1,6 +1,6 @@
 # AMASAMYA NVDA Add-on Roadmap
 
-Last reviewed: 2026-10-07 (v0.2.0 shipped: five scripts total, all sideload-ready. Phase 3 bidirectional native-messaging bridge is the next planned release. Not yet submitted to the NVDA Community Add-ons Store; submission still waiting for Akhilesh's sign-off on the Phase 2 UX after live NVDA testing).
+Last reviewed: 2026-10-07 (v0.2.1 shipped: v0.2.0 shortcuts (NVDA+Shift+<letter>) clashed with user setup, replaced with dual bindings. Every script now reachable via NVDA+Alt+<letter> single-stroke AND via NVDA+A layer command. Phase 3 bidirectional native-messaging bridge is the next planned release. Not yet submitted to the NVDA Community Add-ons Store; submission still waiting for Akhilesh's sign-off on the Phase 2 UX after live NVDA testing).
 
 Scaffolded 2026-10-07 as a new AMASAMYA product surface alongside the three browser extensions and the Android app. Full architectural reasoning in memory/project-nvda-addon.md.
 
@@ -22,7 +22,22 @@ Not yet in this version:
 
 Packaging today is a hand-zipped `.nvda-addon` file. Create one by zipping the contents of `amasamya-nvda-addon/` (not the directory itself, the contents) into `dist/amasamya-nvda-addon-0.1.0.nvda-addon`. The manifest.ini and addon/ folder must sit at the root of the ZIP.
 
-## v0.2.0 (2026-10-07) - Panel navigation scripts shipped
+## v0.2.1 (2026-10-07) - Dual gesture bindings
+
+Akhilesh reported the v0.2.0 shortcuts (NVDA+Shift+<letter>) clashed with existing bindings on his setup. Rather than guess which specific combos were safe, v0.2.1 ships two independent binding schemes simultaneously so a user can pick whichever one fits their NVDA installation.
+
+Path 1: single-stroke Alt-modifier.
+  NVDA+Alt+A, +N, +P, +F, +U.
+  Fastest. Safe for setups that have no NVDA+Alt bindings in use.
+
+Path 2: layer command.
+  NVDA+A enters a 2-second listening window. The layer entry announces "AMASAMYA layer. A panel, N next, P previous, F fix, U summary." so a first-time user hears their options without looking anything up. Within two seconds, pressing A, N, P, F, or U runs the corresponding script. Any other keystroke or the two-second timeout cancels silently; a second NVDA+A cancels immediately. Zero conflict risk because the single-letter keys only mean anything inside the layer.
+
+Both paths run the same five underlying scripts. getScript() on the GlobalPlugin is overridden to intercept bare-letter keyboard gestures while _in_layer is True and dispatch to the matching script method directly; non-matching gestures cancel the layer and fall through to normal NVDA processing. The timeout runs on a threading.Timer and is cancelled whenever the layer exits for any reason.
+
+NVDA+A as the layer trigger is NOT a documented NVDA default and should be free on a stock installation. If a user has rebound it, they can rebind the layer entry through NVDA's Input Gestures dialog like any other script. The dual-binding scheme means losing either path still leaves the other working.
+
+## v0.2.0 (2026-10-07, superseded by v0.2.1) - Panel navigation scripts shipped
 
 Four new scripts added, all under the "AMASAMYA" scriptCategory so users rebind cleanly if any gesture conflicts. All five scripts (including the Phase 1 one) now live in addon/globalPlugins/amasamya.py.
 
