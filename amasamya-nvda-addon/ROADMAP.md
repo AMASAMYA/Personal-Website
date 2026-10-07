@@ -59,10 +59,20 @@ Phase 2 ships: submit to the NVDA Community Add-ons Store at addons.nvda-project
 
 Phase 3 ships: coordinate the add-on store submission with a browser-extension patch that adds the nativeMessaging permission. Timing matters: the extensions should be live with the new permission before the add-on asks users to use it.
 
-## Open questions, flag before writing code for the next phase
+## Blind-first design rules this add-on must honour
 
-1. Does Akhilesh want a Braille-first alternative to the "speak" output in Phase 2? NVDA supports Braille displays natively; routing summaries to Braille instead of (or alongside) speech is a one-line change per script but affects the UX design.
-2. Does Phase 3 require a settings panel inside the add-on for selecting default-browser, verbosity, and alert thresholds? If yes, that is additional scope.
-3. Should the Phase 3 native-messaging bridge also offer the same features in reverse: NVDA sending commands to the browser extension (focus the panel, run a crawl, export a report)? That is a bidirectional bridge and would roughly double the Phase 3 implementation cost.
+Per memory/feedback-blind-first-product.md, AMASAMYA is blind-first as a product-design principle, not just a positioning phrase. These three rules apply to every phase of this add-on and are baked in; they are not optional choices to pick between.
+
+1. Braille is a peer output channel. Every announcement in every phase uses NVDA's `ui.message()` so NVDA fans the text out to both speech and the user's Braille display in the same call. Messages are kept short enough to be legible on a 40-cell Braille display (the common size); longer explanations go in `ui.browseableMessage()` which the user can read character-by-character in Braille at their own pace. No speech-only output.
+
+2. Keyboard-only input. Every script is bound to a keyboard gesture. No mouse, no hover, no visual pointer required for any feature. Gestures do not conflict with the common NVDA, JAWS, or Dolphin shortcut set.
+
+3. Settings UI is the standard NVDA settings-panel pattern when the add-on reaches the point of needing one. NVDA's settings panel is navigable by blind users by construction. The "edit a config file" shortcut is a sighted-first fallback and is not available here.
+
+## Open questions, flag before writing code for Phase 3
+
+The only remaining Phase 3 design question that affects scope:
+
+Should the native-messaging bridge offer the browser-to-NVDA direction only (NVDA receives audit results from the extension), or both directions (NVDA also sends commands to the extension: focus the panel, run a crawl, export a report)? Bidirectional roughly doubles the Phase 3 implementation cost. For a blind-first product the bidirectional case is more compelling than it would be otherwise, because NVDA shortcuts replace mouse-driven UI steps the blind user would otherwise have to navigate the browser side panel to execute. Decide before Phase 3 begins; list three concrete commands you would use regularly if the answer is "both".
 </parameter>
 </invoke>
