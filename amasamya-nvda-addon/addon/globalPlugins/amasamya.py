@@ -199,32 +199,44 @@ def _find_amasamya_panel_in_browser(foreground):
     reach the AMASAMYA document root; v0.2.5's depth-16 budget was
     too tight for strategy 2.
     """
-    # Strategy 0 (v0.2.8): focus-based search. Chrome does not expose
+    # Strategy 0 (v0.2.8+): focus-based search. Chrome does not expose
     # its content as firstChild descendants of the shell HWND - the a11y
-    # tree is reachable only through the focused document. If the user
-    # has focus inside the AMASAMYA panel (press F6 inside Chrome to
-    # cycle regions until the side panel is reached), walk up from
-    # focus and scan each ancestor subtree. This is the only strategy
-    # that works for Chromium's out-of-process iframes.
+    # tree is reachable only through the focused document.
+    #
+    # v0.2.9: walk up from focus collecting EVERY ancestor whose name
+    # contains "amasamya", then return the HIGHEST (closest-to-root)
+    # one. The lowest match is a nested container (role 149 PropertyPage
+    # named "AMASAMYA panel sections") that only wraps the tab-list;
+    # the findings table and summary cards live under the real root
+    # named "AMASAMYA Audit Panel". Picking the highest match gets us
+    # the real root.
     try:
         focus = api.getFocusObject()
     except Exception:
         focus = None
     if focus is not None:
-        panel = _find_amasamya_panel(focus, max_depth=20)
-        if panel is not None:
-            return panel
+        candidates = []
         obj = focus
-        for _ in range(30):
+        for _ in range(40):
+            if obj is None:
+                break
+            try:
+                nm = (obj.name or "")
+            except Exception:
+                nm = ""
+            if "amasamya" in nm.lower():
+                candidates.append(obj)
             try:
                 obj = obj.parent
             except Exception:
-                obj = None
-            if obj is None:
                 break
-            panel = _find_amasamya_panel(obj, max_depth=20)
-            if panel is not None:
-                return panel
+        if candidates:
+            return candidates[-1]
+        # Fallback: BFS downward from focus (covers the case where the
+        # focused element itself is not an AMASAMYA descendant yet).
+        panel = _find_amasamya_panel(focus, max_depth=20)
+        if panel is not None:
+            return panel
 
     if foreground is None:
         return None
@@ -746,6 +758,50 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             add("  NONE FOUND. The plugin cannot see any object with 'amasam' in its name.")
         for i, m in enumerate(matches[:50]):
             add("  [{}] depth={} name={!r} role={} app={!r}".format(i, m["depth"], m["name"], m["role"], m["app"]))
+        add("")
+        add("")
+        add("Full panel subtree dump (via _find_amasamya_panel_in_browser):")
+        try:
+            panel = _find_amasamya_panel_in_browser(fg)
+        except Exception as e:
+            panel = None
+            add("  panel lookup raised: " + repr(e))
+        if panel is None:
+            add("  Panel not found. Nothing to dump.")
+        else:
+            try:
+                add("  Resolved panel: name={!r} role={}".format(panel.name, panel.role))
+            except Exception:
+                pass
+            # Walk the whole panel subtree, cap at 600 nodes, cap depth 20.
+            queue = [(panel, 0)]
+            dumped = 0
+            while queue and dumped < 600:
+                obj, depth = queue.pop(0)
+                try:
+                    nm = obj.name or ""
+                except Exception:
+                    nm = "<exc>"
+                try:
+                    rl = str(obj.role)
+                except Exception:
+                    rl = "<exc>"
+                add("  {}[{}] role={} name={!r}".format("  " * depth, depth, rl, nm))
+                dumped += 1
+                if depth >= 20:
+                    continue
+                try:
+                    c = obj.firstChild
+                except Exception:
+                    c = None
+                while c is not None:
+                    queue.append((c, depth + 1))
+                    try:
+                        c = c.next
+                    except Exception:
+                        c = None
+            if dumped >= 600:
+                add("  ... (truncated at 600 nodes)")
         add("")
         add("End of diagnostic.")
 
