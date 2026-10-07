@@ -1,6 +1,6 @@
 # AMASAMYA NVDA Add-on Roadmap
 
-Last reviewed: 2026-10-07 (v0.2.1 shipped: v0.2.0 shortcuts (NVDA+Shift+<letter>) clashed with user setup, replaced with dual bindings. Every script now reachable via NVDA+Alt+<letter> single-stroke AND via NVDA+A layer command. Phase 3 bidirectional native-messaging bridge is the next planned release. Not yet submitted to the NVDA Community Add-ons Store; submission still waiting for Akhilesh's sign-off on the Phase 2 UX after live NVDA testing).
+Last reviewed: 2026-10-08 (v0.2.2 shipped: one-line manifest fix. v0.2.1 declared `lastTestedNVDAVersion = "2024.4"` and Akhilesh's running NVDA (2026.1 or newer) refused to load it with "An updated version of this add-on is required. This add-on was last tested with NVDA 2024.4." Scripts never registered, so Input Gestures returned empty for the AMASAMYA category. v0.2.2 bumps `lastTestedNVDAVersion` to "2026.1". No code changes. Reinstall path: Add-on Store > Actions > Remove, restart NVDA, install `dist/amasamya-nvda-addon-0.2.2.nvda-addon`, restart NVDA. Phase 3 bidirectional native-messaging bridge is the next planned release.
 
 Scaffolded 2026-10-07 as a new AMASAMYA product surface alongside the three browser extensions and the Android app. Full architectural reasoning in memory/project-nvda-addon.md.
 
