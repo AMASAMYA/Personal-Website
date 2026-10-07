@@ -303,21 +303,41 @@ def _iter_descendants(root, max_depth=12):
 
 
 def _find_findings_rows(panel):
-    """Return every row object inside the panel's findings table."""
+    """Return every row object inside the panel's findings table.
+
+    v0.2.10: fixes the role lookup. The previous version used
+    `controlTypes.Role.ROW`, which does not exist in NVDA - the
+    correct name is `Role.TABLEROW` and the numeric value is 31. The
+    AttributeError silently reduced row_role to None and no row ever
+    matched, so NVDA+Alt+N always said "No findings". This now tries
+    TABLEROW first, falls back to ROW, and finally to a numeric
+    comparison, so it works across the NVDA versions AMASAMYA
+    supports.
+    """
     rows = []
     if panel is None:
         return rows
-    try:
-        row_role = controlTypes.Role.ROW
-    except AttributeError:
-        row_role = None
-    for obj in _iter_descendants(panel):
+    row_role_candidates = []
+    for attr in ("TABLEROW", "ROW"):
+        try:
+            row_role_candidates.append(getattr(controlTypes.Role, attr))
+        except AttributeError:
+            pass
+    for obj in _iter_descendants(panel, max_depth=20):
         try:
             role = obj.role
         except Exception:
             role = None
-        if row_role is not None and role == row_role:
+        if role is None:
+            continue
+        if role in row_role_candidates:
             rows.append(obj)
+            continue
+        try:
+            if int(role) == 31:
+                rows.append(obj)
+        except Exception:
+            pass
     return rows
 
 
