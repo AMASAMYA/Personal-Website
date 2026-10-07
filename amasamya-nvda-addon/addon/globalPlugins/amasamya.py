@@ -108,8 +108,44 @@ def _is_supported_browser_foreground():
     return _foreground_app_name() in SUPPORTED_BROWSERS
 
 
-def _find_amasamya_panel(root, max_depth=8):
-    """Breadth-first bounded walk looking for the AMASAMYA panel root."""
+def _browser_window_root(obj):
+    """Walk up the a11y tree to the browser's top-level window.
+
+    api.getForegroundObject() typically returns the focused web
+    content (the active tab's document), which is a descendant of
+    the browser frame. The AMASAMYA side panel in Chrome, Edge, and
+    Firefox lives alongside that content frame, not inside it, so a
+    descend-only search from the foreground will never find it. This
+    helper walks parent -> parent until it reaches the top (parent
+    is None) or detects a cycle, giving us a root from which both the
+    tab content AND the side panel are reachable.
+    """
+    if obj is None:
+        return None
+    cur = obj
+    seen = set()
+    while cur is not None:
+        if id(cur) in seen:
+            return cur
+        seen.add(id(cur))
+        try:
+            parent = cur.parent
+        except Exception:
+            parent = None
+        if parent is None:
+            return cur
+        cur = parent
+    return obj
+
+
+def _find_amasamya_panel(root, max_depth=16):
+    """Breadth-first bounded walk looking for the AMASAMYA panel root.
+
+    v0.2.5: max_depth bumped from 8 to 16 because the search now
+    starts at the browser top-level window instead of the focused
+    content tab, so the panel sits deeper in the tree relative to
+    the root we hand in.
+    """
     if root is None:
         return None
     queue = [(root, 0)]
@@ -134,6 +170,16 @@ def _find_amasamya_panel(root, max_depth=8):
             except Exception:
                 child = None
     return None
+
+
+def _find_amasamya_panel_in_browser(foreground):
+    """Find the AMASAMYA panel starting from the browser's root window.
+
+    Combines _browser_window_root and _find_amasamya_panel so every
+    @script call site stays a one-liner. Returns None if no panel
+    is found anywhere in the browser window.
+    """
+    return _find_amasamya_panel(_browser_window_root(foreground))
 
 
 def _iter_descendants(root, max_depth=12):
@@ -441,7 +487,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             _not_in_browser_message()
             return
         foreground = api.getForegroundObject()
-        panel = _find_amasamya_panel(foreground)
+        panel = _find_amasamya_panel_in_browser(foreground)
         page = _page_title_from_browser(foreground) or "the current page"
         if panel is not None:
             ui.message(
@@ -488,7 +534,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             _not_in_browser_message()
             return
         foreground = api.getForegroundObject()
-        panel = _find_amasamya_panel(foreground)
+        panel = _find_amasamya_panel_in_browser(foreground)
         if panel is None:
             _no_panel_message(foreground)
             return
@@ -531,7 +577,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             _not_in_browser_message()
             return
         foreground = api.getForegroundObject()
-        panel = _find_amasamya_panel(foreground)
+        panel = _find_amasamya_panel_in_browser(foreground)
         if panel is None:
             _no_panel_message(foreground)
             return
@@ -562,7 +608,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             _not_in_browser_message()
             return
         foreground = api.getForegroundObject()
-        panel = _find_amasamya_panel(foreground)
+        panel = _find_amasamya_panel_in_browser(foreground)
         if panel is None:
             _no_panel_message(foreground)
             return
