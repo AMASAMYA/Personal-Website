@@ -21,7 +21,7 @@
      the platform's per-extension telemetry lines up with the release
      users actually installed. Future bumps: change this constant AND
      manifest.json in the same commit. */
-  const TOOL_VERSION = '5.4.1';
+  const TOOL_VERSION = '5.4.3';
   const CONTRAST = { NORMAL_AA: 4.5, LARGE_AA: 3.0, NORMAL_AAA: 7.0, LARGE_AAA: 4.5, NON_TEXT: 3.0 };
   const LARGE_TEXT_PT_BOLD = 14;
   const LARGE_TEXT_PT_NORMAL = 18;

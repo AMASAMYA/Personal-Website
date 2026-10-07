@@ -1,10 +1,38 @@
 # AMASAMYA Chrome Extension Roadmap
 
-Last reviewed: 2026-10-03 (v5.4.1 live on all three stores. Firefox approved 2026-09-30 at 05:46 UTC same-day, confirmed via AMO public API. Chrome and Edge approval dates in the 2026-09-30 to 2026-10-03 window pending confirmation from Akhilesh's approval emails. Web platform at amasamya.akhileshmalani.com is frozen as of 2026-10-03 per the project-platform-freeze.md memory; its PLATFORM_VERSION stays at 5.4.0 and does not track extension patch bumps).
+Last reviewed: 2026-10-07 (v5.4.2 live on Chrome and Firefox; v5.4.2 submitted to Edge the same day. v5.4.3 patch being built this session to correct TOOL_VERSION drift that shipped inside the v5.4.2 Chrome and Firefox builds, and to apply the amasamya.akhileshmalani.com -> platform.amasamya.com migration consistently across the committed codebase. Web platform is at platform.amasamya.com since 2026-10-06; old host 301-redirects. Platform frozen per project-platform-freeze.md; PLATFORM_VERSION stays at 5.4.0 and does not track extension patch bumps).
 
 This file captures what is committed, what is planned, and what has been
 explicitly deferred. It is the single source of truth for "what is next".
 If a feature is not on this list, it is not planned.
+
+## Packaged for all three stores: v5.4.3 (2026-10-07)
+
+Two problems rolled into one patch.
+
+Problem one: TOOL_VERSION drift that shipped inside v5.4.2. The Chrome Web Store and addons.mozilla.org Firefox builds packaged out of a different session on 2026-10-06 both carried `TOOL_VERSION = '5.4.1'` inside content-script.js while `manifest.json` said 5.4.2. Users saw 5.4.2 in the panel header (the runtime data-version-slot writer that shipped in v5.3.5 pulls from the manifest), but the platform's reporting-extension version in the postMessage payload received 5.4.1. Violated the feedback-version-consistency memory rule. Edge was still on v5.4.1 live, so Edge never got the drifted v5.4.2.
+
+Problem two: the committed repo did not know about the 2026-10-06 URL migration from amasamya.akhileshmalani.com to platform.amasamya.com. The migration itself was done correctly: netlify.toml carries the 301 redirect rules, both manifests already list platform.amasamya.com in content-script matches, both background.js guards check both hosts. But CLAUDE.md, project-platform-freeze.md memory, and ROADMAP.md current-state references still described the platform as living at the old host. Future sessions reading those docs would get stale information.
+
+v5.4.3 fix:
+
+- Manifest version bumped 5.4.2 to 5.4.3 in both Chrome/Edge and Firefox trees.
+- content-script.js TOOL_VERSION bumped 5.4.1 to 5.4.3 in both trees.
+- panel.html data-version-slot fallbacks bumped 5.4.2 to 5.4.3 in both trees, three slots each.
+- CLAUDE.md project-context platform line rewritten to name platform.amasamya.com, note the 2026-10-06 migration, and confirm the 301 keeps old links working.
+- project-platform-freeze.md memory updated to reference platform.amasamya.com throughout.
+- ROADMAP.md Last-reviewed line updated to reflect v5.4.2-live-on-two-stores baseline plus v5.4.3-in-flight state.
+
+Not touched: netlify.toml redirect rules (correct as-is), background.js host guards (correctly check both hosts), amasamya-public-repo mirror (separate sync task, mirror is already at v4.2 and needs a full catch-up not a URL spot-fix), blog posts and content marketing drafts that mention the old URL historically (301 handles them; narrative-correct to leave).
+
+Packages built with .NET ZipFile.CreateFromDirectory for AMO-safe forward-slash paths (the v5.4.2 Firefox ZIP from the other session had Windows-backslash paths and needed a -fixed re-pack to pass AMO validation; using .NET directly avoids the problem permanently):
+
+- dist/AMASAMYA-Chrome-Edge-Extension-v5.4.3.zip (30 entries, 165068 bytes)
+- dist/AMASAMYA-Firefox-Addon-v5.4.3.zip (36 entries, 188318 bytes)
+
+Also deleted the stale `dist/AMASAMYA-Firefox-Addon-v5.4.2.zip` (the backslash-path original, superseded by the -fixed variant that AMO took).
+
+Supersedes the pending Edge v5.4.2 upload. Rather than ship v5.4.2 to Edge and then immediately follow with v5.4.3 to fix the TOOL_VERSION drift, Edge takes v5.4.3 directly.
 
 ## Live on all three stores: v5.4.1 (2026-09-30)
 
