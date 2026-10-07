@@ -80,6 +80,7 @@ LAYER_MAP = {
     "p": "previousFailure",
     "f": "readFix",
     "u": "speakSummary",
+    "d": "diagnostic",
 }
 
 # How long the layer stays armed after NVDA+A, in seconds. Two
@@ -155,7 +156,7 @@ def _find_amasamya_panel(root, max_depth=16):
             name = (obj.name or "")
         except Exception:
             name = ""
-        if name.startswith(PANEL_NAME_PREFIX):
+        if PANEL_NAME_PREFIX.lower() in name.lower():
             return obj
         if depth >= max_depth:
             continue
@@ -556,6 +557,145 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             )
         else:
             _no_panel_message(foreground)
+
+    @script(
+        description=(
+            "Diagnostic. Walk every top-level desktop window and dump "
+            "names, roles, and anything that looks like the AMASAMYA "
+            "panel to a text file in your Downloads folder. Use when "
+            "the other scripts cannot find the panel so Akhilesh can "
+            "see what NVDA actually sees."
+        ),
+        gesture="kb:NVDA+alt+d",
+        category="AMASAMYA",
+    )
+    def script_diagnostic(self, gesture=None):
+        import os, time
+        lines = []
+        def add(s):
+            lines.append(s)
+        add("AMASAMYA NVDA add-on diagnostic")
+        add("Generated: " + time.strftime("%Y-%m-%d %H:%M:%S"))
+        add("")
+        try:
+            fg = api.getForegroundObject()
+        except Exception as e:
+            fg = None
+            add("getForegroundObject raised: " + repr(e))
+        add("Foreground object:")
+        add("  name: " + repr(getattr(fg, "name", None)))
+        try:
+            add("  role: " + repr(fg.role))
+        except Exception as e:
+            add("  role: EXC " + repr(e))
+        try:
+            add("  appModule: " + repr(fg.appModule.appName if fg and fg.appModule else None))
+        except Exception as e:
+            add("  appModule: EXC " + repr(e))
+        add("")
+        add("Parent chain from foreground:")
+        obj = fg
+        for i in range(20):
+            if obj is None:
+                break
+            try:
+                nm = obj.name
+            except Exception:
+                nm = "<exc>"
+            try:
+                rl = str(obj.role)
+            except Exception:
+                rl = "<exc>"
+            add("  [{}] name={!r} role={}".format(i, nm, rl))
+            try:
+                obj = obj.parent
+            except Exception:
+                break
+        add("")
+        add("Top-level desktop children:")
+        try:
+            desktop = api.getDesktopObject()
+        except Exception as e:
+            desktop = None
+            add("  getDesktopObject raised: " + repr(e))
+        try:
+            child = desktop.firstChild if desktop else None
+        except Exception:
+            child = None
+        idx = 0
+        matches = []
+        while child is not None and idx < 60:
+            try:
+                nm = child.name or ""
+            except Exception:
+                nm = ""
+            try:
+                app = child.appModule.appName if child.appModule else ""
+            except Exception:
+                app = ""
+            add("  [{}] app={!r} name={!r}".format(idx, app, nm))
+            if app.lower() in SUPPORTED_BROWSERS:
+                found = self._scan_for_amasamya(child, max_depth=30, bag=matches)
+            idx += 1
+            try:
+                child = child.next
+            except Exception:
+                break
+        add("")
+        add("Objects containing 'amasam' (case-insensitive), max 50:")
+        if not matches:
+            add("  NONE FOUND. The plugin cannot see any object with 'amasam' in its name.")
+        for i, m in enumerate(matches[:50]):
+            add("  [{}] depth={} name={!r} role={} app={!r}".format(i, m["depth"], m["name"], m["role"], m["app"]))
+        add("")
+        add("End of diagnostic.")
+
+        text = "\r\n".join(lines)
+        path = os.path.join(os.path.expanduser("~"), "Downloads", "amasamya-nvda-diag.txt")
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(text)
+            ui.message(
+                "Diagnostic written to Downloads folder, filename "
+                "amasamya dash nvda dash diag dot txt. "
+                "Found {} AMASAMYA-named objects.".format(len(matches))
+            )
+        except Exception as e:
+            ui.browseableMessage(text, title="AMASAMYA diagnostic (write failed: {})".format(e))
+
+    def _scan_for_amasamya(self, root, max_depth, bag):
+        queue = [(root, 0)]
+        visited = 0
+        while queue and visited < 5000:
+            obj, depth = queue.pop(0)
+            visited += 1
+            try:
+                nm = obj.name or ""
+            except Exception:
+                nm = ""
+            if "amasam" in nm.lower():
+                try:
+                    app = obj.appModule.appName if obj.appModule else ""
+                except Exception:
+                    app = ""
+                try:
+                    rl = str(obj.role)
+                except Exception:
+                    rl = "<exc>"
+                bag.append({"depth": depth, "name": nm, "role": rl, "app": app})
+            if depth >= max_depth:
+                continue
+            try:
+                c = obj.firstChild
+            except Exception:
+                c = None
+            while c is not None:
+                queue.append((c, depth + 1))
+                try:
+                    c = c.next
+                except Exception:
+                    c = None
+        return bag
 
     @script(
         description=(
