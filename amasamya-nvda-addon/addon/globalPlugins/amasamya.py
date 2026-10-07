@@ -199,6 +199,33 @@ def _find_amasamya_panel_in_browser(foreground):
     reach the AMASAMYA document root; v0.2.5's depth-16 budget was
     too tight for strategy 2.
     """
+    # Strategy 0 (v0.2.8): focus-based search. Chrome does not expose
+    # its content as firstChild descendants of the shell HWND - the a11y
+    # tree is reachable only through the focused document. If the user
+    # has focus inside the AMASAMYA panel (press F6 inside Chrome to
+    # cycle regions until the side panel is reached), walk up from
+    # focus and scan each ancestor subtree. This is the only strategy
+    # that works for Chromium's out-of-process iframes.
+    try:
+        focus = api.getFocusObject()
+    except Exception:
+        focus = None
+    if focus is not None:
+        panel = _find_amasamya_panel(focus, max_depth=20)
+        if panel is not None:
+            return panel
+        obj = focus
+        for _ in range(30):
+            try:
+                obj = obj.parent
+            except Exception:
+                obj = None
+            if obj is None:
+                break
+            panel = _find_amasamya_panel(obj, max_depth=20)
+            if panel is not None:
+                return panel
+
     if foreground is None:
         return None
 
@@ -574,8 +601,80 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         lines = []
         def add(s):
             lines.append(s)
-        add("AMASAMYA NVDA add-on diagnostic")
+        add("AMASAMYA NVDA add-on diagnostic v0.2.8")
         add("Generated: " + time.strftime("%Y-%m-%d %H:%M:%S"))
+        add("")
+        # Focus object first - this is the key one. Browser content is
+        # only reachable through the focused document, not through
+        # firstChild descent from the shell HWND.
+        try:
+            focus = api.getFocusObject()
+        except Exception as e:
+            focus = None
+            add("getFocusObject raised: " + repr(e))
+        add("Focus object:")
+        add("  name: " + repr(getattr(focus, "name", None)))
+        try:
+            add("  role: " + repr(focus.role))
+        except Exception as e:
+            add("  role: EXC " + repr(e))
+        try:
+            add("  appModule: " + repr(focus.appModule.appName if focus and focus.appModule else None))
+        except Exception as e:
+            add("  appModule: EXC " + repr(e))
+        add("")
+        add("Parent chain from focus:")
+        obj = focus
+        for i in range(40):
+            if obj is None:
+                break
+            try:
+                nm = obj.name
+            except Exception:
+                nm = "<exc>"
+            try:
+                rl = str(obj.role)
+            except Exception:
+                rl = "<exc>"
+            add("  [{}] name={!r} role={}".format(i, nm, rl))
+            try:
+                obj = obj.parent
+            except Exception:
+                break
+        add("")
+        add("BFS from focus looking for 'amasam' (max_depth 25):")
+        focus_matches = []
+        if focus is not None:
+            self._scan_for_amasamya(focus, max_depth=25, bag=focus_matches)
+        if not focus_matches:
+            add("  NONE in focus subtree.")
+        for i, m in enumerate(focus_matches[:30]):
+            add("  [{}] depth={} name={!r} role={}".format(i, m["depth"], m["name"], m["role"]))
+        add("")
+        add("Walking up from focus and scanning each ancestor subtree:")
+        obj = focus
+        ancestor_matches = []
+        for level in range(40):
+            if obj is None:
+                break
+            local = []
+            self._scan_for_amasamya(obj, max_depth=20, bag=local)
+            if local:
+                try:
+                    nm = obj.name
+                except Exception:
+                    nm = "<exc>"
+                add("  Ancestor [{}] name={!r} subtree yielded {} match(es).".format(level, nm, len(local)))
+                for m in local[:3]:
+                    add("    -> depth={} name={!r} role={}".format(m["depth"], m["name"], m["role"]))
+                ancestor_matches.extend(local)
+                break
+            try:
+                obj = obj.parent
+            except Exception:
+                break
+        if not ancestor_matches:
+            add("  No AMASAMYA match in any ancestor subtree up to the desktop.")
         add("")
         try:
             fg = api.getForegroundObject()
