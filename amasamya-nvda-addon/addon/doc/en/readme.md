@@ -6,21 +6,23 @@ AMASAMYA itself is a free accessibility checker that finds problems on web pages
 
 What this version does
 
-This is version 0.1.0, the first release. It ships one script.
+This is version 0.2.0. It ships five keyboard shortcuts, all under the "AMASAMYA" category in NVDA's Input Gestures dialog, so you can rebind any of them if they clash with your own setup. Everything you hear through this add-on also goes to your Braille display at the same time.
 
-Press NVDA plus Shift plus A anywhere in Chrome, Edge, or Firefox. The add-on checks whether the AMASAMYA audit panel is open on the current browser tab and tells you.
+NVDA plus Shift plus A: Where is the AMASAMYA panel? Checks whether the audit panel is open on the current browser tab. If yes, tells you the page title and reminds you to press F6 to move focus into the panel. If no, reminds you how to open it.
 
-If the panel is open, NVDA says "AMASAMYA panel is open on PAGE_TITLE" and reminds you how to move your keyboard focus into the panel.
+NVDA plus Shift plus N: Jump to the next failure in the panel's findings table. Finds the next row whose severity is Critical or Serious, moves the NVDA navigator to it (does not steal your keyboard focus), and speaks the row briefly along with "N of M failures" so you know where you are in the list.
 
-If the panel is not visible, NVDA says "AMASAMYA panel is not visible" and reminds you to press Alt plus Shift plus 1 to open it.
+NVDA plus Shift plus P: Jump to the previous failure. Same as above but walks backwards.
 
-If a browser is not in the foreground, NVDA tells you to switch to Chrome, Edge, or Firefox first.
+NVDA plus Shift plus F: Read the current finding's fix. Looks at whichever row the NVDA navigator is on and reads out the How-to-Fix text. If you have not jumped to a finding yet, it tells you to press NVDA plus Shift plus N first.
+
+NVDA plus Shift plus U: Speak the audit summary. Reads the four severity counts (failures, warnings, passes, info) in one short sentence that fits a 40-cell Braille display.
+
+If a browser is not in the foreground, every one of the five scripts tells you to switch to Chrome, Edge, or Firefox and press again.
 
 What is coming later
 
-Version 0.2 will add scripts to jump between findings in the AMASAMYA panel and to read the current finding's fix out loud without having to navigate the results table.
-
-Version 0.3 will add a direct bridge between NVDA and the AMASAMYA audit engine, so you can press one keyboard shortcut and hear the audit results spoken by NVDA without having to open or focus the panel at all.
+Version 0.3 will add a direct bridge between NVDA and the AMASAMYA audit engine, so you can press one keyboard shortcut and hear the audit results spoken by NVDA without having to open or focus the panel at all. The bridge will also go the other way: NVDA shortcuts to tell the browser extension to focus the panel, run a crawl, or export a report.
 
 Install
 

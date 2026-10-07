@@ -1,6 +1,6 @@
 # AMASAMYA NVDA Add-on Roadmap
 
-Last reviewed: 2026-10-07 (v0.1.0 scaffold shipped; sideload-ready. Not yet submitted to the NVDA Community Add-ons Store; submission waits for Phase 2 feature set).
+Last reviewed: 2026-10-07 (v0.2.0 shipped: five scripts total, all sideload-ready. Phase 3 bidirectional native-messaging bridge is the next planned release. Not yet submitted to the NVDA Community Add-ons Store; submission still waiting for Akhilesh's sign-off on the Phase 2 UX after live NVDA testing).
 
 Scaffolded 2026-10-07 as a new AMASAMYA product surface alongside the three browser extensions and the Android app. Full architectural reasoning in memory/project-nvda-addon.md.
 
@@ -22,19 +22,30 @@ Not yet in this version:
 
 Packaging today is a hand-zipped `.nvda-addon` file. Create one by zipping the contents of `amasamya-nvda-addon/` (not the directory itself, the contents) into `dist/amasamya-nvda-addon-0.1.0.nvda-addon`. The manifest.ini and addon/ folder must sit at the root of the ZIP.
 
-## v0.2 - Panel navigation scripts (planned, not scoped)
+## v0.2.0 (2026-10-07) - Panel navigation scripts shipped
 
-Depends on UIA-tree navigation of the AMASAMYA side panel on each supported browser. Chrome and Edge expose essentially the same tree (both Chromium); Firefox's XUL-based sidebar hosts a document in its own context and the tree walk needs a different root. Expect per-browser code paths.
+Four new scripts added, all under the "AMASAMYA" scriptCategory so users rebind cleanly if any gesture conflicts. All five scripts (including the Phase 1 one) now live in addon/globalPlugins/amasamya.py.
 
-Scripts planned:
-- Jump to next failure (NVDA+Shift+F): finds the next Fail-severity row in the panel's results table and moves focus to it, then speaks the finding's element + issue.
-- Jump to previous failure (NVDA+Shift+Shift+F or an equivalent): the reverse.
-- Read current finding's fix (NVDA+Shift+H): reads the How to Fix cell of whichever finding row is currently focused, in NVDA's own voice with cleaner phrasing than the panel's polite-region announcement.
-- Speak audit summary (NVDA+Shift+S): one short utterance with the four severity counts plus a per-engine breakdown.
+- NVDA+Shift+N: next failure. Walks the panel's findings-table rows via a bounded UIA descendant iterator, filters to rows whose accessible name contains "Critical" or "Serious", finds the first one after the current navigator position, sets the navigator object (does NOT change focus; focus-stealing is jarring mid-audit for a blind user), speaks a short "N of M failures" position cue followed by the row name.
+- NVDA+Shift+P: previous failure. Same mechanism, reverse direction.
+- NVDA+Shift+F: read current finding's fix. Looks for a child or descendant of the current navigator row whose accessible name starts with "Fix" or "How to Fix", extracts the text after the colon, speaks it. If no fix is found, nudges the user to activate the row with NVDA+NumpadEnter so the disclosure opens.
+- NVDA+Shift+U: speak audit summary. Scans the panel for objects named "Failures:", "Warnings:", "Passes:", "Info:", parses the integer that follows each colon, builds one short sentence in all-lowercase label form ("3 failures, 2 warnings, 48 passes, 1 info.") that fits a 40-cell Braille display.
 
-Technical risks:
-- The AMASAMYA panel renders its findings table via Shadow DOM in some code paths; UIA may or may not surface Shadow DOM depending on browser version and NVDA version. May need a message-based fallback where the panel exposes a lightweight data attribute the add-on can read.
-- Firefox's sidebar panel does not propagate focus events in the same way as Chrome's side panel. The Phase 2 scripts will need to fall back to object-navigation rather than depending on focus events alone.
+Blind-first implementation choices locked in:
+- Every announcement goes through ui.message() so NVDA fans output to speech AND the user's Braille display in the same call.
+- Every message is kept short (one or two sentences, under 180 characters) so it is legible on a 40-cell Braille display without hunting.
+- The navigator object is set via api.setNavigatorObject(), focus is never taken, keyboard focus stays wherever the user put it.
+- All five scripts guard against unsupported browsers, missing panel, missing findings, and missing navigator position, with specific user-facing recovery hints in each error case.
+
+Technical state and risks:
+- Fallback-tolerant: every try/except around UIA access returns None/empty rather than throwing. SPAs mutate the DOM frequently and object navigation can throw at any step; the add-on degrades gracefully rather than crashing NVDA.
+- Still needs live NVDA testing against the real AMASAMYA panel on all three browsers. Chrome and Edge should behave identically (same Chromium side panel); Firefox's XUL sidebar may surface a different tree shape. If a specific row-detection or summary-parse fails in practice, the parser (_find_findings_rows, _row_severity, _read_summary_counts) is the first place to look.
+- The "Fix" text parser assumes the panel exposes the How-to-Fix cell with a name beginning with "Fix" or "How to Fix". If panel.html rewording ever changes that prefix, the parser needs an update; keeping this annotation here so the next session that touches the panel copy remembers to check this parser.
+
+Not yet in this version:
+- SCons build config. Still sideload-only; v0.3.0 or the first Community Add-ons Store submission will add it.
+- Localisation. English only still.
+- Automated tests. Harder than it looks: the UIA tree can only be tested against real NVDA. A later version may add a mock-NVDAObject harness for the pure-Python helpers.
 
 ## v0.3 - Native-messaging bridge (planned, needs browser-extension changes)
 
