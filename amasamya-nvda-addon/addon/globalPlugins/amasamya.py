@@ -173,13 +173,73 @@ def _find_amasamya_panel(root, max_depth=16):
 
 
 def _find_amasamya_panel_in_browser(foreground):
-    """Find the AMASAMYA panel starting from the browser's root window.
+    """Find the AMASAMYA panel from any plausible starting point.
 
-    Combines _browser_window_root and _find_amasamya_panel so every
-    @script call site stays a one-liner. Returns None if no panel
-    is found anywhere in the browser window.
+    v0.2.6 cascade: v0.2.5's single-strategy walk-up-then-search still
+    missed Chrome's side panel on Akhilesh's setup. Trying three
+    strategies in order so a success at any level stops the walk.
+
+    Strategy 1: descend-only from the foreground. Catches the case
+    where the AMASAMYA panel is a plain descendant of the focused
+    container.
+
+    Strategy 2: walk up to the top-level window reached by parent
+    chain, then descend. Catches the common case where the side
+    panel is a sibling of the content tab inside the same window.
+
+    Strategy 3: enumerate every top-level window under the desktop,
+    pick the ones running a supported browser, descend into each.
+    Catches the case where Chrome renders the side panel in its own
+    top-level HWND, which some Chrome versions and side-panel
+    configurations do.
+
+    Each strategy uses max_depth=25 because walking from the desktop
+    down into a browser's side panel can be 15-20 levels before we
+    reach the AMASAMYA document root; v0.2.5's depth-16 budget was
+    too tight for strategy 2.
     """
-    return _find_amasamya_panel(_browser_window_root(foreground))
+    if foreground is None:
+        return None
+
+    # Strategy 1
+    panel = _find_amasamya_panel(foreground, max_depth=25)
+    if panel is not None:
+        return panel
+
+    # Strategy 2
+    root = _browser_window_root(foreground)
+    if root is not None and root is not foreground:
+        panel = _find_amasamya_panel(root, max_depth=25)
+        if panel is not None:
+            return panel
+
+    # Strategy 3
+    try:
+        desktop = api.getDesktopObject()
+    except Exception:
+        desktop = None
+    if desktop is not None:
+        try:
+            child = desktop.firstChild
+        except Exception:
+            child = None
+        while child is not None:
+            app_name = ""
+            try:
+                if child.appModule is not None:
+                    app_name = (child.appModule.appName or "").lower()
+            except Exception:
+                app_name = ""
+            if app_name in SUPPORTED_BROWSERS:
+                panel = _find_amasamya_panel(child, max_depth=25)
+                if panel is not None:
+                    return panel
+            try:
+                child = child.next
+            except Exception:
+                child = None
+
+    return None
 
 
 def _iter_descendants(root, max_depth=12):
