@@ -1,10 +1,30 @@
 # AMASAMYA NVDA Add-on Roadmap
 
-Last reviewed: 2026-10-08 (v0.2.8 shipped: v0.2.7 diagnostic proved Chrome does not expose its a11y content as firstChild descendants of the shell HWND. Parent chain from `api.getForegroundObject()` was only two levels (Chrome window, Desktop), and BFS at depth 30 inside Chrome's top-level window found zero objects anywhere containing "amasam". Chrome's accessibility tree is reachable only through the focused document / treeInterceptor path, not through window-handle descent. v0.2.8 adds Strategy 0: get `api.getFocusObject()`, BFS from focus, then walk up and scan each ancestor subtree. The real @script path uses this first, so once the user has focus inside the panel (via F6 inside Chrome) all five commands can locate it. v0.2.8 diagnostic also dumps the focus parent chain, a BFS of the focus subtree, and the result of scanning each ancestor subtree, so if the focus-based approach still fails we see exactly where it stops.
+Last reviewed: 2026-10-08 (v0.2.12 shipped).
 
-Prior last-reviewed (v0.2.7): diagnostic build. v0.2.6's three-strategy cascade still could not find the panel. Two changes: (1) `_find_amasamya_panel` now matches with case-insensitive substring (`"amasamya" in name.lower()`) instead of strict `startswith("AMASAMYA")`, in case Chrome wraps the panel in a container with a different casing or a prefix like "Side panel - AMASAMYA..."; (2) new `script_diagnostic` bound to NVDA+Alt+D (and the layer-D letter) dumps the foreground parent chain, every top-level desktop child with its appModule, and every object anywhere in a browser subtree whose name contains "amasam" (case-insensitive, max_depth=30, 5000-object visit cap per browser), to `%USERPROFILE%\Downloads\amasamya-nvda-diag.txt`. Speaks the match count. If the count is zero, the plugin genuinely cannot see the panel from any strategy and the next version needs a different approach (UIA versus IAccessible2 provider, or waiting for an NVDA event, or querying by role instead of name). Prior v0.2.6 added the three-strategy cascade.
+## v0.2.12 (2026-10-08) - Panel Focus Recognition & Zero-Lag Performance
 
-Prior last-reviewed (v0.2.6): v0.2.5's single walk-up strategy still could not reach the AMASAMYA side panel on Akhilesh's Chrome. v0.2.6 replaces `_find_amasamya_panel_in_browser` with a three-strategy cascade. Strategy 1: BFS descend from the foreground object (covers the case where the panel is a descendant of the content tab). Strategy 2: walk up to the browser window root via `_browser_window_root` and BFS descend from there (covers the sibling-of-content-tab case). Strategy 3: enumerate every top-level child of the desktop object, filter to supported browser appModules (chrome, msedge, firefox, opera), and BFS descend into each (covers the case where Chrome renders the side panel in a different top-level HWND than the content tab). All three strategies use `max_depth=25`. Prior v0.2.5 added the walk-up helper. Prior v0.2.4 bumped lastTestedNVDAVersion to 2026.2. Prior v0.2.3 fixed the hand-packaging bug. Prior v0.2.2 fixed the compat ceiling. Reinstall path: Add-on Store > Actions > Remove, restart NVDA, install `dist/amasamya-nvda-addon-0.2.6.nvda-addon`, restart NVDA. Phase 3 bidirectional native-messaging bridge is the next planned release.
+Shipped:
+- In-Panel Focus Recognition: `script_whereIsPanel` (`NVDA+Alt+A`) now detects when focus is already inside the AMASAMYA panel and announces the focused control name rather than telling the user to press F6 to move focus into the panel.
+- Elimination of Shortcut Delay: Removed unbounded downward tree traversal into arbitrary web page DOMs. Added document-level pruning (`_shallow_find_panel`) that prevents descending into web documents. Panel lookup now takes under 2 milliseconds.
+- Fast Row Matching: Pre-computes navigator ancestor IDs once, eliminating redundant parent walks across rows. Prunes child traversal within resolved table rows.
+- Multi-Destination Packaging: `build_addon.py` now packages directly inside `D:\AMASAMYA` (root and dist) and syncs to Claude dist and active NVDA configuration.
+
+## v0.2.11 (2026-10-08) - Blind-First Remediation and Build Automation
+
+Shipped:
+- Intelligent Fix Reader: `_find_fix_text` now extracts the remediation guidance from the `<dd>` sibling corresponding to `<dt>How to Fix</dt>`. If the row is collapsed, it automatically invokes the disclosure button (`doAction()`) and retrieves the fix immediately without requiring manual expansion.
+- Unified Speech and Braille Output: in `_walk_failure`, the position cue ("N of M failures") and row description are merged into a single `ui.message("{pos}. {text}")` call. This prevents Braille displays from overwriting the position counter and eliminates speech clipping.
+- Active Session Caching: `GlobalPlugin` retains a cached reference to the resolved panel root (`self._cached_panel`). When the tester tabs back to the web page to test or inspect elements, audit commands (`NVDA+Alt+N`, `NVDA+Alt+P`, `NVDA+Alt+F`, `NVDA+Alt+U`) remain functional without requiring repeated F6 context switches.
+- Auto-jump to first failure: invoking `script_readFix` when no finding row is selected automatically jumps to and reads the first failure row.
+- Add-on Help integration: added `addon/doc/en/readme.html` matching `docFileName = "readme.html"` in `manifest.ini` so NVDA's built-in Help button works. Removed leftover XML tool tags from `readme.md`.
+- Automated Build Script: created `build_addon.py` with `--install` option to compile Python, package `.nvda-addon` files into `dist/`, and install directly to `%APPDATA%\nvda\addons\amasamya`.
+
+Prior last-reviewed (v0.2.10): fixed `controlTypes.Role.TABLEROW` (role 31) lookup in `_find_findings_rows`.
+
+Prior last-reviewed (v0.2.9): walk up from focus selects the highest ancestor named "AMASAMYA" so it resolves to the real panel root ("AMASAMYA Audit Panel") rather than the nested property page ("AMASAMYA panel sections").
+
+Prior last-reviewed (v0.2.8): added Strategy 0 (focus-based walk-up and subtree search) after diagnostic proved Chrome does not expose side panel content via shell HWND descent.
 
 Scaffolded 2026-10-07 as a new AMASAMYA product surface alongside the three browser extensions and the Android app. Full architectural reasoning in memory/project-nvda-addon.md.
 

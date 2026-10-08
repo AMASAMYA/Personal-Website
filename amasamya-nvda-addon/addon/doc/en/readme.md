@@ -1,62 +1,69 @@
-AMASAMYA Accessibility Audit Companion for NVDA
+# AMASAMYA Accessibility Audit Companion for NVDA
 
-This add-on works alongside the AMASAMYA browser add-ons for Chrome, Microsoft Edge, and Firefox. It gives you NVDA shortcuts that make the audit panel easier to reach and read.
+This add-on works alongside the AMASAMYA browser extensions for Chrome, Microsoft Edge, and Firefox. It provides keyboard-driven NVDA shortcuts that make the accessibility audit panel easy to reach, inspect, and navigate.
 
-AMASAMYA itself is a free accessibility checker that finds problems on web pages that stop blind and low-vision people from using them. If you have not installed the browser add-on yet, get it from https://amasamya.com before you install this NVDA add-on.
+AMASAMYA is a free accessibility suite designed to uncover accessibility barriers on web pages that prevent blind and low-vision screen reader users from using them. If you have not installed the browser extension yet, install it from https://amasamya.com before using this NVDA add-on.
 
-What this version does
+## What this version does
 
-This is version 0.2.1. Five commands, each reachable two ways. Use whichever feels better. Both reach the same scripts, so there is nothing to re-learn when you switch.
+This is version 0.2.12. Six commands, each reachable two ways. Use whichever feels better. Both reach the same scripts, so there is nothing to re-learn when you switch.
 
-All output goes to speech and Braille at the same time, so if you use a Braille display you get the same information without a separate shortcut.
+All output routes to speech and Braille simultaneously through `ui.message()`, ensuring Braille displays receive full position cues and finding details without truncation or overwrite.
 
-The five commands are:
+The six commands are:
 
-A: Where is the AMASAMYA panel? Checks whether the audit panel is open on the current browser tab. If yes, tells you the page title and reminds you to press F6 to move focus into the panel. If no, reminds you how to open it.
+- **A: Where is the AMASAMYA panel?**
+  Checks whether the audit panel is open on the current browser tab and whether your focus is currently inside the panel. If focus is inside the panel, announces your focused control (for example, the WCAG Audit tab or a finding row). If the panel is open but focus is on the web page, reminds you to press F6 to move focus into the panel. If not visible, provides instructions on how to open it (Alt plus Shift plus 1).
 
-N: Jump to the next failure in the panel's findings table. Finds the next row whose severity is Critical or Serious, moves the NVDA navigator to it (does not steal your keyboard focus), and speaks the row briefly along with "N of M failures" so you know where you are in the list.
+- **N: Jump to next failure**
+  Finds the next row in the panel's findings table whose severity is Critical or Serious, moves the NVDA navigator object to it (without stealing keyboard focus), and speaks "N of M failures" along with the finding summary.
 
-P: Jump to the previous failure. Same as above but walks backwards.
+- **P: Jump to previous failure**
+  Same as above, walking backwards through the failure rows.
 
-F: Read the current finding's fix. Looks at whichever row the NVDA navigator is on and reads out the How-to-Fix text. If you have not jumped to a finding yet, it tells you to go to a failure first.
+- **F: Read current finding fix**
+  Reads the How-to-Fix remediation guidance for the finding currently under the NVDA navigator. If the row is collapsed, it automatically triggers the row disclosure so you hear the fix immediately. If no finding row is selected, it intelligently focuses the first failure.
 
-U: Speak the audit summary. Reads the four severity counts (failures, warnings, passes, info) in one short sentence that fits a 40-cell Braille display.
+- **U: Speak audit summary**
+  Reads the four severity counts (failures, warnings, passes, info) in one short sentence formatted to fit cleanly on a 40-cell Braille display.
 
-Two ways to run them
+- **D: Diagnostic report**
+  Walks the accessible desktop tree and dumps browser object details to `%USERPROFILE%\Downloads\amasamya-nvda-diag.txt` to verify tree resolution.
 
-The single-stroke way: hold NVDA plus Alt, then press the letter. So NVDA plus Alt plus A, NVDA plus Alt plus N, and so on. Fastest if you do not already have NVDA plus Alt bindings for other add-ons.
+## Two ways to run commands
 
-The layer way: press NVDA plus A once. NVDA says "AMASAMYA layer. A panel, N next, P previous, F fix, U summary." Within two seconds, press one letter (A, N, P, F, or U) to run that command. The layer closes on its own after two seconds, or immediately once you press a letter, or if you press any other key to cancel. Press NVDA plus A again inside the two seconds to close the layer early. Zero conflicts guaranteed because the single letters A/N/P/F/U only mean anything while the layer is open.
+1. **Single-stroke Alt-modifier shortcuts (fastest):**
+   - NVDA + Alt + A : Check panel presence
+   - NVDA + Alt + N : Jump to next failure
+   - NVDA + Alt + P : Jump to previous failure
+   - NVDA + Alt + F : Read How-to-Fix text
+   - NVDA + Alt + U : Speak audit summary
+   - NVDA + Alt + D : Generate diagnostic report
 
-Both paths work at the same time. Pick whichever you want, or use both depending on what you are doing.
+2. **Layer command mode (zero-conflict guarantee):**
+   - Press **NVDA + A** once to enter the AMASAMYA layer.
+   - NVDA announces: "AMASAMYA layer. A panel, N next, P previous, F fix, U summary."
+   - Within two seconds, press one letter (**A**, **N**, **P**, **F**, **U**, or **D**) to execute the matching command.
+   - The layer automatically exits after two seconds, immediately upon pressing a command key, or if Escape is pressed. Pressing NVDA + A a second time cancels immediately.
 
-If a browser is not in the foreground, every command tells you to switch to Chrome, Edge, or Firefox and press again.
+Both input methods are active simultaneously. All shortcuts can be customized in NVDA via Menu -> Preferences -> Input Gestures under the "AMASAMYA" category.
 
-If any shortcut conflicts with your setup, open NVDA menu, Preferences, Input Gestures, find the "AMASAMYA" category, and rebind. The layer entry (NVDA plus A) can be rebound too.
+## Installation
 
-What is coming later
+Open the `.nvda-addon` file directly or open NVDA -> Tools -> Add-on Store -> Installed Add-ons -> Install from external file. Confirm the installation prompt and restart NVDA.
 
-Version 0.3 will add a direct bridge between NVDA and the AMASAMYA audit engine, so you can press one keyboard shortcut and hear the audit results spoken by NVDA without having to open or focus the panel at all. The bridge will also go the other way: NVDA shortcuts to tell the browser extension to focus the panel, run a crawl, or export a report.
+## Uninstallation
 
-Install
+Open NVDA -> Tools -> Add-on Store -> Installed Add-ons, select "AMASAMYA Accessibility Audit Companion", and select Remove. Restart NVDA.
 
-Open the .nvda-addon file. NVDA shows a confirmation dialog. Press Yes to install. NVDA will offer to restart; press Yes to apply the add-on.
+## Author
 
-Uninstall
+Akhilesh Malani, blind accessibility engineer in Chennai, India. Built to provide blind testers and developers with equal, independent access to accessibility auditing tools.
 
-Open NVDA menu, choose Tools, choose Manage add-ons, find AMASAMYA Accessibility Audit Companion in the list, press the Remove button. Restart NVDA.
+## Links
 
-Who made this
-
-Akhilesh Malani, a blind accessibility engineer in Chennai, India. Akhilesh has used a screen reader every day for over 16 years. He built AMASAMYA and this companion add-on in his personal time because he could not find accessibility tools a blind engineer could use without asking a sighted colleague for help. The add-on is free and always will be.
-
-Links
-
-AMASAMYA home: https://amasamya.com
-Audit platform: https://platform.amasamya.com
-Chrome Web Store: https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif
-Microsoft Edge Add-ons: https://microsoftedge.microsoft.com/addons/detail/amasamya-accessibility-/enpnjjkakecacidhckphimkmhobjcblj
-Firefox Add-ons: https://addons.mozilla.org/en-US/firefox/addon/amasamya-accessibility-audit/
-Source code: https://github.com/AMASAMYA/AMASAMYA
-</parameter>
-</invoke>
+- AMASAMYA Portal: https://amasamya.com
+- Chrome Web Store: https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif
+- Microsoft Edge Add-ons: https://microsoftedge.microsoft.com/addons/detail/amasamya-accessibility-/enpnjjkakecacidhckphimkmhobjcblj
+- Firefox Add-ons: https://addons.mozilla.org/en-US/firefox/addon/amasamya-accessibility-audit/
+- Source Repository: https://github.com/AMASAMYA/AMASAMYA

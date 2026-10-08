@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AMASAMYA Accessibility Audit Companion for NVDA</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; background-color: #ffffff; }
+h1 { font-size: 1.8rem; border-bottom: 2px solid #0056b3; padding-bottom: 0.4rem; color: #003366; }
+h2 { font-size: 1.4rem; margin-top: 1.6rem; color: #003366; }
+ul, ol { padding-left: 1.5rem; }
+li { margin-bottom: 0.5rem; }
+code, kbd { background: #f0f4f8; padding: 0.15em 0.4em; border-radius: 3px; font-family: Consolas, Monaco, monospace; font-size: 0.95em; }
+kbd { border: 1px solid #ccc; box-shadow: 0 1px 0 rgba(0,0,0,0.2); }
+a { color: #0056b3; text-decoration: underline; }
+a:hover, a:focus { color: #003366; }
+</style>
+</head>
+<body>
+<h1>AMASAMYA Accessibility Audit Companion for NVDA</h1>
+
+<p>This add-on works alongside the AMASAMYA browser extensions for Chrome, Microsoft Edge, and Firefox. It provides keyboard-driven NVDA shortcuts that make the accessibility audit panel easy to reach, inspect, and navigate.</p>
+
+<p>AMASAMYA is a free accessibility suite designed to uncover accessibility barriers on web pages that prevent blind and low-vision screen reader users from using them. If you have not installed the browser extension yet, install it from <a href="https://amasamya.com">https://amasamya.com</a> before using this NVDA add-on.</p>
+
+<h2>What this version does</h2>
+
+<p>This is version 0.2.12. Six commands, each reachable two ways. Use whichever feels better. Both reach the same scripts, so there is nothing to re-learn when you switch.</p>
+
+<p>All output routes to speech and Braille simultaneously through <code>ui.message()</code>, ensuring Braille displays receive full position cues and finding details without truncation or overwrite.</p>
+
+<p>The six commands are:</p>
+
+<ul>
+<li><strong>A: Where is the AMASAMYA panel?</strong><br>
+Checks whether the audit panel is open on the current browser tab and whether your focus is currently inside the panel. If focus is inside the panel, announces your focused control (for example, the WCAG Audit tab or a finding row). If the panel is open but focus is on the web page, reminds you to press <kbd>F6</kbd> to move focus into the panel. If not visible, provides instructions on how to open it (<kbd>Alt+Shift+1</kbd>).</li>
+
+<li><strong>N: Jump to next failure</strong><br>
+Finds the next row in the panel's findings table whose severity is Critical or Serious, moves the NVDA navigator object to it (without stealing keyboard focus), and speaks "N of M failures" along with the finding summary.</li>
+
+<li><strong>P: Jump to previous failure</strong><br>
+Same as above, walking backwards through the failure rows.</li>
+
+<li><strong>F: Read current finding fix</strong><br>
+Reads the How-to-Fix remediation guidance for the finding currently under the NVDA navigator. If the row is collapsed, it automatically triggers the row disclosure so you hear the fix immediately. If no finding row is selected, it intelligently focuses the first failure.</li>
+
+<li><strong>U: Speak audit summary</strong><br>
+Reads the four severity counts (failures, warnings, passes, info) in one short sentence formatted to fit cleanly on a 40-cell Braille display.</li>
+
+<li><strong>D: Diagnostic report</strong><br>
+Walks the accessible desktop tree and dumps browser object details to <code>%USERPROFILE%\Downloads\amasamya-nvda-diag.txt</code> to verify tree resolution.</li>
+</ul>
+
+<h2>Two ways to run commands</h2>
+
+<ol>
+<li><strong>Single-stroke Alt-modifier shortcuts (fastest):</strong>
+<ul>
+<li><kbd>NVDA+Alt+A</kbd> : Check panel presence</li>
+<li><kbd>NVDA+Alt+N</kbd> : Jump to next failure</li>
+<li><kbd>NVDA+Alt+P</kbd> : Jump to previous failure</li>
+<li><kbd>NVDA+Alt+F</kbd> : Read How-to-Fix text</li>
+<li><kbd>NVDA+Alt+U</kbd> : Speak audit summary</li>
+<li><kbd>NVDA+Alt+D</kbd> : Generate diagnostic report</li>
+</ul>
+</li>
+
+<li><strong>Layer command mode (zero-conflict guarantee):</strong>
+<ul>
+<li>Press <kbd>NVDA+A</kbd> once to enter the AMASAMYA layer.</li>
+<li>NVDA announces: "AMASAMYA layer. A panel, N next, P previous, F fix, U summary."</li>
+<li>Within two seconds, press one letter (<kbd>A</kbd>, <kbd>N</kbd>, <kbd>P</kbd>, <kbd>F</kbd>, <kbd>U</kbd>, or <kbd>D</kbd>) to execute the matching command.</li>
+<li>The layer automatically exits after two seconds, immediately upon pressing a command key, or if Escape is pressed. Pressing NVDA + A a second time cancels immediately.</li>
+</ul>
+</li>
+</ol>
+
+<p>Both input methods are active simultaneously. All shortcuts can be customized in NVDA via Menu -&gt; Preferences -&gt; Input Gestures under the "AMASAMYA" category.</p>
+
+<h2>Installation</h2>
+
+<p>Open the <code>.nvda-addon</code> file directly or open NVDA -&gt; Tools -&gt; Add-on Store -&gt; Installed Add-ons -&gt; Install from external file. Confirm the installation prompt and restart NVDA.</p>
+
+<h2>Uninstallation</h2>
+
+<p>Open NVDA -&gt; Tools -&gt; Add-on Store -&gt; Installed Add-ons, select "AMASAMYA Accessibility Audit Companion", and select Remove. Restart NVDA.</p>
+
+<h2>Author</h2>
+
+<p>Akhilesh Malani, blind accessibility engineer in Chennai, India. Built to provide blind testers and developers with equal, independent access to accessibility auditing tools.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li>AMASAMYA Portal: <a href="https://amasamya.com">https://amasamya.com</a></li>
+<li>Chrome Web Store: <a href="https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif">AMASAMYA on Chrome Web Store</a></li>
+<li>Microsoft Edge Add-ons: <a href="https://microsoftedge.microsoft.com/addons/detail/amasamya-accessibility-/enpnjjkakecacidhckphimkmhobjcblj">AMASAMYA on Microsoft Edge Add-ons</a></li>
+<li>Firefox Add-ons: <a href="https://addons.mozilla.org/en-US/firefox/addon/amasamya-accessibility-audit/">AMASAMYA on Firefox Add-ons</a></li>
+<li>Source Repository: <a href="https://github.com/AMASAMYA/AMASAMYA">https://github.com/AMASAMYA/AMASAMYA</a></li>
+</ul>
+</body>
+</html>
