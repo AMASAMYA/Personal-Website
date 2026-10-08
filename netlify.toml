@@ -48,6 +48,11 @@
   status = 200
 
 [[redirects]]
+  from = "/nvda-addon"
+  to = "/nvda-addon.html"
+  status = 200
+
+[[redirects]]
   from = "/doc-checker"
   to = "/doc-checker.html"
   status = 200
@@ -241,3 +246,14 @@
   for = "*.html"
   [headers.values]
     Cache-Control = "public, no-cache"
+
+# NVDA add-on files are ZIP archives with a .nvda-addon extension.
+# Netlify does not know this type by default. Serve as octet-stream
+# with Content-Disposition: attachment so browsers download rather
+# than try to open or display the file.
+[[headers]]
+  for = "*.nvda-addon"
+  [headers.values]
+    Content-Type = "application/octet-stream"
+    Content-Disposition = "attachment"
+    Cache-Control = "public, max-age=604800"

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AMASAMYA companion add-on for NVDA. Beta sideload. Five keyboard commands to run audits, jump between failures, and hear the summary without leaving your screen reader.">
+  <meta name="keywords" content="AMASAMYA, NVDA, NVDA add-on, screen reader, accessibility, keyboard shortcuts, blind engineer, Akhilesh Malani">
+  <meta name="author" content="Akhilesh Malani">
+  <meta name="theme-color" content="#0b192c">
+  <link rel="canonical" href="https://amasamya.com/nvda-addon">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://amasamya.com/nvda-addon">
+  <meta property="og:title" content="AMASAMYA NVDA companion add-on (beta)">
+  <meta property="og:description" content="Five keyboard commands for NVDA users. Beta sideload while the NVDA Add-on Store review is still ahead.">
+  <meta property="og:site_name" content="AMASAMYA">
+
+  <title>AMASAMYA NVDA companion add-on (beta) - amasamya.com</title>
+  <link rel="icon" type="image/svg+xml" href="images/logo-icon.svg">
+  <link rel="preload" href="styles.css" as="style">
+  <link rel="stylesheet" href="styles.css">
+
+  <script>
+    (function(){
+      var h = document.documentElement;
+      var t = localStorage.getItem('theme');
+      if (t) { h.setAttribute('data-theme', t); }
+      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches) {
+        h.setAttribute('data-theme', 'dark');
+      }
+      var s = localStorage.getItem('a11y-text-size');
+      if (s && s !== 'normal') h.setAttribute('data-text-size', s);
+      if (localStorage.getItem('a11y-high-contrast') === 'true') h.setAttribute('data-high-contrast', 'true');
+      if (localStorage.getItem('a11y-dyslexia-font') === 'true') h.setAttribute('data-dyslexia-font', 'true');
+      if (localStorage.getItem('a11y-reduce-motion') === 'true') h.setAttribute('data-reduce-motion', 'true');
+    })();
+  </script>
+
+  <style>
+    .page-hero {
+      background: linear-gradient(135deg, #0b192c 0%, #0d2240 60%, #003366 100%);
+      color: #ffffff;
+      padding: 56px 0 44px;
+      border-bottom: 4px solid #0072bc;
+    }
+    .page-hero .container { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+    .beta-badge {
+      display: inline-block;
+      background: rgba(234, 179, 8, 0.2);
+      border: 1px solid #eab308;
+      color: #fef08a;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .page-hero h1 { font-size: 2.1rem; line-height: 1.25; color: #ffffff; font-weight: 800; margin: 0 0 12px; }
+    .page-hero p.lead { font-size: 1.05rem; line-height: 1.6; color: #e2e8f0; margin: 0 0 20px; max-width: 760px; }
+    .btn-download {
+      display: inline-block;
+      background: #0072bc;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 700;
+      border: 2px solid #0072bc;
+    }
+    .btn-download:focus, .btn-download:hover { background: #0056a0; border-color: #0056a0; }
+    .content-section { padding: 44px 0; }
+    .content-section .container { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+    .content-section h2 { font-size: 1.5rem; margin: 0 0 16px; color: var(--color-primary); }
+    .content-section h3 { font-size: 1.15rem; margin: 24px 0 10px; color: var(--color-text); }
+    .content-section p, .content-section li { line-height: 1.65; color: var(--color-text); }
+    .content-section ol, .content-section ul { padding-left: 24px; margin: 10px 0 18px; }
+    .content-section ol li, .content-section ul li { margin-bottom: 8px; }
+    .shortcut-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+    }
+    .shortcut-table th, .shortcut-table td {
+      border: 1px solid #cbd5e1;
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 0.98rem;
+    }
+    .shortcut-table th { background: #f1f5f9; font-weight: 700; }
+    .callout {
+      background: #fef3c7;
+      border-left: 4px solid #eab308;
+      padding: 14px 18px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .callout p { margin: 0; color: #713f12; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .shortcut-table th { background: #1e293b; color: #e2e8f0; }
+      :root:not([data-theme="light"]) .shortcut-table th,
+      :root:not([data-theme="light"]) .shortcut-table td { border-color: #334155; }
+      :root:not([data-theme="light"]) .callout { background: #422006; border-left-color: #eab308; }
+      :root:not([data-theme="light"]) .callout p { color: #fef3c7; }
+    }
+    :root[data-theme="dark"] .shortcut-table th { background: #1e293b; color: #e2e8f0; }
+    :root[data-theme="dark"] .shortcut-table th,
+    :root[data-theme="dark"] .shortcut-table td { border-color: #334155; }
+    :root[data-theme="dark"] .callout { background: #422006; border-left-color: #eab308; }
+    :root[data-theme="dark"] .callout p { color: #fef3c7; }
+  </style>
+</head>
+<body>
+
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <header role="banner" class="site-header">
+    <div class="container">
+      <a href="/" class="brand-link" aria-label="AMASAMYA home">
+        <span class="brand-name">AMASAMYA</span>
+      </a>
+      <nav role="navigation" aria-label="Primary">
+        <ul>
+          <li><a href="/checker">Check a site</a></li>
+          <li><a href="/extension">Browser add-on</a></li>
+          <li><a href="/nvda-addon" aria-current="page">NVDA add-on</a></li>
+          <li><a href="/accessibility">Accessibility</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" role="main">
+
+    <section class="page-hero">
+      <div class="container">
+        <span class="beta-badge">Beta sideload. NVDA Add-on Store listing is still ahead.</span>
+        <h1>AMASAMYA companion add-on for NVDA</h1>
+        <p class="lead">
+          Five keyboard commands for NVDA users who already have the AMASAMYA browser add-on. Jump to the next failure, read the summary, hear the audit result, without leaving your screen reader. Works with Chrome today. Edge and Firefox are untested so far and will land in a later build.
+        </p>
+        <a href="/AMASAMYA-NVDA-Addon-v0.2.12.nvda-addon" class="btn-download" rel="external" download>Download v0.2.12 (13 KB)</a>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div class="container">
+
+        <h2>What you need before you install</h2>
+        <ul>
+          <li>NVDA 2023.1 or newer. Tested on NVDA 2026.2 on Windows 11.</li>
+          <li>Google Chrome with the AMASAMYA browser add-on already installed. Get it from the <a href="https://chromewebstore.google.com/detail/blnfmiipkccpggpinjofhhglfcgglbif" rel="external">Chrome Web Store</a> if you do not have it yet.</li>
+          <li>No separate account, no sign-in. The add-on runs locally and talks to the browser add-on through the DOM.</li>
+        </ul>
+
+        <h2>How to install</h2>
+        <ol>
+          <li>Download the file above. Your browser saves it to your Downloads folder as AMASAMYA-NVDA-Addon-v0.2.12.nvda-addon.</li>
+          <li>Open the NVDA menu with NVDA plus N.</li>
+          <li>Press T for Tools, then A for Add-on Store. NVDA announces "Add-on Store".</li>
+          <li>Press Ctrl plus Tab until NVDA announces "Install from external source". Press Enter.</li>
+          <li>A file dialog opens. Browse to Downloads, select AMASAMYA-NVDA-Addon-v0.2.12.nvda-addon, press Enter.</li>
+          <li>NVDA warns that the add-on comes from an external source. Press Y for Yes.</li>
+          <li>NVDA asks to restart. Press Enter to restart NVDA.</li>
+        </ol>
+
+        <div class="callout">
+          <p><strong>Why the warning?</strong> NVDA warns on every add-on that did not come from the NVDA Community Add-ons Store. This add-on will go through that store once the beta is stable. Until then, the warning will show on install. You can read the full source at <a href="https://github.com/AMASAMYA/Personal-Website/tree/main/amasamya-nvda-addon" rel="external">github.com/AMASAMYA/Personal-Website</a>.</p>
+        </div>
+
+        <h2>What the five keyboard commands do</h2>
+        <p>Every command works two ways. Pick whichever path fits your NVDA setup; both are rebindable from NVDA's Input Gestures dialog under the category "AMASAMYA".</p>
+
+        <h3>Path 1: single-stroke Alt-modifier</h3>
+        <table class="shortcut-table" aria-label="Single-stroke shortcuts">
+          <thead>
+            <tr><th scope="col">Keystroke</th><th scope="col">What it does</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>NVDA plus Alt plus A</td><td>Say whether the AMASAMYA panel is open on this tab, and whether your focus is already inside it.</td></tr>
+            <tr><td>NVDA plus Alt plus N</td><td>Jump the navigator to the next Critical or Serious failure in the findings table.</td></tr>
+            <tr><td>NVDA plus Alt plus P</td><td>Jump the navigator to the previous Critical or Serious failure.</td></tr>
+            <tr><td>NVDA plus Alt plus F</td><td>Read the How-to-Fix text for the finding currently under the navigator.</td></tr>
+            <tr><td>NVDA plus Alt plus U</td><td>Speak the audit summary: failures, warnings, passes, info counts in one line.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Path 2: layer command</h3>
+        <p>Press NVDA plus A. NVDA announces "AMASAMYA layer. A panel, N next, P previous, F fix, U summary." Within two seconds press A, N, P, F, or U to run the matching command. Any other key or the two-second timeout cancels the layer silently.</p>
+
+        <h2>How to use it with the browser add-on</h2>
+        <ol>
+          <li>Open any web page in Chrome.</li>
+          <li>Press Alt plus Shift plus 1 to open the AMASAMYA side panel.</li>
+          <li>Activate the Re-run Audit button so the findings table is populated.</li>
+          <li>Press F6 one or more times until NVDA announces something inside the AMASAMYA panel. The add-on relies on your focus being inside the panel to locate the findings table.</li>
+          <li>Press NVDA plus Alt plus U to hear the summary, then NVDA plus Alt plus N to walk through failures one at a time.</li>
+        </ol>
+
+        <h2>Known limits in this beta</h2>
+        <ul>
+          <li>Chrome only in testing. Edge and Firefox should work because the AMASAMYA panel exposes the same accessibility tree in all three, but no live NVDA session has verified either yet.</li>
+          <li>The Fix command (NVDA plus Alt plus F) reports "No How-to-Fix text found. Activate the row with NVDA plus NumpadEnter" when the row is still collapsed. The AMASAMYA panel exposes the fix text only once the row is expanded. A later version will expand the row automatically.</li>
+          <li>Focus must be inside the AMASAMYA panel before the shortcuts can find the table. Chrome does not expose side-panel content through the window handle tree, only through the focused document. Pressing F6 first is a one-time step per tab.</li>
+        </ul>
+
+        <h2>Report a bug</h2>
+        <p>
+          Email Akhilesh at <a href="mailto:akhilesh@amasamya.com">akhilesh@amasamya.com</a> with your NVDA version, your browser, the page you ran it on, and what NVDA announced. If possible, press NVDA plus Alt plus D while focus is inside the AMASAMYA panel: that writes a diagnostic file to your Downloads folder named amasamya-nvda-diag.txt. Attach that file to the email.
+        </p>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer role="contentinfo" class="site-footer" style="margin-top: 32px; border-top: 1px solid #cbd5e1; padding: 32px 0; background: #0b192c; color: #cbd5e1;">
+    <div class="container" style="max-width: 1040px; margin: 0 auto; padding: 0 20px; text-align: center;">
+      <p style="margin: 0 0 8px; font-size: 0.95rem;">&copy; 2026 AMASAMYA. Founded, engineered, and owned by Akhilesh Malani.</p>
+      <p style="margin: 0; font-size: 0.85rem; color: #94a3b8;">Accessibility auditing for the web and Android, built for the standards that matter.</p>
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
