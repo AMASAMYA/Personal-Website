@@ -146,6 +146,10 @@
 
     <section id="findings-section" aria-labelledby="findings-heading">
       <h2 id="findings-heading">Findings <span id="findings-count"></span></h2>
+      <!-- v5.5.0 keyboard-nav hint. Screen-reader-only so sighted
+           users are not visually noisy, but discoverable by anyone
+           browsing the Findings heading. Full list spoken on Alt+/. -->
+      <p class="sr-only">Keyboard shortcuts: Alt plus N for next failure, Alt plus P for previous failure, Alt plus S for the summary, Alt plus T for this table, Alt plus U to hear the summary, Alt plus F to cycle the severity filter, Alt plus slash for help.</p>
       <div id="findings-container" role="region" aria-labelledby="findings-heading">
         <table id="findings-table" class="findings-table" aria-label="Accessibility audit findings">
           <thead>

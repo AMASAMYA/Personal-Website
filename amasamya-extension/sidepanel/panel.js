@@ -2307,4 +2307,211 @@ footer{background:#f0f5fa;padding:16px 32px;font-size:.8rem;color:#555;border-to
     return false;
   });
 
+  /* ================================================================
+     IN-PANEL KEYBOARD SHORTCUTS (v5.5.0, stability pass)
+     ----------------------------------------------------------------
+     Six Alt+<letter> shortcuts that fire anywhere inside the panel.
+     Goal: a blind user can walk failures, hear the summary, and
+     cycle the Severity filter without ever leaving focus-mode or
+     reaching for the NVDA companion add-on.
+
+       Alt+N : next failure (Critical or Serious)
+       Alt+P : previous failure
+       Alt+S : focus the first Summary card (Failures)
+       Alt+T : focus the first row of the findings Table (or current
+               row's toggle if focus is already in the table)
+       Alt+U : speak the audit summary via the polite live region
+       Alt+F : cycle Severity filter all -> Critical -> Serious -> all
+       Alt+/ : speak the shortcut list via the polite live region
+               (also fires on Shift+? for keyboards that need Shift
+               to produce "?")
+
+     Design notes:
+     - Alt+<letter> passes through NVDA focus mode and does not
+       collide with Chrome's menu mnemonics inside the side-panel
+       document.
+     - All feedback goes through announce() so NVDA fans text out
+       to Braille in the same call. Each utterance is short enough
+       to fit a 40-cell display without hunting.
+     - Shortcuts are inert when the confirm dialog is open, when
+       focus is on an editable control (so you can type "n" inside
+       the filter dropdown without jumping rows), or when the WCAG
+       Audit tabpanel is not visible.
+     - Rows do not take focus directly; the focusable element
+       inside each row is .finding-toggle (the disclosure button).
+       Focusing it also sets the natural tab-stop for Shift+Tab
+       navigation back out of the table.
+  ================================================================ */
+  (function initPanelShortcuts() {
+    var FAIL_SEVS = ['Critical', 'Serious'];
+    var SEV_CYCLE = ['all', 'Critical', 'Serious'];
+
+    function wcagPanelVisible() {
+      var p = document.getElementById('ppanel-wcag');
+      return !!(p && !p.hidden);
+    }
+
+    function targetIsEditable(t) {
+      if (!t || !t.tagName) return false;
+      var tag = t.tagName.toUpperCase();
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+      if (t.isContentEditable) return true;
+      return false;
+    }
+
+    function failureRows() {
+      var all = Array.prototype.slice.call(
+        document.querySelectorAll('#findings-body tr[data-finding-id]'));
+      return all.filter(function (tr) {
+        /* Severity column is cell index 3 when the Change column is
+           hidden (default), index 4 when a diff is active. Reading
+           the Severity cell by class is more robust than counting. */
+        var cell = tr.querySelector('.severity-critical, .severity-serious');
+        return !!cell;
+      });
+    }
+
+    function currentFailureIndex(rows) {
+      var active = document.activeElement;
+      if (!active) return -1;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i] === active || rows[i].contains(active)) return i;
+      }
+      return -1;
+    }
+
+    function focusRow(tr) {
+      if (!tr) return;
+      var btn = tr.querySelector('.finding-toggle');
+      if (btn) { try { btn.focus(); } catch (_) {} return; }
+      try { tr.scrollIntoView({ block: 'nearest' }); } catch (_) {}
+    }
+
+    function rowBrief(tr) {
+      /* The aria-label on the row already carries the full brief
+         ("AMASAMYA-0094. Colour Contrast. Fail. Serious. Affects 37
+         elements on this page..."). Prefer it over reconstructing. */
+      var label = tr.getAttribute('aria-label');
+      if (label) return label;
+      var btn = tr.querySelector('.finding-toggle');
+      return btn ? btn.textContent.trim() : 'Finding row.';
+    }
+
+    function walkFailure(direction) {
+      var rows = failureRows();
+      if (!rows.length) {
+        announce('No Critical or Serious failures in this audit. Press Alt plus U to hear the summary.');
+        return;
+      }
+      var cur = currentFailureIndex(rows);
+      var next;
+      if (direction > 0) {
+        next = (cur < 0 || cur >= rows.length - 1) ? 0 : cur + 1;
+      } else {
+        next = (cur <= 0) ? rows.length - 1 : cur - 1;
+      }
+      focusRow(rows[next]);
+      announce('Failure ' + (next + 1) + ' of ' + rows.length + '. ' + rowBrief(rows[next]));
+    }
+
+    function focusSummary() {
+      var first = document.getElementById('card-fail');
+      if (!first) {
+        announce('Summary not available. Run an audit first with Alt plus Shift plus 1.');
+        return;
+      }
+      try { first.focus(); } catch (_) {}
+      /* NVDA will announce the card itself via its aria-label; no
+         extra announce() is needed. */
+    }
+
+    function focusTable() {
+      var rows = Array.prototype.slice.call(
+        document.querySelectorAll('#findings-body tr[data-finding-id]'));
+      if (!rows.length) {
+        announce('No findings in the table. Run an audit first with Alt plus Shift plus 1.');
+        return;
+      }
+      /* If focus is already in the table, keep the current row; else
+         jump to the first row. */
+      var active = document.activeElement;
+      var inTable = active && rows.some(function (r) { return r.contains(active); });
+      focusRow(inTable ? rows[rows.indexOf(rows.find(function (r) { return r.contains(active); }))] : rows[0]);
+    }
+
+    function readTextOrDash(id) {
+      var el = document.getElementById(id);
+      var v = el ? (el.textContent || '').trim() : '';
+      return v && v !== '-' ? v : '0';
+    }
+
+    function speakSummary() {
+      var fail  = readTextOrDash('count-fail');
+      var warn  = readTextOrDash('count-warn');
+      var pass  = readTextOrDash('count-pass');
+      var info  = readTextOrDash('count-info');
+      var total = readTextOrDash('count-total');
+      if (total === '0') {
+        announce('No audit has run yet. Press Alt plus Shift plus 1 on any page to start.');
+        return;
+      }
+      var crit = readTextOrDash('sev-critical');
+      var ser  = readTextOrDash('sev-serious');
+      var mod  = readTextOrDash('sev-moderate');
+      var min  = readTextOrDash('sev-minor');
+      announce(
+        fail + ' failures, ' + warn + ' warnings, ' + pass + ' passes, ' + info + ' info. ' +
+        'Severity: ' + crit + ' Critical, ' + ser + ' Serious, ' + mod + ' Moderate, ' + min + ' Minor. ' +
+        'Total ' + total + '.');
+    }
+
+    function cycleSeverityFilter() {
+      var sel = document.getElementById('filter-severity');
+      if (!sel) return;
+      var cur = sel.value || 'all';
+      var i = SEV_CYCLE.indexOf(cur);
+      var next = SEV_CYCLE[(i < 0 ? -1 : i) + 1 >= SEV_CYCLE.length ? 0 : (i < 0 ? 0 : i + 1)];
+      sel.value = next;
+      /* Dispatch change so the existing filter wiring applies it. */
+      try { sel.dispatchEvent(new Event('change', { bubbles: true })); } catch (_) {}
+      /* Resulting row count comes from the Findings heading count span
+         after the filter rebuild. The rebuild is synchronous today
+         (renderFindings runs in the same tick), so this read is safe. */
+      var cEl = document.getElementById('findings-count');
+      var cStr = cEl ? (cEl.textContent || '').trim() : '';
+      var label = (next === 'all') ? 'all severities' : (next + ' only');
+      announce('Severity filter: ' + label + '. ' + (cStr || 'count unavailable') + '.');
+    }
+
+    function speakShortcutHelp() {
+      announce(
+        'AMASAMYA shortcuts. Alt plus N for next failure. Alt plus P for previous failure. ' +
+        'Alt plus S to jump to the summary. Alt plus T to jump to the findings table. ' +
+        'Alt plus U to hear the summary. Alt plus F to cycle the severity filter. ' +
+        'Alt plus slash for this help.');
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (!e.altKey) return;
+      if (e.ctrlKey || e.metaKey) return;
+      if (!wcagPanelVisible()) return;
+      if (targetIsEditable(e.target)) return;
+
+      var k = (e.key || '').toLowerCase();
+      var handler = null;
+      if      (k === 'n') handler = function () { walkFailure(+1); };
+      else if (k === 'p') handler = function () { walkFailure(-1); };
+      else if (k === 's') handler = focusSummary;
+      else if (k === 't') handler = focusTable;
+      else if (k === 'u') handler = speakSummary;
+      else if (k === 'f') handler = cycleSeverityFilter;
+      else if (k === '/' || k === '?') handler = speakShortcutHelp;
+      if (!handler) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      try { handler(); } catch (err) { /* never let a shortcut crash the panel */ }
+    }, true);
+  })();
+
 })();

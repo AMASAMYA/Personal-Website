@@ -173,6 +173,31 @@ Pass criteria: The displayed version matches the manifest version
 on all three browsers. v5.3.5 fixed the hardcoded-version bug; this
 check confirms it has not regressed.
 
+K. In-panel shortcuts: Alt+N / Alt+P walk failures
+--------------------------------------------------
+Test (v5.5.0 and later). After an audit on a page with mixed-severity
+findings, press F6 to put focus inside the panel. Press Alt+N.
+Pass criteria: NVDA announces "Failure 1 of N" followed by the first
+Critical or Serious finding's details. Alt+N again moves to the
+second. Alt+P moves back. On a page with zero failures, NVDA
+announces "No Critical or Serious failures in this audit."
+
+L. In-panel shortcuts: Alt+U speaks the summary
+-----------------------------------------------
+Test. After an audit, press Alt+U.
+Pass criteria: NVDA speaks the full summary line (failures, warnings,
+passes, info, severity breakdown, total) as a single utterance under
+roughly 180 characters so a 40-cell Braille display can show it
+without hunting.
+
+M. In-panel shortcuts: Alt+F cycles the Severity filter
+-------------------------------------------------------
+Test. With findings loaded, press Alt+F three times.
+Pass criteria: The Severity filter dropdown moves all -> Critical ->
+Serious -> all in that order, and each press is accompanied by an
+NVDA announcement naming the new filter and the resulting findings
+count. The underlying table re-renders to match the filter.
+
 Results template
 ================
 
@@ -192,6 +217,9 @@ note for every partial or fail.
 | H. Finding clustering |  |  |  |  |
 | I. VPAT 2.4 ACR export |  |  |  |  |
 | J. Panel version string |  |  |  |  |
+| K. Alt+N / Alt+P walk failures (v5.5.0+) |  |  |  |  |
+| L. Alt+U speaks summary (v5.5.0+) |  |  |  |  |
+| M. Alt+F cycles Severity filter (v5.5.0+) |  |  |  |  |
 
 Release gate
 ============
